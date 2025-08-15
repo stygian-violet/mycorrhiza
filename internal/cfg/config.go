@@ -205,15 +205,15 @@ func ReadConfigFile(path string) error {
 	TelegramBotName = cfg.TelegramBotName
 	TelegramEnabled = (TelegramBotToken != "") && (TelegramBotName != "")
 
-	// This URL makes much more sense. If no URL is set or the protocol is forgotten, assume HTTP.
-	if URL == "" {
-		URL = "http://" + ListenAddr
-	} else if !strings.Contains(URL, ":") {
-		URL = "http://" + URL
-	}
-
 	if !strings.HasSuffix(Root, "/") {
 		Root = Root + "/"
+	}
+
+	// This URL makes much more sense. If no URL is set or the protocol is forgotten, assume HTTP.
+	if URL == "" {
+		URL = "http://" + ListenAddr + cfg.Root
+	} else if !strings.Contains(URL, ":") {
+		URL = "http://" + URL
 	}
 
 	return nil

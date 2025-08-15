@@ -343,18 +343,24 @@ func (rev *Revision) mycoFiles() (filenames []string, ok bool) {
 }
 
 // Try and guess what link is the most important by looking at the message.
-func (rev *Revision) bestLink() string {
+func (rev *Revision) bestLink(includeRoot bool) string {
 	var (
 		revs      = rev.hyphaeAffected()
 		renameRes = renameMsgPattern.FindStringSubmatch(rev.Message)
+		root string
 	)
+	if includeRoot {
+		root = cfg.Root + "hypha/"
+	} else {
+		root = "/hypha/"
+	}
 	switch {
 	case renameRes != nil:
-		return cfg.Root + "hypha/" + renameRes[1]
+		return root + renameRes[1]
 	case len(revs) == 0:
 		return ""
 	default:
-		return cfg.Root + "hypha/" + revs[0]
+		return root + revs[0]
 	}
 }
 

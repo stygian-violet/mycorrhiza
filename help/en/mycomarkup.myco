@@ -163,22 +163,22 @@ You can write a description for the image and specify its size.
 
 * {```
 img {
-https://bouncepaw.com/mushroom.jpg
-https://bouncepaw.com/mushroom.jpg {
+/static/help/image.png
+/static/help/image.png {
 	Description //here//
 }
-https://bouncepaw.com/mushroom.jpg | 100 { Size }
-https://bouncepaw.com/mushroom.jpg | 50*50
+/static/help/image.png | 100 { Size }
+/static/help/image.png | 50*50 { Square }
 }
 ```}
 * {
 img {
-https://bouncepaw.com/mushroom.jpg
-https://bouncepaw.com/mushroom.jpg {
+/static/help/image.png
+/static/help/image.png {
 	Description //here//
 }
-https://bouncepaw.com/mushroom.jpg | 100 { Size }
-https://bouncepaw.com/mushroom.jpg | 50*50 { Square }
+/static/help/image.png | 100 { Size }
+/static/help/image.png | 50*50 { Square }
 }
 }
 
@@ -191,9 +191,9 @@ an image hypha
 
 If you put just one image, it will be displayed with no decorations:
 * {```
-img { https://mycorrhiza.wiki/static/favicon.ico }
+img { /static/favicon.ico }
 ```}
-* {img { https://mycorrhiza.wiki/static/favicon.ico }}
+* {img { /static/favicon.ico }}
 
 === Gallery layout
 
@@ -205,25 +205,25 @@ Specify the layout after `img` and before `{`. If you do not write any of them, 
 
 ```
 img grid {
-   https://bouncepaw.com/mushroom.jpg
-   https://bouncepaw.com/mushroom.jpg
+   /static/help/image.png
+   /static/help/image.png
 }
 
 img side {
-   https://bouncepaw.com/mushroom.jpg | 200
-   https://bouncepaw.com/mushroom.jpg | 200
+   /static/help/image.png | 200
+   /static/help/image.png | 200
 }
 
 This text is wrapped.
 ```
 img grid {
-   https://bouncepaw.com/mushroom.jpg
-   https://bouncepaw.com/mushroom.jpg
+   /static/help/image.png
+   /static/help/image.png
 }
 
 img side {
-   https://bouncepaw.com/mushroom.jpg | 200
-   https://bouncepaw.com/mushroom.jpg | 200
+   /static/help/image.png | 200
+   /static/help/image.png | 200
 }
 
 This text is wrapped.

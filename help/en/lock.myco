@@ -18,7 +18,7 @@ Restart your wiki.
 == Usage
 When unauthorized people visit your wiki, they will see something like this:
 img {
-https://mycorrhiza.wiki/binary/release/1.3/lock_screenshot
+/static/help/lock_screenshot.png
 }
 
 If they log in, they will be able to navigate the wiki. They are not able to register, though. [[/help/en/telegram | Telegram]] authorization is supported.

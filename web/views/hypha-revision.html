@@ -5,7 +5,7 @@
         <section>
             <p>
                 {{block "revision warning" .}}Please note that viewing media is not supported in history for now.{{end}}
-                <a href="/rev-text/{{.RevHash}}/{{.HyphaName}}">
+                <a href="{{ .Meta.Root }}rev-text/{{.RevHash}}/{{.HyphaName}}">
                     {{block "revision link" .}}Get Mycomarkup source of this revision{{end}}
                 </a>
             </p>

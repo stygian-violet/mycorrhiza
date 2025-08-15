@@ -9,7 +9,7 @@ In Mycomarkup, you can address a different wiki by prefixing the link target wit
 
 The interwiki prefixes obey the same naming rules as hyphae. In particular, they are case-insensitive, among other things. Every interwiki entry has one main name and it might have any number of aliases, which can be used interchangeably.
 
-See [[/interwiki]] for the list of configured interwiki entries. Unlike the WWW, there is no distributed list of wikis similar to DNS, so each wiki administrator has to maintain their own list.
+See [[{{root}}interwiki]] for the list of configured interwiki entries. Unlike the WWW, there is no distributed list of wikis similar to DNS, so each wiki administrator has to maintain their own list.
 
 == Mycorrhiza interwiki
 Intermycorrhizal interwiki works the best, due to the nature of hyphae. Unlike with some other systems, you can address images from the other wikis reliably.
@@ -22,7 +22,7 @@ img {
 
 == Setting the intermap
 //This section is meant for wiki administrators.//
-**Intermap**, or interwiki map, is the collection of all configured interwiki entries. To configure it, an administrator has to visit [[/interwiki]] and change the existing entries or add a new one.
+**Intermap**, or interwiki map, is the collection of all configured interwiki entries. To configure it, an administrator has to visit [[{{root}}interwiki]] and change the existing entries or add a new one.
 
 Entries have the following fields:
 *. {

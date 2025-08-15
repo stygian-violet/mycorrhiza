@@ -1,6 +1,6 @@
 = Help: Feeds
 Mycorrhiza Wiki has RSS, Atom, and JSON feeds to track the latest changes on the wiki.
-These feeds are linked on the [[/recent-changes | recent changes page]].
+These feeds are linked on the [[{{root}}recent-changes | recent changes page]].
 
 == Options
 These feeds have options to combine related changes into groups:
@@ -22,18 +22,18 @@ If none of these options are set, changes will never be grouped.
 == Examples
 URLs for feeds using these options look like this:
 * {
-    `/recent-changes-rss?period=1h`
+    `{{root}}recent-changes-rss?period=1h`
     Changes within one hour of each other with the same author and message will be grouped together.
 }
 * {
-    `/recent-changes-atom?period=1h&order=new-to-old`
+    `{{root}}recent-changes-atom?period=1h&order=new-to-old`
     Same as the last one, but the groups will be shown in the opposite order.
 }
 * {
-    `/recent-changes-atom?period=1h&same=none`
+    `{{root}}recent-changes-atom?period=1h&same=none`
     Changes within one hour of each other will be grouped together, even with different authors and messages.
 }
 * {
-    `/recent-changes-atom?same=author&same=message`
+    `{{root}}recent-changes-atom?same=author&same=message`
     Changes with the same author and message will be grouped together no matter how much time passes between them.
 }

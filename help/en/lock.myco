@@ -18,13 +18,13 @@ Restart your wiki.
 == Usage
 When unauthorized people visit your wiki, they will see something like this:
 img {
-/static/help/lock_screenshot.png
+{{root}}static/help/lock_screenshot.png
 }
 
-If they log in, they will be able to navigate the wiki. They are not able to register, though. [[/help/en/telegram | Telegram]] authorization is supported.
+If they log in, they will be able to navigate the wiki. They are not able to register, though. [[{{root}}help/en/telegram | Telegram]] authorization is supported.
 
 == Readers
 You might want to add some users to the `reader` group. Readers can log in even to locked wikis, but they cannot edit.
 
 == See also
-=> /help/en/whitelist | Whitelist
+=> {{root}}help/en/whitelist | Whitelist

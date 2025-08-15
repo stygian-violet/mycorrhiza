@@ -29,7 +29,7 @@
 					</span>
                     {{ if $entry.Username | ne "anon" }}
 						<span class="recent-changes__entry__author">
-							&mdash; <a href="/hypha/{{$userHypha}}/{{$entry.Username}}" rel="author">{{$entry.Username}}</a>
+							&mdash; <a href="{{$.Meta.Root}}hypha/{{$userHypha}}/{{$entry.Username}}" rel="author">{{$entry.Username}}</a>
 						</span>
                     {{end}}
 				</div>
@@ -57,15 +57,15 @@
             {{if $m | eq $editCount}}
 				<b>{{$m}}</b>
             {{else}}
-				<a href="/recent-changes/{{$m}}">{{$m}}</a>
+				<a href="{{$.Meta.Root}}recent-changes/{{$m}}">{{$m}}</a>
             {{end}}
         {{end}}
         {{block "count post" .}}recent changes{{end}}
 	</p>
 
 	<p>
-		<img class="icon" width="20" height="20" src="/static/icon/feed.svg" aria-hidden="true" alt="RSS icon">
-        {{block "subscribe via" .}}Subscribe via <a href="/recent-changes-rss">RSS</a>, <a href="/recent-changes-atom">Atom</a> or <a href="/recent-changes-json">JSON feed</a>.{{end}}
+		<img class="icon" width="20" height="20" src="{{.Meta.Root}}static/icon/feed.svg" aria-hidden="true" alt="RSS icon">
+        {{block "subscribe via" .}}Subscribe via <a href="{{.Meta.Root}}recent-changes-rss">RSS</a>, <a href="{{.Meta.Root}}recent-changes-atom">Atom</a> or <a href="{{.Meta.Root}}recent-changes-json">JSON feed</a>.{{end}}
 	</p>
 </main>
 {{end}}

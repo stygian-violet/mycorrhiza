@@ -32,6 +32,9 @@ HeaderLinksHypha = header-links
 [Network]
 ListenAddr = 0.0.0.0:8080
 URL = https://wiki
+Root = /
+CSP = default-src 'self'; img-src * data:; media-src *; style-src *; font-src * data:
+Referrer = no-referrer
 
 [Authorization]
 UseAuth = true
@@ -46,12 +49,14 @@ AllowRegistration = true
 === [Hyphae]
 * `HomeHypha`: //string//. The name your home hypha has. **Default:** `home`.
 * `UserHypha`: //string//. The name of the hypha that is parent of all user hyphae. **Default:** `u`.
-* `HeaderLinkHypha`: //string//. The name of the hypha where you can configure the header. See [[/help/en/top_bar]]. There is no default.
+* `HeaderLinkHypha`: //string//. The name of the hypha where you can configure the header. See [[{{root}}/help/en/top_bar]]. There is no default.
 
 === [Network]
 * `ListenAddr`: //number//. What port is used for serving the web interface of Mycorrhiza. **Default:** `1737`.
 * `URL`: //url//. What URL is used for Opengraph and Web feed in the web interface. There is no default and you really should set it to something.
-
+* `Root`: //string//. The root path of the wiki. **Default:** `/`.
+* `CSP`: //string//. The [[https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy | Content-Security-Policy]] HTTP header. **Default:** `default-src 'self' telegram.org *.telegram.org; img-src * data:; media-src *; style-src *; font-src * data:`.
+* `Referrer`: //string//. The [[https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy | Referrer-Policy]] HTTP header. **Default:** `no-referrer`.
 === [Authorization]
 * `UseAuth`: //boolean//. Whether to enable authorization system. **Default:** `false`.
 * `AllowRegistration`: //boolean//. Whether you want unregistered visitors to be able to register themselves using the web form. **Default:** `false`.

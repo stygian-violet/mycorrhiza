@@ -32,7 +32,7 @@ func initPages() {
 	}, "views/orphans.html")
 	pageBacklinks = newtmpl.NewPage(fs, map[string]string{
 		"backlinks to text": `Обратные ссылки на {{.}}`,
-		"backlinks to link": `Обратные ссылки на <a href="/hypha/{{.}}">{{beautifulName .}}</a>`,
+		"backlinks to link": `Обратные ссылки на <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>`,
 		"description":       `Ниже перечислены гифы, на которых есть ссылка на эту гифу, трансклюзия этой гифы или эта гифа вставлена как изображение.`,
 	}, "views/backlinks.html")
 	pageUserList = newtmpl.NewPage(fs, map[string]string{
@@ -52,14 +52,14 @@ func initPages() {
 	}, "views/change-password.html")
 	pageHyphaDelete = newtmpl.NewPage(fs, map[string]string{
 		"delete hypha?":     "Удалить {{beautifulName .}}?",
-		"delete [[hypha]]?": "Удалить <a href=\"/hypha/{{.}}\">{{beautifulName .}}</a>?",
+		"delete [[hypha]]?": "Удалить <a href=\"{{.Meta.Root}}hypha/{{.HyphaName}}\">{{beautifulName .HyphaName}}</a>?",
 		"want to delete?":   "Вы действительно хотите удалить эту гифу?",
 		"delete tip":        "Нельзя отменить удаление гифы, но её история останется доступной.",
 	}, "views/hypha-delete.html")
 	pageHyphaEdit = newtmpl.NewPage(fs, map[string]string{
 		"editing hypha":               `Редактирование {{beautifulName .}}`,
-		"editing [[hypha]]":           `Редактирование <a href="/hypha/{{.}}">{{beautifulName .}}</a>`,
-		"creating [[hypha]]":          `Создание <a href="/hypha/{{.}}">{{beautifulName .}}</a>`,
+		"editing [[hypha]]":           `Редактирование <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>`,
+		"creating [[hypha]]":          `Создание <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>`,
 		"you're creating a new hypha": `Вы создаёте новую гифу.`,
 		"describe your changes":       `Опишите ваши правки`,
 		"save":                        `Сохранить`,
@@ -85,7 +85,7 @@ func initPages() {
 		"code":               `Код-блок`,
 		"bullets":            `Маркир. список`,
 		"numbers":            `Нумер. список`,
-		"mycomarkup help":    `<a href="/help/en/mycomarkup" class="shy-link">Подробнее</a> о Микоразметке`,
+		"mycomarkup help":    `<a href="{{.Meta.Root}}help/en/mycomarkup" class="shy-link">Подробнее</a> о Микоразметке`,
 		"actions":            `Действия`,
 		"current date local": `Местная дата`,
 		"current time local": `Местное время`,
@@ -111,7 +111,7 @@ func initPages() {
 		"empty log in":                     `Войти в свою учётную запись, если она у вас есть`,
 		"empty register":                   `Создать новую учётную запись`,
 		"write a text":                     `Написать текст`,
-		"write a text tip":                 `Напишите заметку, дневник, статью, рассказ или иной текст с помощью <a href="/help/en/mycomarkup" class="shy-link">Микоразметки</a>. Сохраняется полная история правок документа.`,
+		"write a text tip":                 `Напишите заметку, дневник, статью, рассказ или иной текст с помощью <a href="{{.Meta.Root}}help/en/mycomarkup" class="shy-link">Микоразметки</a>. Сохраняется полная история правок документа.`,
 		"write a text writing conventions": `Не забывайте следовать правилам оформления этой вики, если они имеются.`,
 		"write a text btn":                 `Создать`,
 		"upload a media":                   `Загрузить медиа`,
@@ -187,7 +187,7 @@ func initPages() {
 
 	pageCatEdit = newtmpl.NewPage(fs, map[string]string{
 		"edit category x":       "Редактирование категории {{beautifulName .}}",
-		"edit category heading": "Редактирование категории <a href=\"/category/{{.}}\">{{beautifulName .}}</a>",
+		"edit category heading": "Редактирование категории <a href=\"{{.Meta.Root}}category/{{.CatName}}\">{{beautifulName .CatName}}</a>",
 		"empty cat":             "Эта категория пуста.",
 		"add to category title": "Добавить гифу в эту категорию",
 		"hypha name":            "Название гифы",

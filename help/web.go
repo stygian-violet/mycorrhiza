@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/mycoopts"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 
@@ -56,7 +57,7 @@ func handlerHelp(w http.ResponseWriter, rq *http.Request) {
 	// See the history of this file to resurrect the old algorithm that supported multiple languages
 	var (
 		meta        = viewutil.MetaFrom(w, rq)
-		articlePath = strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, "/help/"), "/help")
+		articlePath = strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, cfg.Root + "help"), "/")
 		lang        = "en"
 	)
 	if articlePath == "" {
@@ -82,7 +83,8 @@ func handlerHelp(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	// TODO: change for the function that uses byte array when there is such function in mycomarkup.
-	ctx, _ := mycocontext.ContextFromStringInput(string(content), mycoopts.MarkupOptions(articlePath))
+	contentString := strings.Replace(string(content), "{{root}}", cfg.Root, -1)
+	ctx, _ := mycocontext.ContextFromStringInput(contentString, mycoopts.MarkupOptions(articlePath))
 	ast := mycomarkup.BlockTree(ctx)
 	result := mycomarkup.BlocksToHTML(ctx, ast)
 	w.WriteHeader(http.StatusOK)
@@ -98,7 +100,7 @@ type helpData struct {
 func viewHelp(meta viewutil.Meta, lang, contentsHTML, articlePath string) {
 	viewutil.ExecutePage(meta, chain, helpData{
 		BaseData: &viewutil.BaseData{
-			Addr: "/help/" + articlePath,
+			Addr: cfg.Root + "help/" + articlePath,
 		},
 		ContentsHTML: contentsHTML,
 		Lang:         lang,

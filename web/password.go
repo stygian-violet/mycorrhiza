@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
@@ -39,7 +40,7 @@ func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 					u.Password = previousPassword
 					f = f.WithError(err)
 				} else {
-					http.Redirect(w, rq, "/", http.StatusSeeOther)
+					http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 					return
 				}
 			}

@@ -4,8 +4,8 @@
 <main class="main-width">
 	<h1>{{template "manage users"}}</h1>
 
-	<form action="/admin/reindex-users" method="post">
-		<a class="btn" href="/admin/new-user">{{block "create user" .}}Create a new user{{end}}</a>
+	<form action="{{ .Meta.Root }}admin/reindex-users" method="post">
+		<a class="btn" href="{{ .Meta.Root }}admin/new-user">{{block "create user" .}}Create a new user{{end}}</a>
 		<button class="btn" type="submit">{{block "reindex users" .}}Reindex users{{end}}</button>
 	</form>
 
@@ -22,7 +22,7 @@
 		{{range .Users}}
 		<tr>
 			<td class="table-cell--fill">
-				<a href="/hypha/{{$userHypha}}/{{.Name}}">{{.Name}}</a>
+				<a href="{{ $.Meta.Root }}hypha/{{$userHypha}}/{{.Name}}">{{.Name}}</a>
 			</td>
 			<td>{{.Group}}</td>
 			<td>
@@ -33,7 +33,7 @@
 				{{end}}
 			</td>
 			<td>
-				<a href="/admin/users/{{.Name}}/edit">{{block "edit" .}}Edit{{end}}</a>
+				<a href="{{ $.Meta.Root }}admin/users/{{.Name}}/edit">{{block "edit" .}}Edit{{end}}</a>
 			</td>
 		</tr>
 		{{end}}

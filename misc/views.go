@@ -17,7 +17,7 @@ var (
 {{define "search results for"}}Результаты поиска для «{{.}}»{{end}}
 {{define "search no results"}}Ничего не найдено.{{end}}
 {{define "x total"}}{{.}} всего.{{end}}
-{{define "go to hypha"}}Перейти к гифе <a class="wikilink{{if .HasExactMatch | not}} wikilink_new{{end}}" href="/hypha/{{.MatchedHyphaName}}">{{beautifulName .MatchedHyphaName}}</a>.{{end}}
+{{define "go to hypha"}}Перейти к гифе <a class="wikilink{{if .HasExactMatch | not}} wikilink_new{{end}}" href="{{.Meta.Root}}hypha/{{.MatchedHyphaName}}">{{beautifulName .MatchedHyphaName}}</a>.{{end}}
 `
 )
 

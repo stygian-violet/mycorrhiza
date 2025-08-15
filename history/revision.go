@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
 )
 
@@ -241,11 +242,11 @@ func (rev *Revision) bestLink() string {
 	)
 	switch {
 	case renameRes != nil:
-		return "/hypha/" + renameRes[1]
+		return cfg.Root + "hypha/" + renameRes[1]
 	case len(revs) == 0:
 		return ""
 	default:
-		return "/hypha/" + revs[0]
+		return cfg.Root + "hypha/" + revs[0]
 	}
 }
 

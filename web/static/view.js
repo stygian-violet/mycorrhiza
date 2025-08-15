@@ -29,7 +29,7 @@ wrapper.appendChild(hamburgerSection);
         datalist = document.querySelector('.js-add-cat-list')
     if (!input || !datalist) return;
 
-    const categories = await fetch('/category')
+    const categories = await fetch(`${rrh.root}category`)
         .then(resp => resp.text())
         .then(html => {
             return Array
@@ -46,4 +46,3 @@ wrapper.appendChild(hamburgerSection);
     }
     input.setAttribute('list', 'cat-name-options')
 })();
-

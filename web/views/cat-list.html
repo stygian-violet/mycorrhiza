@@ -7,7 +7,7 @@
 			<ol>
                 {{range .Categories}}
 					<li class="mv-tag">
-						<a class="wikilink u-url p-name" href="/category/{{.}}">{{beautifulName .}}</a>
+						<a class="wikilink u-url p-name" href="{{ $.Meta.Root }}category/{{.}}">{{beautifulName .}}</a>
 					</li>
                 {{end}}
 			</ol>

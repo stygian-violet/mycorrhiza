@@ -25,7 +25,7 @@ func InitHandlers(rtr *mux.Router) {
 	rtr.PathPrefix("/primitive-diff/").HandlerFunc(handlerPrimitiveDiff)
 	rtr.HandleFunc("/recent-changes/{count:[0-9]+}", handlerRecentChanges)
 	rtr.HandleFunc("/recent-changes/", func(w http.ResponseWriter, rq *http.Request) {
-		http.Redirect(w, rq, "/recent-changes/20", http.StatusSeeOther)
+		http.Redirect(w, rq, cfg.Root + "recent-changes/20", http.StatusSeeOther)
 	})
 	rtr.PathPrefix("/history/").HandlerFunc(handlerHistory)
 	rtr.HandleFunc("/recent-changes-rss", handlerRecentChangesRSS)
@@ -39,7 +39,7 @@ func InitHandlers(rtr *mux.Router) {
 
 func handlerPrimitiveDiff(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
-	shorterURL := strings.TrimPrefix(rq.URL.Path, "/primitive-diff/")
+	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root + "primitive-diff/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
 		http.Error(w, "403 bad request", http.StatusBadRequest)
@@ -126,15 +126,15 @@ var (
 	fs            embed.FS
 	ruTranslation = `
 {{define "history of title"}}История «{{.}}»{{end}}
-{{define "history of heading"}}История <a href="/hypha/{{.}}">{{beautifulName .}}</a>{{end}}
+{{define "history of heading"}}История <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>{{end}}
 
 {{define "diff for at title"}}Разница для {{beautifulName .HyphaName}} для {{.Hash}}{{end}}
-{{define "diff for at heading"}}Разница для <a href="/hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a> для {{.Hash}}{{end}}
+{{define "diff for at heading"}}Разница для <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a> для {{.Hash}}{{end}}
 {{define "no text diff available"}}Нет текстовой разницы.{{end}}
 
 {{define "count pre"}}Отобразить{{end}}
 {{define "count post"}}свежих правок.{{end}}
-{{define "subscribe via"}}Подписаться через <a href="/recent-changes-rss">RSS</a>, <a href="/recent-changes-atom">Atom</a> или <a href="/recent-changes-json">JSON-ленту</a>.{{end}}
+{{define "subscribe via"}}Подписаться через <a href="{{.Meta.Root}}recent-changes-rss">RSS</a>, <a href="{{.Meta.Root}}recent-changes-atom">Atom</a> или <a href="{{.Meta.Root}}recent-changes-json">JSON-ленту</a>.{{end}}
 {{define "recent changes"}}Свежие правки{{end}}
 {{define "n recent changes"}}{{.}} свеж{{if eq . 1}}ая правка{{else if le . 4}}их правок{{else}}их правок{{end}}{{end}}
 {{define "recent empty"}}Правки не найдены.{{end}}
@@ -219,7 +219,7 @@ type historyData struct {
 func historyView(meta viewutil.Meta, hyphaName, contents string) {
 	viewutil.ExecutePage(meta, chainHistory, historyData{
 		BaseData: &viewutil.BaseData{
-			Addr: "/history/" + util.CanonicalName(hyphaName),
+			Addr: cfg.Root + "history/" + util.CanonicalName(hyphaName),
 		},
 		HyphaName: hyphaName,
 		Contents:  contents,

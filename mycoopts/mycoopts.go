@@ -45,10 +45,10 @@ func MarkupOptions(hyphaName string) options.Options {
 		},
 		LocalTargetCanonicalName: util.CanonicalName,
 		LocalLinkHref: func(hyphaName string) string {
-			return "/hypha/" + util.CanonicalName(hyphaName)
+			return cfg.Root + "hypha/" + util.CanonicalName(hyphaName)
 		},
 		LocalImgSrc: func(hyphaName string) string {
-			return "/binary/" + util.CanonicalName(hyphaName)
+			return cfg.Root + "binary/" + util.CanonicalName(hyphaName)
 		},
 		LinkHrefFormatForInterwikiPrefix: interwiki.HrefLinkFormatFor,
 		ImgSrcFormatForInterwikiPrefix:   interwiki.ImgSrcFormatFor,

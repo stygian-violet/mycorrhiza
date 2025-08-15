@@ -39,7 +39,11 @@ func (rev Revision) StreamHyphaeLinksHTML(qw422016 *qt422016.Writer) {
 //line history/view.qtpl:10
 		}
 //line history/view.qtpl:10
-		qw422016.N().S(`<a href="/hypha/`)
+		qw422016.N().S(`<a href="`)
+//line history/view.qtpl:11
+		qw422016.E().S(cfg.Root)
+//line history/view.qtpl:11
+		qw422016.N().S(`hypha/`)
 //line history/view.qtpl:11
 		qw422016.E().S(hyphaName)
 //line history/view.qtpl:11
@@ -98,7 +102,11 @@ func (rev Revision) StreamHyphaeDiffsHTML(qw422016 *qt422016.Writer) {
 //line history/view.qtpl:21
 	if len(entries) == 1 {
 //line history/view.qtpl:21
-		qw422016.N().S(`<a href="/primitive-diff/`)
+		qw422016.N().S(`<a href="`)
+//line history/view.qtpl:22
+		qw422016.E().S(cfg.Root)
+//line history/view.qtpl:22
+		qw422016.N().S(`primitive-diff/`)
 //line history/view.qtpl:22
 		qw422016.E().S(rev.Hash)
 //line history/view.qtpl:22
@@ -122,7 +130,11 @@ func (rev Revision) StreamHyphaeDiffsHTML(qw422016 *qt422016.Writer) {
 //line history/view.qtpl:27
 			}
 //line history/view.qtpl:27
-			qw422016.N().S(`<a href="/primitive-diff/`)
+			qw422016.N().S(`<a href="`)
+//line history/view.qtpl:28
+			qw422016.E().S(cfg.Root)
+//line history/view.qtpl:28
+			qw422016.N().S(`primitive-diff/`)
 //line history/view.qtpl:28
 			qw422016.E().S(rev.Hash)
 //line history/view.qtpl:28
@@ -284,7 +296,11 @@ func StreamWithRevisions(qw422016 *qt422016.Writer, hyphaName string, revs []Rev
 //line history/view.qtpl:58
 			qw422016.N().S(`
             <li class="history__entry">
-            	<a class="history-entry" href="/rev/`)
+            	<a class="history-entry" href="`)
+//line history/view.qtpl:60
+			qw422016.E().S(cfg.Root)
+//line history/view.qtpl:60
+			qw422016.N().S(`rev/`)
 //line history/view.qtpl:60
 			qw422016.E().S(rev.Hash)
 //line history/view.qtpl:60
@@ -299,7 +315,11 @@ func StreamWithRevisions(qw422016 *qt422016.Writer, hyphaName string, revs []Rev
 //line history/view.qtpl:61
 			qw422016.N().S(`</time>
                 </a>
-            	<span class="history-entry__hash"><a href="/primitive-diff/`)
+            	<span class="history-entry__hash"><a href="`)
+//line history/view.qtpl:63
+			qw422016.E().S(cfg.Root)
+//line history/view.qtpl:63
+			qw422016.N().S(`primitive-diff/`)
 //line history/view.qtpl:63
 			qw422016.E().S(rev.Hash)
 //line history/view.qtpl:63
@@ -322,7 +342,11 @@ func StreamWithRevisions(qw422016 *qt422016.Writer, hyphaName string, revs []Rev
 			if rev.Username != "anon" {
 //line history/view.qtpl:65
 				qw422016.N().S(`
-                    <span class="history-entry__author">by <a href="/hypha/`)
+                    <span class="history-entry__author">by <a href="`)
+//line history/view.qtpl:66
+				qw422016.E().S(cfg.Root)
+//line history/view.qtpl:66
+				qw422016.N().S(`hypha/`)
 //line history/view.qtpl:66
 				qw422016.E().S(cfg.UserHypha)
 //line history/view.qtpl:66

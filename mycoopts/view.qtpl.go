@@ -8,183 +8,214 @@ package mycoopts
 import "path/filepath"
 
 //line mycoopts/view.qtpl:3
-import "github.com/bouncepaw/mycorrhiza/internal/hyphae"
+import "github.com/bouncepaw/mycorrhiza/internal/cfg"
 
 //line mycoopts/view.qtpl:4
+import "github.com/bouncepaw/mycorrhiza/internal/hyphae"
+
+//line mycoopts/view.qtpl:5
 import "github.com/bouncepaw/mycorrhiza/l18n"
 
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 import (
 	qtio422016 "io"
 
 	qt422016 "github.com/valyala/quicktemplate"
 )
 
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 var (
 	_ = qtio422016.Copy
 	_ = qt422016.AcquireByteBuffer
 )
 
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 func streammediaRaw(qw422016 *qt422016.Writer, h *hyphae.MediaHypha) {
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	StreamMedia(qw422016, h, l18n.New("en", "en"))
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 }
 
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 func writemediaRaw(qq422016 qtio422016.Writer, h *hyphae.MediaHypha) {
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	streammediaRaw(qw422016, h)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	qt422016.ReleaseWriter(qw422016)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 }
 
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 func mediaRaw(h *hyphae.MediaHypha) string {
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	qb422016 := qt422016.AcquireByteBuffer()
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	writemediaRaw(qb422016, h)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	qs422016 := string(qb422016.B)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	qt422016.ReleaseByteBuffer(qb422016)
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 	return qs422016
-//line mycoopts/view.qtpl:6
+//line mycoopts/view.qtpl:7
 }
 
-//line mycoopts/view.qtpl:8
+//line mycoopts/view.qtpl:9
 func StreamMedia(qw422016 *qt422016.Writer, h *hyphae.MediaHypha, lc *l18n.Localizer) {
-//line mycoopts/view.qtpl:8
+//line mycoopts/view.qtpl:9
 	qw422016.N().S(`
 	`)
-//line mycoopts/view.qtpl:9
+//line mycoopts/view.qtpl:10
 	switch filepath.Ext(h.MediaFilePath()) {
-//line mycoopts/view.qtpl:11
+//line mycoopts/view.qtpl:12
 	case ".jpg", ".gif", ".png", ".webp", ".svg", ".ico":
-//line mycoopts/view.qtpl:11
+//line mycoopts/view.qtpl:12
 		qw422016.N().S(`
 	<div class="binary-container binary-container_with-img">
-		<a href="/binary/`)
-//line mycoopts/view.qtpl:13
+		<a href="`)
+//line mycoopts/view.qtpl:14
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:14
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:14
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:13
-		qw422016.N().S(`"><img src="/binary/`)
-//line mycoopts/view.qtpl:13
+//line mycoopts/view.qtpl:14
+		qw422016.N().S(`"><img src="`)
+//line mycoopts/view.qtpl:14
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:14
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:14
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:13
+//line mycoopts/view.qtpl:14
 		qw422016.N().S(`"/></a>
 	</div>
 
 	`)
-//line mycoopts/view.qtpl:16
+//line mycoopts/view.qtpl:17
 	case ".ogg", ".webm", ".mp4":
-//line mycoopts/view.qtpl:16
+//line mycoopts/view.qtpl:17
 		qw422016.N().S(`
 	<div class="binary-container binary-container_with-video">
 		<video controls>
-			<source src="/binary/`)
-//line mycoopts/view.qtpl:19
+			<source src="`)
+//line mycoopts/view.qtpl:20
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:20
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:20
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:19
+//line mycoopts/view.qtpl:20
 		qw422016.N().S(`"/>
 			<p>`)
-//line mycoopts/view.qtpl:20
+//line mycoopts/view.qtpl:21
 		qw422016.E().S(lc.Get("ui.media_novideo"))
-//line mycoopts/view.qtpl:20
-		qw422016.N().S(` <a href="/binary/`)
-//line mycoopts/view.qtpl:20
+//line mycoopts/view.qtpl:21
+		qw422016.N().S(` <a href="`)
+//line mycoopts/view.qtpl:21
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:21
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:21
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:20
+//line mycoopts/view.qtpl:21
 		qw422016.N().S(`">`)
-//line mycoopts/view.qtpl:20
+//line mycoopts/view.qtpl:21
 		qw422016.E().S(lc.Get("ui.media_novideo_link"))
-//line mycoopts/view.qtpl:20
+//line mycoopts/view.qtpl:21
 		qw422016.N().S(`</a></p>
 		</video>
 	</div>
 
 	`)
-//line mycoopts/view.qtpl:24
+//line mycoopts/view.qtpl:25
 	case ".mp3":
-//line mycoopts/view.qtpl:24
+//line mycoopts/view.qtpl:25
 		qw422016.N().S(`
 	<div class="binary-container binary-container_with-audio">
 		<audio controls>
-			<source src="/binary/`)
-//line mycoopts/view.qtpl:27
+			<source src="`)
+//line mycoopts/view.qtpl:28
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:28
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:28
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:27
+//line mycoopts/view.qtpl:28
 		qw422016.N().S(`"/>
 			<p>`)
-//line mycoopts/view.qtpl:28
+//line mycoopts/view.qtpl:29
 		qw422016.E().S(lc.Get("ui.media_noaudio"))
-//line mycoopts/view.qtpl:28
-		qw422016.N().S(` <a href="/binary/`)
-//line mycoopts/view.qtpl:28
+//line mycoopts/view.qtpl:29
+		qw422016.N().S(` <a href="`)
+//line mycoopts/view.qtpl:29
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:29
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:29
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:28
+//line mycoopts/view.qtpl:29
 		qw422016.N().S(`">`)
-//line mycoopts/view.qtpl:28
+//line mycoopts/view.qtpl:29
 		qw422016.E().S(lc.Get("ui.media_noaudio_link"))
-//line mycoopts/view.qtpl:28
+//line mycoopts/view.qtpl:29
 		qw422016.N().S(`</a></p>
 		</audio>
 	</div>
 
 	`)
-//line mycoopts/view.qtpl:32
+//line mycoopts/view.qtpl:33
 	default:
-//line mycoopts/view.qtpl:32
+//line mycoopts/view.qtpl:33
 		qw422016.N().S(`
 	<div class="binary-container binary-container_with-nothing">
-		<p><a href="/binary/`)
-//line mycoopts/view.qtpl:34
+		<p><a href="`)
+//line mycoopts/view.qtpl:35
+		qw422016.E().S(cfg.Root)
+//line mycoopts/view.qtpl:35
+		qw422016.N().S(`binary/`)
+//line mycoopts/view.qtpl:35
 		qw422016.N().S(h.CanonicalName())
-//line mycoopts/view.qtpl:34
+//line mycoopts/view.qtpl:35
 		qw422016.N().S(`">`)
-//line mycoopts/view.qtpl:34
+//line mycoopts/view.qtpl:35
 		qw422016.E().S(lc.Get("ui.media_download"))
-//line mycoopts/view.qtpl:34
+//line mycoopts/view.qtpl:35
 		qw422016.N().S(`</a></p>
 	</div>
 `)
-//line mycoopts/view.qtpl:36
+//line mycoopts/view.qtpl:37
 	}
-//line mycoopts/view.qtpl:36
+//line mycoopts/view.qtpl:37
 	qw422016.N().S(`
 `)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 }
 
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 func WriteMedia(qq422016 qtio422016.Writer, h *hyphae.MediaHypha, lc *l18n.Localizer) {
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	StreamMedia(qw422016, h, lc)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	qt422016.ReleaseWriter(qw422016)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 }
 
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	qb422016 := qt422016.AcquireByteBuffer()
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	WriteMedia(qb422016, h, lc)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	qs422016 := string(qb422016.B)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	qt422016.ReleaseByteBuffer(qb422016)
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 	return qs422016
-//line mycoopts/view.qtpl:37
+//line mycoopts/view.qtpl:38
 }

@@ -2,7 +2,7 @@
 <h1 class="navi-title">
     {{- $withParents := .HyphaNamePartsWithParents -}}
     {{- $parts := .HyphaNameParts -}}
-	<a href="/hypha/{{.HomeHypha}}">
+	<a href="{{.Root}}hypha/{{.HomeHypha}}">
 		{{- .Icon -}}
 		<span aria-hidden="true" class="navi-title__colon">:</span></a>
 	{{- range $i, $part := .HyphaNameParts -}}

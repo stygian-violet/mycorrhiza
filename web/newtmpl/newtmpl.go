@@ -35,7 +35,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 			"beautifulLink": func(hyphaName string) template.HTML {
 				return template.HTML(
 					fmt.Sprintf(
-						`<a href="/hypha/%s">%s</a>`, hyphaName, hyphaName))
+						`<a href="%shypha/%s">%s</a>`, cfg.Root, hyphaName, hyphaName))
 			},
 		}).
 		Parse(fmt.Sprintf(`
@@ -50,11 +50,11 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 <ul class="top-bar__auth auth-links">
 	<li class="auth-links__box auth-links__user-box">
 		{{if .Meta.U.Group | eq "anon" }}
-			<a href="/login" class="auth-links__link auth-links__login-link">
+			<a href="{{ .Meta.Root }}login" class="auth-links__link auth-links__login-link">
 				{{block "login" .}}Login{{end}}
 			</a>
 		{{else}}
-			<a href="/hypha/{{block "user hypha" .}}{{end}}/{{.Meta.U.Name}}" class="auth-links__link auth-links__user-link">
+			<a href="{{ .Meta.Root }}hypha/{{block "user hypha" .}}{{end}}/{{.Meta.U.Name}}" class="auth-links__link auth-links__user-link">
 				{{beautifulName .Meta.U.Name}}
 			</a>
 		{{end}}
@@ -68,7 +68,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 		must(en.Parse(`{{define "registration"}}
 {{if .Meta.U.Group | eq "anon"}}
 	 <li class="auth-links__box auth-links__register-box">
-		 <a href="/register" class="auth-links__link auth-links__register-link">
+		 <a href="{{ .Meta.Root }}register" class="auth-links__link auth-links__register-link">
 			 {{block "register" .}}Register{{end}}
 		 </a>
 	 </li>

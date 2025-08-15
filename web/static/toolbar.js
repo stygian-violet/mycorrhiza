@@ -112,8 +112,11 @@ function insertTimeLocal() {
 }
 
 function insertUserlink() {
-    const userlink = document.querySelector('.auth-links__user-link')
-    const userHypha = userlink.getAttribute('href').substring(7) // no /hypha/
+    const userlink = document
+        .querySelector('.auth-links__user-link')
+        .getAttribute('href');
+    const userHypha = userlink.substring(userlink.indexOf('/hypha/') + 7);
+    // no /hypha/
     textInserter('[[' + userHypha + ']]')()
 }
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/l18n"
 )
@@ -15,6 +16,8 @@ type Meta struct {
 	U    *user.User
 	W    io.Writer
 	Addr string
+	Root string
+	Referrer string
 
 	// New template additions
 	HeadElements   []template.HTML
@@ -28,6 +31,8 @@ func MetaFrom(w http.ResponseWriter, rq *http.Request) Meta {
 		U:    user.FromRequest(rq),
 		W:    w,
 		Addr: rq.URL.Path,
+		Root: cfg.Root,
+		Referrer: cfg.Referrer,
 	}
 }
 

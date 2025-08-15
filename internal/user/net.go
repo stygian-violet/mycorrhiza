@@ -125,7 +125,7 @@ func cookie(nameSuffix, val string, t time.Time) *http.Cookie {
 		Name:    "mycorrhiza_" + nameSuffix,
 		Value:   val,
 		Expires: t,
-		Path:    "/",
+		Path:    cfg.Root,
 	}
 }
 

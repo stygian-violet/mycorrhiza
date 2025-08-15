@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 )
 
 // HttpErr is used by many handlers to signal errors in a compact way.
@@ -17,8 +19,9 @@ func HttpErr(meta Meta, status int, name, errMsg string) {
 			meta,
 			"Error",
 			fmt.Sprintf(
-				`<main class="main-width"><p>%s. <a href="/hypha/%s">%s<a></p></main>`,
+				`<main class="main-width"><p>%s. <a href="%shypha/%s">%s<a></p></main>`,
 				errMsg,
+				cfg.Root,
 				name,
 				meta.Lc.Get("ui.error_go_back"),
 			),

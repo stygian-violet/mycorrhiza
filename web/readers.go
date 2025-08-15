@@ -51,12 +51,12 @@ func initReaders(r *mux.Router) {
 
 func handlerEditToday(w http.ResponseWriter, rq *http.Request) {
 	today := time.Now().Format(time.DateOnly)
-	http.Redirect(w, rq, "/edit/"+today, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"edit/"+today, http.StatusSeeOther)
 }
 
 func handlerToday(w http.ResponseWriter, rq *http.Request) {
 	today := time.Now().Format(time.DateOnly)
-	http.Redirect(w, rq, "/hypha/"+today, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+today, http.StatusSeeOther)
 }
 
 func handlerMedia(w http.ResponseWriter, rq *http.Request) {
@@ -97,7 +97,7 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 // /rev-text/<revHash>/<hyphaName>
 func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
-	shorterURL := strings.TrimPrefix(rq.URL.Path, "/rev-text/")
+	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev-text/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
 		http.Error(w, "403 bad request", http.StatusBadRequest)
@@ -151,7 +151,7 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	lc := l18n.FromRequest(rq)
-	shorterURL := strings.TrimPrefix(rq.URL.Path, "/rev/")
+	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
 		http.Error(w, "403 bad request", http.StatusBadRequest)
@@ -283,7 +283,7 @@ func handlerBacklinks(w http.ResponseWriter, rq *http.Request) {
 
 	_ = pageBacklinks.RenderTo(viewutil.MetaFrom(w, rq),
 		map[string]any{
-			"Addr":      "/backlinks/" + hyphaName,
+			"Addr":      cfg.Root + "backlinks/" + hyphaName,
 			"HyphaName": hyphaName,
 			"Backlinks": backlinks.BacklinksFor(hyphaName),
 		})
@@ -292,7 +292,7 @@ func handlerBacklinks(w http.ResponseWriter, rq *http.Request) {
 func handlerOrphans(w http.ResponseWriter, rq *http.Request) {
 	_ = pageOrphans.RenderTo(viewutil.MetaFrom(w, rq),
 		map[string]any{
-			"Addr":    "/orphans",
+			"Addr":    cfg.Root + "orphans",
 			"Orphans": backlinks.Orphans(),
 		})
 }

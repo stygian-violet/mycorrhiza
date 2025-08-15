@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
@@ -69,7 +70,8 @@ func childHTML(c *child, w io.Writer) {
 		_, _ = io.WriteString(w, " wikilink_new")
 	}
 	_, _ = io.WriteString(w, fmt.Sprintf(
-		"\" href=\"/hypha/%s\">%s</a>\n",
+		"\" href=\"%shypha/%s\">%s</a>\n",
+		cfg.Root,
 		c.name,
 		util.BeautifulName(path.Base(c.name)),
 	))

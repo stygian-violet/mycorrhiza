@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -16,7 +17,7 @@ import (
 func handlerEditCategory(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	meta := viewutil.MetaFrom(w, rq)
-	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, "/edit-category"), "/"))
+	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, cfg.Root + "edit-category"), "/"))
 	if catName == "" {
 		viewutil.HandlerNotFound(w, rq)
 		return
@@ -24,7 +25,7 @@ func handlerEditCategory(w http.ResponseWriter, rq *http.Request) {
 
 	slog.Info("Editing category", "name", catName)
 	_ = pageCatEdit.RenderTo(meta, map[string]any{
-		"Addr":                    "/edit-category/" + catName,
+		"Addr":                    cfg.Root + "edit-category/" + catName,
 		"CatName":                 catName,
 		"Hyphae":                  categories.HyphaeInCategory(catName),
 		"GivenPermissionToModify": meta.U.CanProceed("add-to-category"),
@@ -37,14 +38,14 @@ func handlerListCategory(w http.ResponseWriter, rq *http.Request) {
 	sort.Strings(cats)
 
 	_ = pageCatList.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-		"Addr":       "/category",
+		"Addr":       cfg.Root + "category",
 		"Categories": cats,
 	})
 }
 
 func handlerCategory(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
-	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, "/category"), "/"))
+	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, cfg.Root + "category"), "/"))
 	if catName == "" {
 		handlerListCategory(w, rq)
 		return
@@ -53,7 +54,7 @@ func handlerCategory(w http.ResponseWriter, rq *http.Request) {
 	meta := viewutil.MetaFrom(w, rq)
 	slog.Info("Viewing category", "name", catName)
 	_ = pageCatPage.RenderTo(meta, map[string]any{
-		"Addr":                    "/category/" + catName,
+		"Addr":                    cfg.Root + "category/" + catName,
 		"CatName":                 catName,
 		"Hyphae":                  categories.HyphaeInCategory(catName),
 		"GivenPermissionToModify": meta.U.CanProceed("add-to-category"),

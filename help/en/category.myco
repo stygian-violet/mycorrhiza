@@ -6,6 +6,6 @@ On hypha pages, a card titled ‘Categories’ is shown. There, you can see the 
 Category names follow the same rules as hypha names: case-insensitive, spaces and underscores are the same.
 
 To see the list of all categories, see:
-=> /category
+=> {{root}}category
 
 Only trusted editors (and higher) can modify categories.

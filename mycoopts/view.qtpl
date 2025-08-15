@@ -1,5 +1,6 @@
 {% import "path/filepath" %}
 
+{% import "github.com/bouncepaw/mycorrhiza/internal/cfg" %}
 {% import "github.com/bouncepaw/mycorrhiza/internal/hyphae" %}
 {% import "github.com/bouncepaw/mycorrhiza/l18n" %}
 
@@ -10,28 +11,28 @@
 
 	{% case ".jpg", ".gif", ".png", ".webp", ".svg", ".ico" %}
 	<div class="binary-container binary-container_with-img">
-		<a href="/binary/{%s= h.CanonicalName() %}"><img src="/binary/{%s= h.CanonicalName() %}"/></a>
+		<a href="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}"><img src="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}"/></a>
 	</div>
 
 	{% case ".ogg", ".webm", ".mp4" %}
 	<div class="binary-container binary-container_with-video">
 		<video controls>
-			<source src="/binary/{%s= h.CanonicalName() %}"/>
-			<p>{%s lc.Get("ui.media_novideo") %} <a href="/binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_novideo_link") %}</a></p>
+			<source src="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}"/>
+			<p>{%s lc.Get("ui.media_novideo") %} <a href="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_novideo_link") %}</a></p>
 		</video>
 	</div>
 
 	{% case ".mp3" %}
 	<div class="binary-container binary-container_with-audio">
 		<audio controls>
-			<source src="/binary/{%s= h.CanonicalName() %}"/>
-			<p>{%s lc.Get("ui.media_noaudio") %} <a href="/binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_noaudio_link") %}</a></p>
+			<source src="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}"/>
+			<p>{%s lc.Get("ui.media_noaudio") %} <a href="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_noaudio_link") %}</a></p>
 		</audio>
 	</div>
 
 	{% default %}
 	<div class="binary-container binary-container_with-nothing">
-		<p><a href="/binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_download") %}</a></p>
+		<p><a href="{%s cfg.Root %}binary/{%s= h.CanonicalName() %}">{%s lc.Get("ui.media_download") %}</a></p>
 	</div>
 {% endswitch %}
 {% endfunc %}

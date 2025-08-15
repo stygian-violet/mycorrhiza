@@ -36,7 +36,7 @@
 			<div class="form-field">
 				<div class="form-field__input">
 					<button class="btn" type="submit">{{block "create" .}}Create{{end}}</button>
-					<a class="btn btn_weak" href="/admin/users/">{{template "cancel"}}</a>
+					<a class="btn btn_weak" href="{{ .Meta.Root }}admin/users/">{{template "cancel"}}</a>
 				</div>
 			</div>
 		</form>

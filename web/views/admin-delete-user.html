@@ -15,7 +15,7 @@
 
 		<form action="" method="post">
 			<input class="btn btn_destructive" type="submit" value="{{template "delete"}}">
-			<a class="btn btn_weak" href="/admin/users/{{.U.Name}}/edit">{{template "cancel"}}</a>
+			<a class="btn btn_weak" href="{{ .Meta.Root }}admin/users/{{.U.Name}}/edit">{{template "cancel"}}</a>
 		</form>
 	</main>
 {{end}}

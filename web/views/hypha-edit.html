@@ -25,7 +25,7 @@
     </section>
     <p class="edit-toolbar__help">
         {{block "mycomarkup help" .}}
-            <a href="/help/en/mycomarkup" target="_blank" class="shy-link">Learn more</a> about Mycomarkup
+            <a href="{{ .Meta.Root }}help/en/mycomarkup" target="_blank" class="shy-link">Learn more</a> about Mycomarkup
         {{end}}
     </p>
 </aside>
@@ -41,7 +41,7 @@
         {{end}}
     </section>
 </aside>
-<script src="/static/toolbar.js"></script>
+<script src="{{ .Meta.Root }}static/toolbar.js"></script>
 {{end}}
 
 {{define "editing hypha"}}Edit {{beautifulName .}}{{end}}
@@ -55,15 +55,15 @@
 {{end}}
 {{define "body"}}
 <main class="main-width edit {{if .Preview}}edit_with-preview{{else}}edit_no-preview{{end}}">
-    <form method="post" class="edit-form" action="/upload-text/{{.HyphaName}}">
+    <form method="post" class="edit-form" action="{{ .Meta.Root }}upload-text/{{.HyphaName}}">
         <h1 class="edit__title">
             {{if .IsNew}}
-                {{block "creating [[hypha]]" .HyphaName}}
-                    Create <a href="/hypha/{{.}}">{{beautifulName .}}</a>
+                {{block "creating [[hypha]]" .}}
+                    Create <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
                 {{end}}
             {{else}}
-                {{block "editing [[hypha]]" .HyphaName}}
-                    Edit <a href="/hypha/{{.}}">{{beautifulName .}}</a>
+                {{block "editing [[hypha]]" .}}
+                    Edit <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
                 {{end}}
             {{end}}
         </h1>
@@ -85,7 +85,7 @@
             <button type="submit" name="action" class="btn edit-form__preview" value="preview">
                 {{block "preview" .}}Preview{{end}}
             </button>
-            <a href="/hypha/{{.HyphaName}}" class="btn btn_weak">
+            <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}" class="btn btn_weak">
                 {{template "cancel" .}}
             </a>
         </p>
@@ -100,7 +100,7 @@
     {{end}}
 </main>
 {{template "toolbar" .}}
-<script src="/static/editor.js"></script>
+<script src="{{ .Meta.Root }}static/editor.js"></script>
 {{range .EditScripts}}
     <script src="{{.}}"></script>
 {{end}}

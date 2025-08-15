@@ -282,29 +282,29 @@ rrh.shortcuts.addGroup(new ShortcutGroup('Common', null, [
     new Shortcut(['?', isMac ? 'Meta+/' : 'Ctrl+/'], openHelp, 'Shortcut help', { force: true }),
 ]))
 
-if (document.body.dataset.rrhAddr.startsWith('/hypha')) {
+if (document.body.dataset.rrhAddr.startsWith(rrh.root + 'hypha')) {
     rrh.shortcuts.addGroup(new ShortcutGroup('Hypha', null, [
         new Shortcut('', $$('article .wikilink'), 'First 9 hypha′s links'),
         new Shortcut(['p', 'Alt+ArrowLeft', 'Ctrl+Alt+ArrowLeft'], $('.prevnext__prev'), 'Previous hypha'),
         new Shortcut(['n', 'Alt+ArrowRight', 'Ctrl+Alt+ArrowRight'], $('.prevnext__next'), 'Next hypha'),
         new Shortcut(['s', 'Alt+ArrowUp', 'Ctrl+Alt+ArrowUp'], $$('.navi-title a').slice(1, -1).slice(-1)[0], 'Parent hypha'),
         new Shortcut(['c', 'Alt+ArrowDown', 'Ctrl+Alt+ArrowDown'], $('.subhyphae__link'), 'First child hypha'),
-        new Shortcut(['e', isMac ? 'Meta+Enter' : 'Ctrl+Enter'], $('.btn__link_navititle[href^="/edit/"]'), 'Edit this hypha'),
-        new Shortcut('v', $('.hypha-info__link[href^="/hypha/"]'), 'Go to hypha′s page'),
-        new Shortcut('a', $('.hypha-info__link[href^="/media/"]'), 'Go to media management'),
-        new Shortcut('h', $('.hypha-info__link[href^="/history/"]'), 'Go to history'),
-        new Shortcut('r', $('.hypha-info__link[href^="/rename/"]'), 'Rename this hypha'),
-        new Shortcut('b', $('.hypha-info__link[href^="/backlinks/"]'), 'Backlinks'),
+        new Shortcut(['e', isMac ? 'Meta+Enter' : 'Ctrl+Enter'], $(`.btn__link_navititle[href^="${rrh.root}edit/"]`), 'Edit this hypha'),
+        new Shortcut('v', $(`.hypha-info__link[href^="${rrh.root}hypha/"]`), 'Go to hypha′s page'),
+        new Shortcut('a', $(`.hypha-info__link[href^="${rrh.root}media/"]`), 'Go to media management'),
+        new Shortcut('h', $(`.hypha-info__link[href^="${rrh.root}history/"]`), 'Go to history'),
+        new Shortcut('r', $(`.hypha-info__link[href^="${rrh.root}rename/"]`), 'Rename this hypha'),
+        new Shortcut('b', $(`.hypha-info__link[href^="${rrh.root}backlinks/"]`), 'Backlinks'),
     ]))
 }
 
-if (document.body.dataset.rrhAddr.startsWith('/edit')) {
+if (document.body.dataset.rrhAddr.startsWith(rrh.root + 'edit')) {
     rrh.shortcuts.addGroup(new ShortcutGroup('Editor', null, [
         new Shortcut(isMac ? 'Meta+Enter' : 'Ctrl+Enter', $('.edit-form__save'), 'Save changes'),
         new Shortcut(isMac ? 'Meta+Shift+Enter' : 'Ctrl+Shift+Enter', $('.edit-form__preview'), 'Preview changes'),
     ]))
 
-    if (editTextarea) {
+    if (typeof editTextarea !== 'undefined') {
         rrh.shortcuts.addGroup(new ShortcutGroup('Format', null, [
             new Shortcut(isMac ? 'Meta+b' : 'Ctrl+b', wrapBold, 'Bold', { force: true }),
             new Shortcut(isMac ? 'Meta+i' : 'Ctrl+i', wrapItalic, 'Italic', { force: true }),

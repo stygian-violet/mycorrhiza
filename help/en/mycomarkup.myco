@@ -6,17 +6,17 @@ It is the only supported markup, there is no support for Markdown, Creole, etc.
 A Mycomarkup document (which is most often a hypha's text part) consists of //blocks//. There are different blocks for different purposes.
 
 == Table of contents
-=> /help/en/mycomarkup#Paragraph       | Paragraph
-=> /help/en/mycomarkup#Inline_link     | Inline link
-=> /help/en/mycomarkup#Rocket_link     | Rocket link
-=> /help/en/mycomarkup#Heading         | Heading
-=> /help/en/mycomarkup#Codeblock       | Codeblock
-=> /help/en/mycomarkup#Thematic_break  | Thematic break
-=> /help/en/mycomarkup#Image_gallery   | Image gallery
-=> /help/en/mycomarkup#List            | List
-=> /help/en/mycomarkup#Quote           | Quote
-=> /help/en/mycomarkup#Table           | Table
-=> /help/en/mycomarkup#Transclusion    | Transclusion
+=> {{root}}help/en/mycomarkup#Paragraph       | Paragraph
+=> {{root}}help/en/mycomarkup#Inline_link     | Inline link
+=> {{root}}help/en/mycomarkup#Rocket_link     | Rocket link
+=> {{root}}help/en/mycomarkup#Heading         | Heading
+=> {{root}}help/en/mycomarkup#Codeblock       | Codeblock
+=> {{root}}help/en/mycomarkup#Thematic_break  | Thematic break
+=> {{root}}help/en/mycomarkup#Image_gallery   | Image gallery
+=> {{root}}help/en/mycomarkup#List            | List
+=> {{root}}help/en/mycomarkup#Quote           | Quote
+=> {{root}}help/en/mycomarkup#Table           | Table
+=> {{root}}help/en/mycomarkup#Transclusion    | Transclusion
 
 == Paragraph
 **Paragraphs** are the most ubiquitous blocks. You will use them a lot.
@@ -163,22 +163,22 @@ You can write a description for the image and specify its size.
 
 * {```
 img {
-/static/help/image.png
-/static/help/image.png {
+{{root}}static/help/image.png
+{{root}}static/help/image.png {
 	Description //here//
 }
-/static/help/image.png | 100 { Size }
-/static/help/image.png | 50*50 { Square }
+{{root}}static/help/image.png | 100 { Size }
+{{root}}static/help/image.png | 50*50 { Square }
 }
 ```}
 * {
 img {
-/static/help/image.png
-/static/help/image.png {
+{{root}}static/help/image.png
+{{root}}static/help/image.png {
 	Description //here//
 }
-/static/help/image.png | 100 { Size }
-/static/help/image.png | 50*50 { Square }
+{{root}}static/help/image.png | 100 { Size }
+{{root}}static/help/image.png | 50*50 { Square }
 }
 }
 
@@ -191,9 +191,9 @@ an image hypha
 
 If you put just one image, it will be displayed with no decorations:
 * {```
-img { /static/favicon.ico }
+img { {{root}}static/favicon.ico }
 ```}
-* {img { /static/favicon.ico }}
+* {img { {{root}}static/favicon.ico }}
 
 === Gallery layout
 
@@ -205,25 +205,25 @@ Specify the layout after `img` and before `{`. If you do not write any of them, 
 
 ```
 img grid {
-   /static/help/image.png
-   /static/help/image.png
+   {{root}}static/help/image.png
+   {{root}}static/help/image.png
 }
 
 img side {
-   /static/help/image.png | 200
-   /static/help/image.png | 200
+   {{root}}static/help/image.png | 200
+   {{root}}static/help/image.png | 200
 }
 
 This text is wrapped.
 ```
 img grid {
-   /static/help/image.png
-   /static/help/image.png
+   {{root}}static/help/image.png
+   {{root}}static/help/image.png
 }
 
 img side {
-   /static/help/image.png | 200
-   /static/help/image.png | 200
+   {{root}}static/help/image.png | 200
+   {{root}}static/help/image.png | 200
 }
 
 This text is wrapped.

@@ -125,7 +125,7 @@ func handlerAdminReindexUsers(w http.ResponseWriter, rq *http.Request) {
 	user.ReadUsersFromFilesystem()
 	redirectTo := rq.Referer()
 	if redirectTo == "" {
-		redirectTo = "/hypha/" + cfg.UserHypha
+		redirectTo = cfg.Root + "hypha/" + cfg.UserHypha
 	}
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }
@@ -165,7 +165,7 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 				slog.Info("Failed to save user database", "err", err)
 				f = f.WithError(err)
 			} else {
-				http.Redirect(w, rq, "/admin/users/", http.StatusSeeOther)
+				http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
 				return
 			}
 		} else {
@@ -209,7 +209,7 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 				u.Password = previousPassword
 				f = f.WithError(err)
 			} else {
-				http.Redirect(w, rq, "/admin/users/", http.StatusSeeOther)
+				http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
 				return
 			}
 		}
@@ -239,7 +239,7 @@ func handlerAdminUserDelete(w http.ResponseWriter, rq *http.Request) {
 	if rq.Method == http.MethodPost {
 		f = f.WithError(user.DeleteUser(u.Name))
 		if !f.HasError() {
-			http.Redirect(w, rq, "/admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
 		} else {
 			slog.Info("Failed to delete user", "err", f.Error())
 		}
@@ -267,7 +267,7 @@ func handlerAdminUserNew(w http.ResponseWriter, rq *http.Request) {
 			w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
 			viewNewUser(viewutil.MetaFrom(w, rq), f.WithError(err))
 		} else {
-			http.Redirect(w, rq, "/admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
 		}
 	}
 }

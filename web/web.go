@@ -28,12 +28,15 @@ import (
 // Handler initializes and returns the HTTP router based on the configuration.
 func Handler() http.Handler {
 	router := mux.NewRouter()
+	if cfg.Root != "/" {
+		router = router.PathPrefix(strings.TrimSuffix(cfg.Root, "/")).Subrouter()
+	}
+
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 			util.PrepareRq(rq)
-			w.Header().Add("Content-Security-Policy",
-				"default-src 'self' telegram.org *.telegram.org; "+
-					"img-src * data:; media-src *; style-src *; font-src * data:")
+			w.Header().Add("Content-Security-Policy", cfg.CSP)
+			w.Header().Add("Referrer-Policy", cfg.Referrer)
 			next.ServeHTTP(w, rq)
 		})
 	})
@@ -107,7 +110,7 @@ func Handler() http.Handler {
 	// Index page
 	r.HandleFunc("/", func(w http.ResponseWriter, rq *http.Request) {
 		// Let's pray it never fails
-		addr, _ := url.Parse("/hypha/" + cfg.HomeHypha)
+		addr, _ := url.Parse(cfg.Root + "hypha/" + cfg.HomeHypha)
 		rq.URL = addr
 		handlerHypha(w, rq)
 	})
@@ -190,7 +193,7 @@ func handlerRegister(w http.ResponseWriter, rq *http.Request) {
 	if err := user.LoginDataHTTP(w, username, password); err != nil {
 		return
 	}
-	http.Redirect(w, rq, "/"+rq.URL.RawQuery, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+rq.URL.RawQuery, http.StatusSeeOther)
 }
 
 // handlerLogout shows the logout form (GET) or logs the user out (POST).
@@ -198,7 +201,7 @@ func handlerLogout(w http.ResponseWriter, rq *http.Request) {
 	if rq.Method == http.MethodPost {
 		slog.Info("Somebody logged out")
 		user.LogoutFromRequest(w, rq)
-		http.Redirect(w, rq, "/", http.StatusSeeOther)
+		http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 		return
 	}
 
@@ -254,7 +257,7 @@ func handlerLogin(w http.ResponseWriter, rq *http.Request) {
 		slog.Info("Failed to log in", "username", username, "err", err.Error())
 		return
 	}
-	http.Redirect(w, rq, "/", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 	slog.Info("Logged in", "username", username)
 }
 
@@ -294,9 +297,10 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 				viewutil.MetaFrom(w, rq),
 				lc.Get("ui.error"),
 				fmt.Sprintf(
-					`<main class="main-width"><p>%s</p><p>%s</p><p><a href="/login">%s<a></p></main>`,
+					`<main class="main-width"><p>%s</p><p>%s</p><p><a href="%slogin">%s<a></p></main>`,
 					lc.Get("auth.error_telegram"),
 					err.Error(),
+					cfg.Root,
 					lc.Get("auth.go_login"),
 				),
 				map[string]string{},
@@ -315,9 +319,10 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 				viewutil.MetaFrom(w, rq),
 				"Error",
 				fmt.Sprintf(
-					`<main class="main-width"><p>%s</p><p>%s</p><p><a href="/login">%s<a></p></main>`,
+					`<main class="main-width"><p>%s</p><p>%s</p><p><a href="%slogin">%s<a></p></main>`,
 					lc.Get("auth.error_telegram"),
 					err.Error(),
+					cfg.Root,
 					lc.Get("auth.go_login"),
 				),
 				map[string]string{},
@@ -325,6 +330,6 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 		)
 		return
 	}
-	http.Redirect(w, rq, "/", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 	slog.Info("Logged in", "username", username, "method", "telegram")
 }

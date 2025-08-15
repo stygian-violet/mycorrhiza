@@ -5,6 +5,8 @@ const arrToStr = a => Array.isArray(a) ? a.join('') : a
 const strToArr = a => Array.isArray(a) ? a : [a]
 
 const rrh = {
+    root: document.body.getAttribute('data-rrh-root'),
+
     html(s, ...parts) {
         s = s.reduce((acc, cur, i) => (`${acc}${cur}${parts[i] ? arrToStr(parts[i]) : ''}`), '')
         const wrapper = document.createElement('div')

@@ -4,8 +4,8 @@ A **hypha** (//plural:// hyphae) is the main content unit used in Mycorrhiza Wik
 == The ontology
 There are two types of hyphae:
 
-*. **Textual hypha.** This is a stand-alone text unit such as an article, a diary or a poem. It is written in a special markup, called [[/help/en/mycomarkup | Mycomarkup]].
-*. **Media hypha.** This is a media resource such as an image. Media hyphae also have descriptions, also written in Mycomarkup. See [[/help/en/media | media]].
+*. **Textual hypha.** This is a stand-alone text unit such as an article, a diary or a poem. It is written in a special markup, called [[{{root}}help/en/mycomarkup | Mycomarkup]].
+*. **Media hypha.** This is a media resource such as an image. Media hyphae also have descriptions, also written in Mycomarkup. See [[{{root}}help/en/media | media]].
 
 Understanding the difference between the two is really important, as it is one of the defining features of the engine. It can be confusing at first.
 

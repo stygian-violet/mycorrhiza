@@ -7,7 +7,7 @@
 		<ol>
             {{range .Orphans}}
 				<li>
-					<a class="wikilink" href="/hypha/{{.}}">{{beautifulName .}}</a>
+					<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a>
 				</li>
             {{end}}
 		</ol>

@@ -3,7 +3,7 @@
 {{define "body"}}
 	<main class="main-width form-wrap">
 		<h1>
-			<a href="/admin/users/">&larr;</a>
+			<a href="{{ .Meta.Root }}admin/users/">&larr;</a>
 			{{.U.Name}}
 		</h1>
 
@@ -36,7 +36,7 @@
 		<h2>{{block "change password" .}}Change password{{end}}</h2>
 
 		{{if eq .U.Source "local"}}
-		<form action="/admin/users/{{.U.Name}}/change-password" method="post">
+		<form action="{{ .Meta.Root }}admin/users/{{.U.Name}}/change-password" method="post">
 			<div class="form-field">
 				<label for="pass">{{block "password" .}}Password{{end}}</label>
 				<input required type="password" autocomplete="new-password" id="pass" name="password">
@@ -55,6 +55,6 @@
 
 		<h2>{{block "delete user" .}}Delete user{{end}}</h2>
 		<p>{{block "delete user tip" .}}Remove the user from the database. Changes made by the user will be preserved. It will be possible to take this username later.{{end}}</p>
-		<a class="btn btn_destructive" href="/admin/users/{{.U.Name}}/delete">{{template "delete"}}</a>
+		<a class="btn btn_destructive" href="{{ .Meta.Root }}admin/users/{{.U.Name}}/delete">{{template "delete"}}</a>
 	</main>
 {{end}}

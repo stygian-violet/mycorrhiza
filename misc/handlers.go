@@ -27,9 +27,9 @@ func InitAssetHandlers(rtr *mux.Router) {
 	rtr.HandleFunc("/static/style.css", handlerStyle)
 	rtr.HandleFunc("/robots.txt", handlerRobotsTxt)
 	rtr.PathPrefix("/static/").
-		Handler(http.StripPrefix("/static/", http.FileServer(http.FS(static.FS))))
+		Handler(http.StripPrefix(cfg.Root + "static/", http.FileServer(http.FS(static.FS))))
 	rtr.HandleFunc("/favicon.ico", func(w http.ResponseWriter, rq *http.Request) {
-		http.Redirect(w, rq, "/static/favicon.ico", http.StatusSeeOther)
+		http.Redirect(w, rq, cfg.Root + "static/favicon.ico", http.StatusSeeOther)
 	})
 }
 
@@ -80,7 +80,7 @@ func handlerReindex(w http.ResponseWriter, rq *http.Request) {
 	slog.Info("Reindexing hyphae", "hyphaeDir", files.HyphaeDir())
 	hyphae.Index(files.HyphaeDir())
 	backlinks.IndexBacklinks()
-	http.Redirect(w, rq, "/", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 
 // handlerUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.
@@ -94,7 +94,7 @@ func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
 	}
 	slog.Info("Updated header links")
 	shroom.SetHeaderLinks()
-	http.Redirect(w, rq, "/", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 
 // handlerRandom redirects to a random hypha.
@@ -116,7 +116,7 @@ func handlerRandom(w http.ResponseWriter, rq *http.Request) {
 		}
 		i--
 	}
-	http.Redirect(w, rq, "/hypha/"+randomHyphaName, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+randomHyphaName, http.StatusSeeOther)
 }
 
 // handlerAbout shows a summary of wiki's software.

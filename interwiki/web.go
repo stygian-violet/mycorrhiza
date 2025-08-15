@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 
 	"github.com/gorilla/mux"
@@ -83,7 +84,7 @@ func handlerModifyEntry(w http.ResponseWriter, rq *http.Request) {
 
 	saveInterwikiJson()
 	slog.Info("Modified entry", "name", name)
-	http.Redirect(w, rq, "/interwiki", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root + "interwiki", http.StatusSeeOther)
 }
 
 func handlerAddEntry(w http.ResponseWriter, rq *http.Request) {
@@ -93,7 +94,7 @@ func handlerAddEntry(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 	saveInterwikiJson()
-	http.Redirect(w, rq, "/interwiki", http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root + "interwiki", http.StatusSeeOther)
 }
 
 type nameTakenData struct {

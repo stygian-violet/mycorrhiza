@@ -8,7 +8,7 @@
             {{else}}
                 {{block "empty" .}}This hypha has no media, you can upload it here.{{end}}
             {{end}}
-            <a href="/help/en/media" class="shy-link">
+            <a href="{{ .Meta.Root }}help/en/media" class="shy-link">
                 {{block "what is media?" .}}What is media?{{end}}
             </a>
         </p>
@@ -23,7 +23,7 @@
             {{end}}
 
             {{if .U.CanProceed "upload-binary" }}
-            <form action="/upload-binary/{{.HyphaName}}"
+            <form action="{{ .Meta.Root }}upload-binary/{{.HyphaName}}"
                   method="post" enctype="multipart/form-data"
                   class="upload-binary modal amnt-menu-block">
                 <fieldset class="modal__fieldset">
@@ -41,7 +41,7 @@
             {{end}}
 
             {{if .IsMediaHypha | and (.U.CanProceed "remove-media")}}
-            <form action="/remove-media/{{.HyphaName}}" class="modal amnt-menu-block" method="POST">
+            <form action="{{ .Meta.Root }}remove-media/{{.HyphaName}}" class="modal amnt-menu-block" method="POST">
                 <fieldset class="modal__fieldset">
                     <legend class="modal__title modal__title_small">
                         {{block "remove title" .}}Remove media{{end}}</legend>

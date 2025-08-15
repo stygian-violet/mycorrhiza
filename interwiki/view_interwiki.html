@@ -52,7 +52,7 @@
 	{{end}}
 	{{if len .Entries}}
 		{{range $i, $wiki := .Entries}}
-			<form method="post" action="/interwiki/modify-entry/{{.Name}}">
+			<form method="post" action="{{$.Meta.Root}}interwiki/modify-entry/{{.Name}}">
 				<p>
 					<label for="name{{$i}}" class="required-field">{{template "name"}}</label>
 					<input type="text" id="name{{$i}}" name="name" required
@@ -91,7 +91,7 @@
 			</form>
 		{{end}}
 	{{end}}
-	<form method="post" action="/interwiki/add-entry">
+	<form method="post" action="{{.Meta.Root}}interwiki/add-entry">
 		<h2>{{template "add interwiki entry"}}</h2>
 		<p>
 			<label for="name" class="required-field">{{template "name"}}</label>
@@ -137,10 +137,10 @@
 	<main class="main-width">
 		<h1>{{template "interwiki map"}}</h1>
 		{{if .CanEdit}}
-			<p><a href="/help/en/interwiki">{{template "documentation."}}</a> {{template "edit separately."}}</p>
+			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a> {{template "edit separately."}}</p>
             {{template "authorized map" .}}
 		{{else}}
-			<p><a href="/help/en/interwiki">{{template "documentation."}}</a></p>
+			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a></p>
 			{{template "static map" .}}
 		{{end}}
 	</main>

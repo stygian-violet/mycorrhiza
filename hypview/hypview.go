@@ -16,10 +16,10 @@ var (
 	fs            embed.FS
 	ruTranslation = `
 {{define "rename hypha?"}}Переименовать {{beautifulName .}}?{{end}}
-{{define "rename [[hypha]]?"}}Переименовать <a href="/hypha/{{.}}">{{beautifulName .}}</a>?{{end}}
+{{define "rename [[hypha]]?"}}Переименовать <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>?{{end}}
 {{define "new name"}}Новое название:{{end}}
 {{define "rename recursively"}}Также переименовать подгифы{{end}}
-{{define "rename tip"}}Переименовывайте аккуратно. <a href="/help/en/rename">Документация на английском.</a>{{end}}
+{{define "rename tip"}}Переименовывайте аккуратно. <a href="{{.Meta.Root}}help/en/rename">Документация на английском.</a>{{end}}
 {{define "leave redirection"}}Оставить перенаправление{{end}}
 
 
@@ -42,7 +42,7 @@ type renameData struct {
 func RenameHypha(meta viewutil.Meta, hyphaName string) {
 	viewutil.ExecutePage(meta, chainRenameHypha, renameData{
 		BaseData: &viewutil.BaseData{
-			Addr: "/rename/" + hyphaName,
+			Addr: cfg.Root + "rename/" + hyphaName,
 		},
 		HyphaName:               hyphaName,
 		LeaveRedirectionDefault: backlinks.BacklinksCount(hyphaName) != 0,
@@ -54,6 +54,7 @@ type naviTitleData struct {
 	HyphaNamePartsWithParents []string
 	Icon                      string
 	HomeHypha                 string
+	Root                      string
 }
 
 func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
@@ -64,6 +65,7 @@ func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
 		HyphaNamePartsWithParents: partsWithParents,
 		Icon:                      cfg.NaviTitleIcon,
 		HomeHypha:                 cfg.HomeHypha,
+		Root:                      cfg.Root,
 	})
 	if err != nil {
 		slog.Error("Failed to render NaviTitle properly; using nevertheless", "err", err)
@@ -73,7 +75,7 @@ func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
 
 func naviTitleify(hyphaName string) ([]string, []string) {
 	var (
-		prevAcc          = "/hypha"
+		prevAcc          = cfg.Root + "hypha"
 		parts            = strings.Split(hyphaName, "/")
 		partsWithParents []string
 	)

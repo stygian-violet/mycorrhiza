@@ -78,8 +78,9 @@ func IsProfileName(hyphaName string) bool {
 func HyphaNameFromRq(rq *http.Request, actions ...string) string {
 	p := rq.URL.Path
 	for _, action := range actions {
-		if strings.HasPrefix(p, "/"+action+"/") {
-			return CanonicalName(strings.TrimPrefix(p, "/"+action+"/"))
+		prefix := cfg.Root + action + "/"
+		if strings.HasPrefix(p, prefix) {
+			return CanonicalName(strings.TrimPrefix(p, prefix))
 		}
 	}
 	slog.Info("HyphaNameFromRq: this request is invalid, fall back to home hypha")

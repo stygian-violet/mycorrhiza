@@ -3,7 +3,7 @@
 {{define "body"}}
 <main class="main-width">
 	<article class="history">
-		<h1>{{block "history of heading" .HyphaName}}History of <a href="/hypha/{{.}}">{{beautifulName .}}</a>{{end}}</h1>
+		<h1>{{block "history of heading" .}}History of <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>{{end}}</h1>
 		{{.Contents}}
 	</article>
 </main>

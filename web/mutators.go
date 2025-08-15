@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bouncepaw/mycorrhiza/hypview"
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -51,7 +52,7 @@ func handlerRemoveMedia(w http.ResponseWriter, rq *http.Request) {
 			return
 		}
 	}
-	http.Redirect(w, rq, "/hypha/"+h.CanonicalName(), http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+h.CanonicalName(), http.StatusSeeOther)
 }
 
 func handlerDelete(w http.ResponseWriter, rq *http.Request) {
@@ -92,7 +93,7 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 		viewutil.HttpErr(meta, http.StatusInternalServerError, h.CanonicalName(), err.Error())
 		return
 	}
-	http.Redirect(w, rq, "/hypha/"+h.CanonicalName(), http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+h.CanonicalName(), http.StatusSeeOther)
 }
 
 func handlerRename(w http.ResponseWriter, rq *http.Request) {
@@ -137,7 +138,7 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 		viewutil.HttpErr(meta, http.StatusForbidden, oldHypha.CanonicalName(), lc.Get(err.Error())) // TODO: localize
 		return
 	}
-	http.Redirect(w, rq, "/hypha/"+newName, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+newName, http.StatusSeeOther)
 }
 
 // handlerEdit shows the edit form. It doesn't edit anything actually.
@@ -219,7 +220,7 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 		viewutil.HttpErr(meta, http.StatusForbidden, hyphaName, err.Error())
 		return
 	}
-	http.Redirect(w, rq, "/hypha/"+hyphaName, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+hyphaName, http.StatusSeeOther)
 }
 
 // handlerUploadBinary uploads a new media for the hypha.
@@ -259,5 +260,5 @@ func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
 		viewutil.HttpErr(meta, http.StatusInternalServerError, hyphaName, err.Error())
 		return
 	}
-	http.Redirect(w, rq, "/hypha/"+hyphaName, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+hyphaName, http.StatusSeeOther)
 }

@@ -42,7 +42,7 @@ const aboutTemplateString = `
 			<dd>{{ .Version }}</dd>
 		{{ if .Cfg.UseAuth }}
 			<dt>{{ get .L.HomeHypha }}</dt>
-			<dd><a href="/">{{ .Cfg.HomeHypha }}</a></dd>
+			<dd><a href="{{ .Cfg.Root }}">{{ .Cfg.HomeHypha }}</a></dd>
 
 			<dt>{{get .L.Auth}}</dt>
 			<dd>{{ get .L.AuthOn }}</dd>
@@ -57,7 +57,7 @@ const aboutTemplateString = `
 
 			<dt>{{ get .L.Admins }}</dt>
 			{{$cfg := .Cfg}}{{ range $i, $username := .Admins }}
-				<dd><a href="/hypha/{{ $cfg.UserHypha }}/{{ $username }}">{{ $username }}</a></dd>
+				<dd><a href="{{ $cfg.Root }}hypha/{{ $cfg.UserHypha }}/{{ $username }}">{{ $username }}</a></dd>
 			{{ end }}
 
 		{{ else }}

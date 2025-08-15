@@ -27,6 +27,9 @@ var (
 
 	ListenAddr string
 	URL        string
+	Root       string
+	CSP        string
+	Referrer   string
 
 	UseAuth           bool
 	AllowRegistration bool
@@ -73,6 +76,9 @@ type Hyphae struct {
 type Network struct {
 	ListenAddr string
 	URL        string `comment:"Set your wiki's public URL here. It's used for OpenGraph generation and syndication feeds."`
+	Root       string `comment:"Set your wiki's root path here."`
+	CSP        string `comment:"Content-Security-Policy header."`
+	Referrer   string `comment:"Referrer-Policy header."`
 }
 
 // CustomScripts is a section with paths to JavaScript files that are loaded on
@@ -120,6 +126,10 @@ func ReadConfigFile(path string) error {
 		Network: Network{
 			ListenAddr: "127.0.0.1:1737",
 			URL:        "",
+			Root:       "/",
+			CSP:        "default-src 'self' telegram.org *.telegram.org; "+
+			            "img-src * data:; media-src *; style-src *; font-src * data:",
+			Referrer:   "no-referrer",
 		},
 		Authorization: Authorization{
 			UseAuth:           false,
@@ -179,6 +189,9 @@ func ReadConfigFile(path string) error {
 		ListenAddr = cfg.ListenAddr
 	}
 	URL = cfg.URL
+	Root = cfg.Root
+	CSP = cfg.CSP
+	Referrer = cfg.Referrer
 	UseAuth = cfg.UseAuth
 	AllowRegistration = cfg.AllowRegistration
 	RegistrationLimit = cfg.RegistrationLimit
@@ -197,6 +210,10 @@ func ReadConfigFile(path string) error {
 		URL = "http://" + ListenAddr
 	} else if !strings.Contains(URL, ":") {
 		URL = "http://" + URL
+	}
+
+	if !strings.HasSuffix(Root, "/") {
+		Root = Root + "/"
 	}
 
 	return nil

@@ -3,7 +3,7 @@ The **top bar** is present on every single page of the wiki. It is the primary n
 
 On big screens, the top bar is spread onto two lines.
 * First line
-** Link to the [[/ | home page]]
+** Link to the [[{{root}} | home page]]
 ** Search bar
 ** //If authorization is enabled,//
 *** Link to your profile, //if logged in//
@@ -46,10 +46,10 @@ Edit the hypha. You can put any markup there. Only rocket links will be used for
 ```myco
 This paragraph is unused.
 
-=> /recent-changes | Recent changes
+=> {{root}}recent-changes | Recent changes
 => Highlights
 => Philosophy | Our views on life
 => Essays
 ```
 
-Now, for changes to take effect, a moderator or an administrator has to visit [[/update-header-links]].
+Now, for changes to take effect, a moderator or an administrator has to visit [[{{root}}update-header-links]].

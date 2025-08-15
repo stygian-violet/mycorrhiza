@@ -260,7 +260,8 @@ func FileAtRevision(filepath, hash string) (string, error) {
 
 // PrimitiveDiffAtRevision generates a plain-text diff for the given filepath at the commit with the given hash. It may return an error if git fails.
 func PrimitiveDiffAtRevision(filepath, hash string) (string, error) {
-	out, err := silentGitsh("diff", "--unified=1", "--no-color", hash+"~", hash, "--", filepath)
+	// out, err := silentGitsh("diff", "--unified=1", "--no-color", hash+"~", hash, "--", filepath)
+	out, err := silentGitsh("show", "--unified=1", "--no-color", hash, "--", filepath)
 	if err != nil {
 		return "", err
 	}

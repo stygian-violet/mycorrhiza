@@ -30,10 +30,16 @@
 					       placeholder="{{block `search by title` .}}Search by title{{end}}">
 				</form>
 			</li>
-			<li class="top-bar__section top-bar__section_auth">
+			<input type="checkbox" id="top-bar__expand" autocomplete="off">
+			<li class="top-bar__section top-bar__section_hamburger">
+				<div class="top-bar__hamburger-wrapper">
+					<label class="top-bar__hamburger" for="top-bar__expand">Menu</label>
+				</div>
+			</li>
+			<li class="top-bar__section top-bar__section_auth top-bar__section_hidden-on-mobile">
                 {{block "auth" .}}{{end}}
 			</li>
-			<li class="top-bar__section top-bar__section_highlights">
+			<li class="top-bar__section top-bar__section_highlights top-bar__section_hidden-on-mobile">
 				<ul class="top-bar__highlights">
 					{{range .HeaderLinks}}
 						<li class="top-bar__highlight">
@@ -48,7 +54,6 @@
 {{block "body" .}}{{end}}
 <script src="{{ .Meta.Root }}static/common.js"></script>
 <script src="{{ .Meta.Root }}static/shortcuts.js"></script>
-<script src="{{ .Meta.Root }}static/view.js"></script>
 {{range .CommonScripts}}
 	<script src="{{.}}"></script>
 {{end}}

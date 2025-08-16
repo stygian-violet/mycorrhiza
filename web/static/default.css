@@ -662,7 +662,7 @@ a.btn_destructive:visited,
 	border: 0;
 	display: block;
 	margin: 0 .5rem 0 0;
-	padding: 0 .5rem;
+	padding: .5rem;
 }
 
 .top-bar__hamburger:hover,
@@ -700,6 +700,13 @@ a.btn_destructive:visited,
 
 .top-bar__section_search {
 	align-self: center;
+}
+
+#top-bar__expand {
+	position: absolute;
+	top: 0;
+	right: 0;
+	opacity: 0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -755,6 +762,9 @@ a.btn_destructive:visited,
 		padding: 0;
 		margin: 0 0 0 -.5rem;
 	}
+	#top-bar__expand {
+		display: none;
+	}
 }
 
 @media screen and (max-width: 799px) {
@@ -795,7 +805,7 @@ a.btn_destructive:visited,
 	.top-bar__highlight-link {
 		padding-left: 1rem;
 	}
-	.top-bar__section_hidden-on-mobile {
+	#top-bar__expand:not(:checked) ~ .top-bar__section_hidden-on-mobile {
 		display: none;
 	}
 }

@@ -240,6 +240,7 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 			"BacklinkCount":           backlinks.BacklinksCount(h.CanonicalName()),
 			"GivenPermissionToModify": user.CanProceed(rq, "edit"),
 			"Categories":              cats,
+			"CategoryNameOptions":     categories.ListOfCategories(),
 			"IsMediaHypha":            false,
 		}
 	)

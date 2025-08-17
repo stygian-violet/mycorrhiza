@@ -172,7 +172,7 @@ caption { caption-side: top; font-size: small; }
 
 /* Color stuff */
 /* Lighter stuff #eee */
-::-webkit-file-upload-button, .btn { background-color: #eee; color: black; }
+::-webkit-file-upload-button, ::file-selector-button, .btn { background-color: #eee; color: black; }
 .btn:visited { color: black; }
 .btn_weak { background-color: transparent; }
 
@@ -228,6 +228,7 @@ a:visited, .wikilink_external:visited { color: #ffb86c; }
 
 input[type="text"], input[type="password"],
 ::-webkit-file-upload-button,
+::file-selector-button,
 .btn,
 article code, 
 article .codeblock,
@@ -494,6 +495,7 @@ kbd {
  */
 
 ::-webkit-file-upload-button,
+::file-selector-button,
 .btn {
 	line-height: normal;
 	display: inline-block;
@@ -503,9 +505,6 @@ kbd {
 	padding: .25rem .5rem;
 	font-size: 1rem;
 	margin: 0;
-}
-
-.btn:hover {
 	cursor: pointer;
 }
 
@@ -526,7 +525,7 @@ a.btn_destructive:visited,
 }
 
 @media (prefers-color-scheme: dark) {
-	.btn {
+	::file-selector-button, .btn {
 		border: #444 solid 1px;
 	}
 

@@ -232,7 +232,7 @@ func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
 		h                  = hyphae.ByName(hyphaName)
 		u                  = user.FromRequest(rq)
 		lc                 = l18n.FromRequest(rq)
-		file, handler, err = rq.FormFile("binary")
+		file, header, err  = rq.FormFile("binary")
 		meta               = viewutil.MetaFrom(w, rq)
 	)
 	if err != nil {
@@ -253,10 +253,10 @@ func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	var (
-		mime = handler.Header.Get("Content-Type")
+		mime = header.Header.Get("Content-Type")
 	)
 
-	if err := shroom.UploadBinary(h, mime, file, u); err != nil {
+	if err := shroom.UploadBinary(h, header.Filename, mime, file, u); err != nil {
 		viewutil.HttpErr(meta, http.StatusInternalServerError, hyphaName, err.Error())
 		return
 	}

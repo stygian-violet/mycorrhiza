@@ -156,6 +156,14 @@ func IsRevHash(revHash string) bool {
 	return true
 }
 
+func Truncate(str string, maxlen int) string {
+    runes := []rune(str)
+    if len(runes) <= maxlen {
+        return str
+    }
+    return string(runes[0:maxlen])
+}
+
 var newlineRegexp = regexp.MustCompile("\r\n?|\n\r?")
 
 func NormalizeText(text string) string {
@@ -165,4 +173,11 @@ func NormalizeText(text string) string {
 		text += "\n"
 	}
 	return text
+}
+
+var sanitizeExtensionRegexp = regexp.MustCompile(`[^.a-zA-Z0-9-_]+`)
+
+func SanitizeExtension(ext string) string {
+	ext = sanitizeExtensionRegexp.ReplaceAllString(ext, "")
+	return Truncate(ext, 16)
 }

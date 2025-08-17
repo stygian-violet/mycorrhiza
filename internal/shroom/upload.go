@@ -116,9 +116,9 @@ func historyMessageForMediaUpload(h hyphae.Hypha, mime string) string {
 }
 
 // writeMediaToDisk saves the given data with the given mime type for the given hypha to the disk and returns the path to the saved file and an error, if any.
-func writeMediaToDisk(h hyphae.Hypha, mime string, data []byte) (string, error) {
+func writeMediaToDisk(h hyphae.Hypha, filename string, mime string, data []byte) (string, error) {
 	var (
-		ext = mimetype.ToExtension(mime)
+		ext = mimetype.ToExtension(filename, mime)
 		// That's where the file will go
 
 		uploadedFilePath = filepath.Join(append([]string{files.HyphaeDir()}, strings.Split(h.CanonicalName()+ext, "\\")...)...)
@@ -135,7 +135,7 @@ func writeMediaToDisk(h hyphae.Hypha, mime string, data []byte) (string, error) 
 }
 
 // UploadBinary edits the hypha's media part and makes a history record about that.
-func UploadBinary(h hyphae.Hypha, mime string, file multipart.File, u *user.User) error {
+func UploadBinary(h hyphae.Hypha, filename string, mime string, file multipart.File, u *user.User) error {
 	hop := history.
 		Operation(history.TypeEditBinary).
 		WithMsg(historyMessageForMediaUpload(h, mime)).
@@ -169,7 +169,7 @@ func UploadBinary(h hyphae.Hypha, mime string, file multipart.File, u *user.User
 
 	// At this point, we have a savable media document. Gotta save it.
 	hop.SetFilesChanged()
-	uploadedFilePath, err := writeMediaToDisk(h, mime, data)
+	uploadedFilePath, err := writeMediaToDisk(h, filename, mime, data)
 	if err != nil {
 		hop.Abort()
 		return err

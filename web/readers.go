@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -69,6 +70,7 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 
 		mime     string
 		fileSize int64
+		fileName string
 	)
 	switch h := h.(type) {
 	case *hyphae.MediaHypha:
@@ -82,6 +84,7 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 		}
 
 		fileSize = fileinfo.Size()
+		fileName = path.Base(h.MediaFilePath())
 	}
 	_ = pageMedia.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
 		"HyphaName":    h.CanonicalName(),
@@ -89,6 +92,7 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 		"IsMediaHypha": isMedia,
 		"MimeType":     mime,
 		"FileSize":     fileSize,
+		"FileName":     fileName,
 	})
 }
 
@@ -209,8 +213,16 @@ func handlerBinary(w http.ResponseWriter, rq *http.Request) {
 		slog.Info("Textual hypha has no media file; cannot serve it",
 			"hyphaName", h.CanonicalName())
 	case *hyphae.MediaHypha:
-		slog.Info("Serving media file", "path", h.MediaFilePath())
-		w.Header().Set("Content-Type", mimetype.FromExtension(filepath.Ext(h.MediaFilePath())))
+		path := h.MediaFilePath()
+		filename := filepath.Base(path)
+		slog.Info("Serving media file", "path", path)
+		w.Header().Set("Content-Type", mimetype.FromExtension(filepath.Ext(path)))
+		filename = fmt.Sprintf(
+			`attachment; filename="%s"; filename*=UTF-8''%s`,
+			filename,
+			url.QueryEscape(filename),
+		)
+		w.Header().Set("Content-Disposition", filename)
 		http.ServeFile(w, rq, h.MediaFilePath())
 	}
 }

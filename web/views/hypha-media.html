@@ -17,6 +17,7 @@
             {{if .IsMediaHypha}}
                 <fieldset class="amnt-menu-block"> <!-- TODO: refactor with <dl> -->
                     <legend class="modal__title modal__title_small">{{block "stat" .}}Stat{{end}}</legend>
+                    <p><b>{{block "stat name" .}}File name:{{end}}</b> {{.FileName}}</p>
                     <p><b>{{block "stat size" .}}File size:{{end}}</b> {{.FileSize}}</p> <!-- TODO: human readable measure -->
                     <p><b>{{block "stat mime" .}}MIME type:{{end}}</b> {{.MimeType}}</p>
                 </fieldset>

@@ -8,11 +8,19 @@ import (
 )
 
 // ToExtension returns dotted extension for given mime-type.
-func ToExtension(mime string) string {
+func ToExtension(filename string, mime string) string {
 	if ext, ok := mapMime2Ext[mime]; ok {
 		return "." + ext
 	}
-	return ".bin"
+	ext := filepath.Ext(filename)
+	if ext == filename {
+		return ".bin"
+	}
+	ext = util.SanitizeExtension(ext)
+	if ext == "" || ext == "." || strings.EqualFold(ext, ".myco") {
+		return ".bin"
+	}
+	return ext
 }
 
 // FromExtension returns mime-type for given extension. The extension must start with a dot.

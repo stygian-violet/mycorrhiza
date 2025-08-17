@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -153,4 +154,15 @@ func IsRevHash(revHash string) bool {
 		return false
 	}
 	return true
+}
+
+var newlineRegexp = regexp.MustCompile("\r\n?|\n\r?")
+
+func NormalizeText(text string) string {
+	text = strings.TrimSpace(text)
+	text = newlineRegexp.ReplaceAllString(text, "\n")
+	if text != "" {
+		text += "\n"
+	}
+	return text
 }

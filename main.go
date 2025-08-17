@@ -59,6 +59,7 @@ func main() {
 	}
 	migration.MigrateRocketsMaybe()
 	migration.MigrateHeadingsMaybe()
+	migration.MigrateSpacesAndNewlinesMaybe()
 	shroom.SetHeaderLinks()
 	if err := categories.Init(); err != nil {
 		os.Exit(1)

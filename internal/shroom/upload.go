@@ -1,7 +1,6 @@
 package shroom
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -34,16 +33,16 @@ func historyMessageForTextUpload(h hyphae.Hypha, userMessage string) string {
 	return fmt.Sprintf("%s ‘%s’: %s", verb, h.CanonicalName(), userMessage)
 }
 
-func writeTextToDisk(h hyphae.ExistingHypha, data []byte, hop *history.Op) error {
+func writeTextToDisk(h hyphae.ExistingHypha, data string, hop *history.Op) error {
 	hop.SetFilesChanged()
-	if err := hyphae.WriteToMycoFile(h, data); err != nil {
+	if err := hyphae.WriteToMycoFile(h, []byte(data)); err != nil {
 		return err
 	}
 	return hop.WithFiles(h.TextFilePath()).Error
 }
 
 // UploadText edits the hypha's text part and makes a history record about that.
-func UploadText(h hyphae.Hypha, data []byte, userMessage string, u *user.User) error {
+func UploadText(h hyphae.Hypha, text string, userMessage string, u *user.User) error {
 	hop := history.
 		Operation(history.TypeEditText).
 		WithMsg(historyMessageForTextUpload(h, userMessage)).
@@ -63,20 +62,15 @@ func UploadText(h hyphae.Hypha, data []byte, userMessage string, u *user.User) e
 		return errors.New("invalid hypha name")
 	}
 
+	// text := util.NormalizeText(text)
+
 	oldText, err := hyphae.FetchMycomarkupFile(h)
 	if err != nil {
 		hop.Abort()
 		return err
 	}
 
-	// Empty data check
-	if len(bytes.TrimSpace(data)) == 0 && len(oldText) == 0 { // if nothing but whitespace
-		hop.Abort()
-		return nil
-	}
-
-	// TODO: that []byte(...) part should be removed
-	if bytes.Equal(data, []byte(oldText)) {
+	if text == oldText {
 		// No changes! Just like cancel button
 		hop.Abort()
 		return nil
@@ -99,7 +93,7 @@ func UploadText(h hyphae.Hypha, data []byte, userMessage string, u *user.User) e
 		H = h
 	}
 
-	err = writeTextToDisk(H, data, hop)
+	err = writeTextToDisk(H, text, hop)
 	if err != nil {
 		hop.Abort()
 		return err

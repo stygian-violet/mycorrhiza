@@ -195,7 +195,7 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 		h         = hyphae.ByName(hyphaName)
 		_, isNew  = h.(*hyphae.EmptyHypha)
 
-		textData = rq.PostFormValue("text")
+		textData = util.NormalizeText(rq.PostFormValue("text"))
 		action   = rq.PostFormValue("action")
 		message  = rq.PostFormValue("message")
 	)
@@ -216,7 +216,7 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
-	if err := shroom.UploadText(h, []byte(textData), message, u); err != nil {
+	if err := shroom.UploadText(h, textData, message, u); err != nil {
 		viewutil.HttpErr(meta, http.StatusForbidden, hyphaName, err.Error())
 		return
 	}

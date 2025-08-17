@@ -48,6 +48,8 @@ func CategoriesJSON() string { return paths.categoriesJSON }
 // FileInRoot returns full path for the given filename if it was placed in the root of the wiki structure.
 func FileInRoot(filename string) string { return filepath.Join(cfg.WikiDir, filename) }
 
+func FileInRepo(filename string) string { return filepath.Join(paths.gitRepo, filename) }
+
 func InterwikiJSON() string { return paths.interwikiJSON }
 
 // PrepareWikiRoot ensures all needed directories and files exist and have

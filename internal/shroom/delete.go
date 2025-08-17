@@ -28,8 +28,8 @@ func Delete(u *user.User, h hyphae.ExistingHypha) error {
 	case *hyphae.TextualHypha:
 		hop.WithFilesRemoved(h.TextFilePath())
 	}
-	if hop.Apply().HasErrors() {
-		return hop.Errs[0]
+	if hop.Apply().HasError() {
+		return hop.Error
 	}
 	backlinks.UpdateBacklinksAfterDelete(h, originalText)
 	categories.RemoveHyphaFromAllCategories(h.CanonicalName())

@@ -3,7 +3,6 @@ package history
 // history/operations.go
 // 	Things related to writing history.
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -38,38 +37,42 @@ const (
 // Op is an object representing a history operation.
 type Op struct {
 	// All errors are appended here.
-	Errs    []error
-	Type    OpType
-	userMsg string
-	name    string
-	email   string
+	Error        error
+	Type         OpType
+	userMsg      string
+	name         string
+	email        string
+	filesChanged bool
 }
 
 // Operation is a constructor of a history operation.
 func Operation(opType OpType) *Op {
 	gitMutex.Lock()
 	hop := &Op{
-		Errs:  []error{},
 		name:  "anon",
 		email: "anon@mycorrhiza",
+		filesChanged: false,
 		Type:  opType,
+		Error: nil,
 	}
 	return hop
 }
 
 // git operation maker helper
 func (hop *Op) gitop(args ...string) *Op {
-	out, err := gitsh(args...)
+	if hop.HasError() {
+		return hop
+	}
+	_, err := gitsh(args...)
 	if err != nil {
-		fmt.Println("out:", out.String())
-		hop.Errs = append(hop.Errs, err)
+		hop.Error = err
 	}
 	return hop
 }
 
 // withErr appends the `err` to the list of errors.
 func (hop *Op) withErr(err error) *Op {
-	hop.Errs = append(hop.Errs, err)
+	hop.Error = err
 	return hop
 }
 
@@ -78,9 +81,15 @@ func (hop *Op) WithErrAbort(err error) *Op {
 	return hop.withErr(err).Abort()
 }
 
+func (hop *Op) SetFilesChanged() *Op {
+	hop.filesChanged = true
+	return hop
+}
+
 // WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
 func (hop *Op) WithFilesRemoved(paths ...string) *Op {
-	args := []string{"rm", "--quiet", "--"}
+	hop.SetFilesChanged()
+	args := []string{"rm", "--"}
 	for _, path := range paths {
 		if path != "" {
 			args = append(args, path)
@@ -91,11 +100,12 @@ func (hop *Op) WithFilesRemoved(paths ...string) *Op {
 
 // WithFilesRenamed git-mv-s all passed keys of `pairs` to values of `pairs`. Paths can be rooted ot not. Empty keys are ignored.
 func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
+	hop.SetFilesChanged()
 	for from, to := range pairs {
 		if from != "" {
 			if err := os.MkdirAll(filepath.Dir(to), 0777); err != nil {
-				hop.Errs = append(hop.Errs, err)
-				continue
+				hop.Error = err
+				return hop
 			}
 			hop.gitop("mv", "--force", from, to)
 		}
@@ -105,6 +115,7 @@ func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
 
 // WithFiles stages all passed `paths`. Paths can be rooted or not.
 func (hop *Op) WithFiles(paths ...string) *Op {
+	hop.SetFilesChanged()
 	for i, path := range paths {
 		paths[i] = util.ShorterPath(path)
 	}
@@ -114,18 +125,28 @@ func (hop *Op) WithFiles(paths ...string) *Op {
 
 // Apply applies history operation by doing the commit. You do not need to call Abort afterwards.
 func (hop *Op) Apply() *Op {
-	hop.gitop(
-		"commit",
-		"--author='"+hop.name+" <"+hop.email+">'",
-		"--message="+hop.userMsg,
-		"--no-gpg-sign",
-	)
+	if hop.filesChanged {
+		hop.gitop(
+			"commit",
+			"--author='"+hop.name+" <"+hop.email+">'",
+			"--message="+hop.userMsg,
+			"--no-gpg-sign",
+		)
+	}
+	if hop.HasError() {
+		return hop.Abort()
+	}
 	gitMutex.Unlock()
 	return hop
 }
 
 // Abort aborts the history operation.
 func (hop *Op) Abort() *Op {
+	if hop.filesChanged {
+		if err := gitReset(); err != nil {
+			// os.Exit(1)
+		}
+	}
 	gitMutex.Unlock()
 	return hop
 }
@@ -151,11 +172,11 @@ func (hop *Op) WithUser(u *user.User) *Op {
 }
 
 // HasErrors checks whether operation has errors appended.
-func (hop *Op) HasErrors() bool {
-	return len(hop.Errs) > 0
+func (hop *Op) HasError() bool {
+	return hop.Error != nil
 }
 
 // FirstErrorText extracts first error appended to the operation.
-func (hop *Op) FirstErrorText() string {
-	return hop.Errs[0].Error()
+func (hop *Op) ErrorText() string {
+	return hop.Error.Error()
 }

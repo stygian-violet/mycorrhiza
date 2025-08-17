@@ -11,9 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -76,10 +74,7 @@ func handlerReindex(w http.ResponseWriter, rq *http.Request) {
 		slog.Info("No rights to reindex")
 		return
 	}
-	hyphae.ResetCount()
-	slog.Info("Reindexing hyphae", "hyphaeDir", files.HyphaeDir())
-	hyphae.Index(files.HyphaeDir())
-	backlinks.IndexBacklinks()
+	shroom.Reindex()
 	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 

@@ -140,7 +140,7 @@ func gitLog(args ...string) ([]Revision, error) {
 		"--pretty=format:%h\t%ae\t%at\t%s",
 	}, args...)
 	args = append(args, "--")
-	out, err := silentGitsh(args...)
+	out, err := gitsh(args...)
 	if strings.Contains(out.String(), "bad revision 'HEAD'") {
 		// Then we have no recent changes! It's a hack.
 		return nil, nil
@@ -269,7 +269,7 @@ func (rev *Revision) filesAffected() (filenames []string) {
 		return rev.filesAffectedBuf
 	}
 	// List of files affected by this revision, one per line.
-	out, err := silentGitsh("diff-tree", "--no-commit-id", "--name-only", "-r", rev.Hash)
+	out, err := gitsh("diff-tree", "--no-commit-id", "--name-only", "-r", rev.Hash)
 	// There's an error? Well, whatever, let's just assign an empty slice, who cares.
 	if err != nil {
 		rev.filesAffectedBuf = []string{}
@@ -375,8 +375,7 @@ func FileAtRevision(filepath, hash string) (string, error) {
 
 // PrimitiveDiffAtRevision generates a plain-text diff for the given filepath at the commit with the given hash. It may return an error if git fails.
 func PrimitiveDiffAtRevision(filepath, hash string) (string, error) {
-	// out, err := silentGitsh("diff", "--unified=1", "--no-color", hash+"~", hash, "--", filepath)
-	out, err := silentGitsh("show", "--unified=1", "--no-color", hash, "--", filepath)
+	out, err := gitsh("show", "--unified=1", "--no-color", hash, "--", filepath)
 	if err != nil {
 		return "", err
 	}

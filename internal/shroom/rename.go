@@ -20,19 +20,23 @@ import (
 
 // Rename renames the old hypha to the new name and makes a history record about that. Call if and only if the user has the permission to rename.
 func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leaveRedirections bool, u *user.User) error {
+	hop := history.Operation(history.TypeRenameHypha).WithUser(u)
 	// * bouncepaw hates this function and related renaming functions
 	if newName == "" {
+		hop.Abort()
 		rejectRenameLog(oldHypha, u, "no new name given")
 		return errors.New("ui.rename_noname_tip")
 	}
 
 	if !hyphae.IsValidName(newName) {
+		hop.Abort()
 		rejectRenameLog(oldHypha, u, fmt.Sprintf("new name ‘%s’ invalid", newName))
 		return errors.New("ui.rename_badname_tip") // FIXME: There is a bug related to this.
 	}
 
 	switch targetHypha := hyphae.ByName(newName); targetHypha.(type) {
 	case hyphae.ExistingHypha:
+		hop.Abort()
 		if targetHypha.CanonicalName() == oldHypha.CanonicalName() {
 			return nil
 		}
@@ -53,10 +57,9 @@ func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leave
 	)
 
 	if err != nil {
+		hop.Abort()
 		return err
 	}
-
-	hop := history.Operation(history.TypeRenameHypha).WithUser(u)
 
 	if len(hyphaeToRename) > 0 {
 		hop.WithMsg(fmt.Sprintf(
@@ -72,8 +75,8 @@ func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leave
 
 	hop.WithFilesRenamed(renameMap)
 
-	if len(hop.Errs) != 0 {
-		return hop.Errs[0]
+	if hop.HasError() {
+		return hop.Abort().Error
 	}
 
 	for _, h := range hyphaeToRename {
@@ -87,14 +90,17 @@ func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leave
 		if leaveRedirections {
 			if err := leaveRedirection(oldName, newName, hop); err != nil {
 				hop.WithErrAbort(err)
+				Reindex()
 				return err
 			}
 		}
 	}
 
 	hop.Apply()
-
-	return nil
+	if hop.HasError() {
+		Reindex()
+	}
+	return hop.Error
 }
 
 const redirectionTemplate = `=> %[1]s | 👁️➡️ %[2]s

@@ -54,7 +54,9 @@ func main() {
 	if err := history.Start(); err != nil {
 		os.Exit(1)
 	}
-	history.InitGitRepo()
+	if err := history.InitGitRepo(); err != nil {
+		os.Exit(1)
+	}
 	migration.MigrateRocketsMaybe()
 	migration.MigrateHeadingsMaybe()
 	shroom.SetHeaderLinks()

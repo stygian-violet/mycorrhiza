@@ -3,11 +3,11 @@ package history
 
 import (
 	"bytes"
-	"fmt"
 	"log/slog"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -32,10 +32,10 @@ func Start() error {
 }
 
 // InitGitRepo checks a Git repository and initializes it if necessary.
-func InitGitRepo() {
+func InitGitRepo() error {
 	// Detect if the Git repo directory is a Git repository
 	isGitRepo := true
-	buf, err := silentGitsh("rev-parse", "--git-dir")
+	buf, err := gitsh("rev-parse", "--git-dir")
 	if err != nil {
 		isGitRepo = false
 	}
@@ -47,34 +47,48 @@ func InitGitRepo() {
 	}
 	if !isGitRepo {
 		slog.Info("Initializing Git repo", "path", files.HyphaeDir())
-		gitsh("init")
-		gitsh("config", "core.quotePath", "false")
+		if _, err := gitsh("init"); err != nil {
+			return err
+		}
+		if _, err := gitsh("config", "core.quotePath", "false"); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func gitstr(args ...string) string {
+	return strings.Join(append([]string{"> git"}, args...), " ");
 }
 
 // I pronounce it as [gɪt͡ʃ].
 // gitsh is async-safe, therefore all other git-related functions in this module are too.
 func gitsh(args ...string) (out bytes.Buffer, err error) {
-	fmt.Printf("$ %v\n", args)
+	slog.Info(gitstr(args...))
 	cmd := exec.Command(gitpath, args...)
 	cmd.Dir = files.HyphaeDir()
 	cmd.Env = append(cmd.Environ(), gitEnv...)
 
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Info("Git command failed", "err", err, "output", string(b))
+		slog.Error("Git command failed", "args", args, "err", err, "output", string(b))
 	}
 	return *bytes.NewBuffer(b), err
 }
 
-// silentGitsh is like gitsh, except it writes less to the stdout.
-func silentGitsh(args ...string) (out bytes.Buffer, err error) {
-	cmd := exec.Command(gitpath, args...)
-	cmd.Dir = files.HyphaeDir()
-	cmd.Env = append(cmd.Environ(), gitEnv...)
-
-	b, err := cmd.CombinedOutput()
-	return *bytes.NewBuffer(b), err
+func gitReset() error {
+	slog.Info("Resetting Git working directory")
+	var ret error = nil
+	if _, err := gitsh("reset", "--hard"); err != nil {
+		ret = err
+	}
+	if _, err := gitsh("clean", "-d", "-f"); err != nil {
+		ret = err
+	}
+	if ret != nil {
+		slog.Error("Failed to reset working tree")
+	}
+	return ret
 }
 
 // Rename renames from `from` to `to` using `git mv`.

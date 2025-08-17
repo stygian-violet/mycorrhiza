@@ -185,7 +185,7 @@ func saveInterwikiJson() {
 	if data, err := json.MarshalIndent(listOfEntries, "", "\t"); err != nil {
 		slog.Error("Failed to marshal interwiki entries", "err", err)
 		os.Exit(1)
-	} else if err = os.WriteFile(files.InterwikiJSON(), data, 0666); err != nil {
+	} else if err = os.WriteFile(files.InterwikiJSON(), data, 0660); err != nil {
 		slog.Error("Failed to write interwiki.json", "err", err)
 		os.Exit(1)
 	}

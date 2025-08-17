@@ -130,11 +130,11 @@ func writeMediaToDisk(h hyphae.Hypha, mime string, data []byte) (string, error) 
 		uploadedFilePath = filepath.Join(append([]string{files.HyphaeDir()}, strings.Split(h.CanonicalName()+ext, "\\")...)...)
 	)
 
-	if err := os.MkdirAll(filepath.Dir(uploadedFilePath), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(uploadedFilePath), os.ModeDir|0770); err != nil {
 		return uploadedFilePath, err
 	}
 
-	if err := os.WriteFile(uploadedFilePath, data, 0666); err != nil {
+	if err := os.WriteFile(uploadedFilePath, data, 0660); err != nil {
 		return uploadedFilePath, err
 	}
 	return uploadedFilePath, nil

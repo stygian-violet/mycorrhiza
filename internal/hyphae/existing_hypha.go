@@ -64,10 +64,10 @@ func Insert(h ExistingHypha) (madeNewRecord bool) {
 }
 
 func WriteToMycoFile(h ExistingHypha, data []byte) error {
-	if err := os.MkdirAll(filepath.Dir(h.TextFilePath()), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(h.TextFilePath()), os.ModeDir|0770); err != nil {
 		return err
 	}
-	if err := os.WriteFile(h.TextFilePath(), data, 0666); err != nil {
+	if err := os.WriteFile(h.TextFilePath(), data, 0660); err != nil {
 		return err
 	}
 	switch h := h.(type) {

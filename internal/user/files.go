@@ -104,7 +104,7 @@ func dumpUserCredentials() error {
 		return err
 	}
 
-	err = os.WriteFile(files.UserCredentialsJSON(), blob, 0666)
+	err = os.WriteFile(files.UserCredentialsJSON(), blob, 0660)
 	if err != nil {
 		slog.Error("Failed to write users.json", "err", err)
 		return err
@@ -128,7 +128,7 @@ func dumpTokens() {
 		slog.Error("Failed to marshal tokens.json", "err", err)
 		return
 	}
-	err = os.WriteFile(files.TokensJSON(), blob, 0666)
+	err = os.WriteFile(files.TokensJSON(), blob, 0660)
 	if err != nil {
 		slog.Error("Failed to write tokens.json", "err", err)
 	}

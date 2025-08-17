@@ -103,7 +103,7 @@ func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
 	hop.SetFilesChanged()
 	for from, to := range pairs {
 		if from != "" {
-			if err := os.MkdirAll(filepath.Dir(to), 0777); err != nil {
+			if err := os.MkdirAll(filepath.Dir(to), os.ModeDir|0770); err != nil {
 				hop.Error = err
 				return hop
 			}

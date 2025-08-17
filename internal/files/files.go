@@ -57,22 +57,22 @@ func PrepareWikiRoot() error {
 	if _, err := os.Stat(cfg.WikiDir); err != nil && os.IsNotExist(err) {
 		isFirstInit = true
 	}
-	if err := os.MkdirAll(cfg.WikiDir, os.ModeDir|0777); err != nil {
+	if err := os.MkdirAll(cfg.WikiDir, os.ModeDir|0770); err != nil {
 		return err
 	}
 
 	paths.cacheDir = filepath.Join(cfg.WikiDir, "cache")
-	if err := os.MkdirAll(paths.cacheDir, os.ModeDir|0777); err != nil {
+	if err := os.MkdirAll(paths.cacheDir, os.ModeDir|0770); err != nil {
 		return err
 	}
 
 	paths.gitRepo = filepath.Join(cfg.WikiDir, "wiki.git")
-	if err := os.MkdirAll(paths.gitRepo, os.ModeDir|0777); err != nil {
+	if err := os.MkdirAll(paths.gitRepo, os.ModeDir|0770); err != nil {
 		return err
 	}
 
 	paths.staticFiles = filepath.Join(cfg.WikiDir, "static")
-	if err := os.MkdirAll(paths.staticFiles, os.ModeDir|0777); err != nil {
+	if err := os.MkdirAll(paths.staticFiles, os.ModeDir|0770); err != nil {
 		return err
 	}
 

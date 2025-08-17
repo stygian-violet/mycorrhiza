@@ -34,7 +34,7 @@ func genericLineMigrator(
 	for hypha := range hyphae.FilterHyphaeWithText(hyphae.YieldExistingHyphae()) {
 		/// Open file, read from file, modify file. If anything goes wrong, scream and shout.
 
-		file, err := os.OpenFile(hypha.TextFilePath(), os.O_RDWR, 0766)
+		file, err := os.OpenFile(hypha.TextFilePath(), os.O_RDWR, 0660)
 		if err != nil {
 			hop.WithErrAbort(err)
 			slog.Error("Failed to open text part file", "path", hypha.TextFilePath(), "err", err)

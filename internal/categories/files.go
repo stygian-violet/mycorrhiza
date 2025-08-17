@@ -138,7 +138,7 @@ func saveToDisk() {
 
 	// TODO: make the data safer somehow?? Back it up before overwriting?
 	fileMutex.Lock()
-	err = os.WriteFile(files.CategoriesJSON(), data, 0666)
+	err = os.WriteFile(files.CategoriesJSON(), data, 0660)
 	if err != nil {
 		slog.Error("Failed to write categories.json", "err", err)
 		os.Exit(1)

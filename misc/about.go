@@ -2,7 +2,6 @@ package misc
 
 import (
 	"log/slog"
-	"os"
 	"strings"
 	"text/template" // sic! TODO: make it html/template after the template library migration
 
@@ -98,7 +97,7 @@ func AboutHTML(lc *l18n.Localizer) string {
 	temp, err := template.New("about wiki").Funcs(template.FuncMap{"get": get}).Parse(aboutTemplateString)
 	if err != nil {
 		slog.Error("Failed to parse About template", "err", err)
-		os.Exit(1)
+		return err.Error()
 	}
 	data := aboutData
 	data.Version = version.Short
@@ -116,7 +115,7 @@ func AboutHTML(lc *l18n.Localizer) string {
 	err = temp.Execute(&out, data)
 	if err != nil {
 		slog.Error("Failed to execute About template", "err", err)
-		os.Exit(1)
+		return err.Error()
 	}
 	return out.String()
 }

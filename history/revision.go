@@ -5,7 +5,6 @@ import (
 	"html"
 	"log/slog"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -185,7 +184,7 @@ func (stream *recentChangesStream) next(n int) []Revision {
 	if err != nil {
 		// TODO: return error
 		slog.Error("Failed to git log", "err", err)
-		os.Exit(1)
+		return nil
 	}
 	if len(res) != 0 {
 		stream.currHash = res[len(res)-1].Hash

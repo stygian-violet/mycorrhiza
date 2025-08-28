@@ -11,6 +11,7 @@ import (
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
@@ -26,74 +27,96 @@ var (
 )
 
 // InitUserDatabase loads users, if necessary. Call it during initialization.
-func InitUserDatabase() {
+func InitUserDatabase() error {
 	if !cfg.UseAuth {
-		return
+		return nil
 	}
-	ReadUsersFromFilesystem()
-	go runSessionUpdater()
+	if err := ReadUsersFromFilesystem(); err != nil {
+		return err
+	}
+	process.Go(runSessionUpdater)
+	return nil
 }
 
 // ReadUsersFromFilesystem reads all user information from filesystem and
 // stores it internally.
-func ReadUsersFromFilesystem() {
-	rememberUsers(usersFromFile())
-	readTokensToUsers()
+func ReadUsersFromFilesystem() error {
+	users, err := usersFromFile()
+	if err != nil {
+		return err
+	}
+	rememberUsers(users)
+	return readTokensToUsers()
 }
 
 func runSessionUpdater() {
+	slog.Info("Starting session updater")
 	ticker := time.NewTicker(cfg.SessionUpdateInterval)
 	defer ticker.Stop()
 	save := false
+L:
 	for {
+		write := false
 		select {
+		case <-process.Done():
+			break L
 		case ev, ok := <- sessionEvents:
 			switch {
 			case !ok:
 				slog.Info("Session event channel closed")
-				slog.Info("Saving sessions")
-				dumpTokens()
-				return
+				break L
 			case ev == SessionActive:
 				save = true
 			case ev == SessionChanged:
-				err := dumpTokens()
-				if err == nil {
-					save = false
-				}
+				write = true
 			default:
 				slog.Warn("Invalid session event", "ev", ev)
 			}
 		case <- ticker.C:
 			if save {
 				slog.Info("Saving session activity")
-				err := dumpTokens()
-				if err == nil {
-					save = false
-				}
+				write = true
+			}
+		}
+		if write {
+			err := writeTokens()
+			if err == nil {
+				save = false
 			}
 		}
 	}
+	slog.Info("Stopping session updater")
+	if save {
+		slog.Info("Saving sessions")
+		writeTokens()
+	}
 }
 
-func usersFromFile() []*User {
+func sendSessionEvent(ev SessionEvent) {
+	select {
+	case <-process.Done():
+	case sessionEvents <- ev:
+	}
+}
+
+func usersFromFile() ([]*User, error) {
 	var users []*User
 
 	userFileMutex.Lock()
 	contents, err := os.ReadFile(files.UserCredentialsJSON())
 	userFileMutex.Unlock()
 	if errors.Is(err, os.ErrNotExist) {
-		return users
+		return users, nil
 	}
 	if err != nil {
 		slog.Error("Failed to read users.json", "err", err)
-		os.Exit(1)
+		return users, err
 	}
 
 	err = json.Unmarshal(contents, &users)
 	if err != nil {
 		slog.Error("Failed to unmarshal users.json contents", "err", err)
-		os.Exit(1)
+		return users, err
 	}
 
 	for _, u := range users {
@@ -103,7 +126,7 @@ func usersFromFile() []*User {
 		}
 	}
 	slog.Info("Indexed users", "n", len(users))
-	return users
+	return users, nil
 }
 
 func rememberUsers(userList []*User) {
@@ -122,17 +145,17 @@ func rememberUsers(userList []*User) {
 	usersMutex.Unlock()
 }
 
-func readTokensToUsers() {
+func readTokensToUsers() error {
 	contents, err := os.ReadFile(files.TokensJSON())
 	if os.IsNotExist(err) {
 		tokensMutex.Lock()
 		tokens = make(map[string]*Session)
 		tokensMutex.Unlock()
-		return
+		return nil
 	}
 	if err != nil {
 		slog.Error("Failed to read tokens.json", "err", err)
-		os.Exit(1)
+		return err
 	}
 
 	var sessions []*Session
@@ -140,6 +163,7 @@ func readTokensToUsers() {
 	err = json.Unmarshal(contents, &sessions)
 	if err != nil {
 		slog.Error("Failed to unmarshal tokens.json contents", "err", err)
+		// return err
 	}
 	slices.SortFunc(sessions, MostRecentlyUsedSession)
 
@@ -168,14 +192,15 @@ func readTokensToUsers() {
 	}
 	tokensMutex.Unlock()
 	slog.Info("Indexed sessions", "active", active, "invalid", invalid)
+	return nil
 }
 
 // SaveUserDatabase stores current user credentials into JSON file by configured path.
 func SaveUserDatabase() error {
-	return dumpUserCredentials()
+	return writeUserCredentials()
 }
 
-func dumpUserCredentials() error {
+func writeUserCredentials() error {
 	userFileMutex.Lock()
 	defer userFileMutex.Unlock()
 
@@ -204,7 +229,7 @@ func dumpUserCredentials() error {
 	return nil
 }
 
-func dumpTokens() error {
+func writeTokens() error {
 	var sessionList []*Session
 	tokensMutex.Lock()
 	for token, session := range tokens {

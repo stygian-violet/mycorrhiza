@@ -133,15 +133,14 @@ func saveToDisk() {
 	data, err := json.MarshalIndent(record, "", "\t")
 	if err != nil {
 		slog.Error("Failed to marshal categories record", "err", err)
-		os.Exit(1) // Better fail now, than later
+		return
 	}
 
 	// TODO: make the data safer somehow?? Back it up before overwriting?
 	fileMutex.Lock()
 	err = os.WriteFile(files.CategoriesJSON(), data, 0660)
+	fileMutex.Unlock()
 	if err != nil {
 		slog.Error("Failed to write categories.json", "err", err)
-		os.Exit(1)
 	}
-	fileMutex.Unlock()
 }

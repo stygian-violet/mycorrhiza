@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 )
 
 // Index finds all hypha files in the full `path` and saves them to the hypha storage.
@@ -13,10 +14,10 @@ func Index(path string) {
 	byNames = make(map[string]ExistingHypha)
 	ch := make(chan ExistingHypha, 5)
 
-	go func(ch chan ExistingHypha) {
+	process.Go(func() {
 		indexHelper(path, 0, ch)
 		close(ch)
-	}(ch)
+	})
 
 	for foundHypha := range ch {
 		switch storedHypha := ByName(foundHypha.CanonicalName()).(type) {
@@ -61,7 +62,8 @@ func indexHelper(path string, nestLevel uint, ch chan ExistingHypha) {
 	nodes, err := os.ReadDir(path)
 	if err != nil {
 		slog.Error("Failed to read directory", "path", path, "err", err)
-		os.Exit(1)
+		process.Shutdown()
+		return
 	}
 
 	for _, node := range nodes {
@@ -77,17 +79,22 @@ func indexHelper(path string, nestLevel uint, ch chan ExistingHypha) {
 			hyphaName, isText, skip = mimetype.DataFromFilename(hyphaPartPath)
 		)
 		if !skip {
+			var hypha ExistingHypha
 			if isText {
-				ch <- &TextualHypha{
+				hypha = &TextualHypha{
 					canonicalName: hyphaName,
 					mycoFilePath:  hyphaPartPath,
 				}
 			} else {
-				ch <- &MediaHypha{
+				hypha = &MediaHypha{
 					canonicalName: hyphaName,
 					mycoFilePath:  "",
 					mediaFilePath: hyphaPartPath,
 				}
+			}
+			select {
+			case <-process.Done():
+			case ch <- hypha:
 			}
 		}
 	}

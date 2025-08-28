@@ -12,14 +12,16 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 )
 
-func serveHTTP(handler http.Handler) (err error) {
-	server := &http.Server{
+func newServer(handler http.Handler) *http.Server {
+	return &http.Server{
 		ReadTimeout:  300 * time.Second,
 		WriteTimeout: 300 * time.Second,
 		IdleTimeout:  300 * time.Second,
 		Handler:      handler,
 	}
+}
 
+func serveHTTP(server *http.Server) (err error) {
 	if strings.HasPrefix(cfg.ListenAddr, "/") {
 		err = startUnixSocketServer(server, cfg.ListenAddr)
 	} else {

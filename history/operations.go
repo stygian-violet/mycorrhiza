@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/internal/user"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
@@ -144,7 +145,7 @@ func (hop *Op) Apply() *Op {
 func (hop *Op) Abort() *Op {
 	if hop.filesChanged {
 		if err := gitReset(); err != nil {
-			// os.Exit(1)
+			process.Shutdown()
 		}
 	}
 	gitMutex.Unlock()

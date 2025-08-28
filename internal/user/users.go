@@ -94,7 +94,7 @@ func ByToken(token string) *User {
 			terminateSession(token)
 			return EmptyUser()
 		} else {
-			sessionEvents <- SessionActive
+			sendSessionEvent(SessionActive)
 		}
 		return user
 	}
@@ -139,7 +139,7 @@ func DeleteUser(name string) error {
 	}
 	tokensMutex.Unlock()
 	if sessions > 0 {
-		sessionEvents <- SessionChanged
+		sendSessionEvent(SessionChanged)
 	}
 	return SaveUserDatabase()
 }
@@ -191,7 +191,7 @@ func AddSession(username string) (*Session, error) {
 		tokensMutex.Unlock()
 		if !exists {
 			slog.Info("Added session", "username", username, "session", session)
-			sessionEvents <- SessionChanged
+			sendSessionEvent(SessionChanged)
 			return session, nil
 		}
 	}
@@ -210,7 +210,7 @@ func terminateSession(token string) {
 		slog.Info("Terminating session", "data", session)
 		session.Username = "anon"
 		session.Unlock()
-		sessionEvents <- SessionChanged
+		sendSessionEvent(SessionChanged)
 	}
 }
 

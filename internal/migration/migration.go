@@ -19,32 +19,32 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 )
 
-func shouldMigrate(markerPath string) bool {
+func shouldMigrate(markerPath string) (bool, error) {
 	file, err := os.Open(markerPath)
 	if os.IsNotExist(err) {
-		return true
+		return true, nil
 	}
 	if err != nil {
 		slog.Error("Failed to check if migration is needed", "markerPath", markerPath, "err", err)
-		os.Exit(1)
+		return false, err
 	}
 	_ = file.Close()
-	return false
+	return false, nil
 }
 
-func createMarker(markerPath string, contents string) {
+func createMarker(markerPath string, contents string) error {
 	err := ioutil.WriteFile(markerPath, []byte(contents), 0660)
 	if err != nil {
 		slog.Error("Failed to create migration marker", "markerPath", markerPath, "err", err)
-		os.Exit(1)
 	}
+	return err
 }
 
 func genericLineMigrator(
 	commitMessage string,
 	migrator func(string) string,
 	commitErrorMessage string,
-) {
+) error {
 	var (
 		hop = history.
 			Operation(history.TypeMarkupMigration).
@@ -62,7 +62,7 @@ func genericLineMigrator(
 		if err != nil {
 			hop.WithErrAbort(err)
 			slog.Error("Failed to open text part file", "path", hypha.TextFilePath(), "err", err)
-			os.Exit(1)
+			return err
 		}
 
 		var buf strings.Builder
@@ -71,7 +71,7 @@ func genericLineMigrator(
 			hop.WithErrAbort(err)
 			_ = file.Close()
 			slog.Error("Failed to read text part file", "path", hypha.TextFilePath(), "err", err)
-			os.Exit(1)
+			return err
 		}
 
 		var (
@@ -87,7 +87,7 @@ func genericLineMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to truncate text part file", "path", hypha.TextFilePath(), "err", err)
-				os.Exit(1)
+				return err
 			}
 
 			_, err = file.Seek(0, 0)
@@ -95,7 +95,7 @@ func genericLineMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to seek in text part file", "path", hypha.TextFilePath(), "err", err)
-				os.Exit(1)
+				return err
 			}
 
 			_, err = file.WriteString(newText)
@@ -103,7 +103,7 @@ func genericLineMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to write to text part file", "path", hypha.TextFilePath(), "err", err)
-				os.Exit(1)
+				return err
 			}
 		}
 		_ = file.Close()
@@ -111,15 +111,16 @@ func genericLineMigrator(
 
 	if len(mycoFiles) == 0 {
 		hop.Abort()
-		return
+		return nil
 	}
 
 	if hop.WithFiles(mycoFiles...).Apply().HasError() {
 		slog.Error(commitErrorMessage + hop.ErrorText())
-		os.Exit(1)
+		return hop.Error
 	}
 
 	slog.Info("Migrated Mycomarkup documents", "n", len(mycoFiles))
+	return nil
 }
 
 func genericFileMigrator(
@@ -127,7 +128,7 @@ func genericFileMigrator(
 	commitMessage string,
 	migrator func(string) string,
 	commitErrorMessage string,
-) {
+) error {
 	var (
 		hop = history.
 			Operation(history.TypeMarkupMigration).
@@ -154,7 +155,7 @@ func genericFileMigrator(
 		if err != nil {
 			hop.WithErrAbort(err)
 			slog.Error("Failed to open file", "path", path, "err", err)
-			os.Exit(1)
+			return err
 		}
 
 		if exists {
@@ -164,7 +165,7 @@ func genericFileMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to read file", "path", path, "err", err)
-				os.Exit(1)
+				return err
 			}
 			oldText = buf.String()
 		} else {
@@ -182,7 +183,7 @@ func genericFileMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to truncate file", "path", path, "err", err)
-				os.Exit(1)
+				return err
 			}
 
 			_, err = file.Seek(0, 0)
@@ -190,7 +191,7 @@ func genericFileMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to seek in file", "path", path, "err", err)
-				os.Exit(1)
+				return err
 			}
 
 			_, err = file.WriteString(newText)
@@ -198,7 +199,7 @@ func genericFileMigrator(
 				hop.WithErrAbort(err)
 				_ = file.Close()
 				slog.Error("Failed to write to text part file", "path", path, "err", err)
-				os.Exit(1)
+				return err
 			}
 		}
 		_ = file.Close()
@@ -206,13 +207,14 @@ func genericFileMigrator(
 
 	if len(changedFiles) == 0 {
 		hop.Abort()
-		return
+		return nil
 	}
 
 	if hop.WithFiles(changedFiles...).Apply().HasError() {
 		slog.Error(commitErrorMessage + hop.ErrorText())
-		os.Exit(1)
+		return hop.Error
 	}
 
 	slog.Info("Migrated files", "n", len(changedFiles))
+	return nil
 }

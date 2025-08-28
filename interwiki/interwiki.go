@@ -89,34 +89,21 @@ func deleteEntry(wiki *Wiki) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// I'm being fancy here. Come on, the code here is already a mess.
-	// Let me have some fun.
-	var wg sync.WaitGroup
+	names := append(wiki.Aliases, wiki.Name)
+	for _, name := range names {
+		name := name // I guess we need that
+		delete(entriesByName, name)
+	}
 
-	wg.Add(2)
-	go func() {
-		names := append(wiki.Aliases, wiki.Name)
-		for _, name := range names {
-			name := name // I guess we need that
-			delete(entriesByName, name)
+	for i, w := range listOfEntries {
+		i, w := i, w
+		if w.Name == wiki.Name {
+			// Drop ith element.
+			listOfEntries[i] = listOfEntries[len(listOfEntries)-1]
+			listOfEntries = listOfEntries[:len(listOfEntries)-1]
+			break
 		}
-		wg.Done()
-	}()
-
-	go func() {
-		for i, w := range listOfEntries {
-			i, w := i, w
-			if w.Name == wiki.Name {
-				// Drop ith element.
-				listOfEntries[i] = listOfEntries[len(listOfEntries)-1]
-				listOfEntries = listOfEntries[:len(listOfEntries)-1]
-				break
-			}
-		}
-		wg.Done()
-	}()
-
-	wg.Wait()
+	}
 }
 
 // TODO: There is something clearly wrong with error-returning in this function.
@@ -182,14 +169,14 @@ func readInterwiki() ([]Wiki, error) {
 
 func saveInterwikiJson() {
 	// Trust me, wiki crashing when an admin takes an administrative action totally makes sense.
-	if data, err := json.MarshalIndent(listOfEntries, "", "\t"); err != nil {
+	data, err := json.MarshalIndent(listOfEntries, "", "\t")
+	if err != nil {
 		slog.Error("Failed to marshal interwiki entries", "err", err)
-		os.Exit(1)
-	} else if err = os.WriteFile(files.InterwikiJSON(), data, 0660); err != nil {
-		slog.Error("Failed to write interwiki.json", "err", err)
-		os.Exit(1)
+		return
 	}
-
+	if err = os.WriteFile(files.InterwikiJSON(), data, 0660); err != nil {
+		slog.Error("Failed to write interwiki.json", "err", err)
+		return
+	}
 	slog.Info("Saved interwiki.json")
-
 }

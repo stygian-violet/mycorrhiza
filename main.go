@@ -2,8 +2,12 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
@@ -12,6 +16,7 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/migration"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/internal/version"
@@ -21,25 +26,31 @@ import (
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
+func exit() {
+	process.Shutdown()
+	process.Wait()
+	os.Exit(1)
+}
+
 func main() {
 	if err := parseCliArgs(); err != nil {
-		os.Exit(1)
+		exit()
 	}
 
 	if err := files.PrepareWikiRoot(); err != nil {
 		slog.Error("Failed to prepare wiki root", "err", err)
-		os.Exit(1)
+		exit()
 	}
 
 	if err := cfg.ReadConfigFile(files.ConfigPath()); err != nil {
 		slog.Error("Failed to read config", "err", err)
-		os.Exit(1)
+		exit()
 	}
 
 	if err := os.Chdir(files.HyphaeDir()); err != nil {
 		slog.Error("Failed to chdir to hyphae dir",
 			"err", err, "hyphaeDir", files.HyphaeDir())
-		os.Exit(1)
+		exit()
 	}
 	slog.Info("Running Mycorrhiza Wiki",
 		"version", version.Short, "wikiDir", cfg.WikiDir)
@@ -49,23 +60,25 @@ func main() {
 	viewutil.Init()
 	hyphae.Index(files.HyphaeDir())
 	backlinks.IndexBacklinks()
-	go backlinks.RunBacklinksConveyor()
-	user.InitUserDatabase()
+	process.Go(backlinks.RunBacklinksConveyor)
+	if err := user.InitUserDatabase(); err != nil {
+		exit()
+	}
 	if err := history.Start(); err != nil {
-		os.Exit(1)
+		exit()
 	}
 	if err := history.InitGitRepo(); err != nil {
-		os.Exit(1)
+		exit()
 	}
-	migration.MigrateRocketsMaybe()
-	migration.MigrateHeadingsMaybe()
-	migration.MigrateSpacesAndNewlinesMaybe()
+	if err := migration.Migrate(); err != nil {
+		exit()
+	}
 	shroom.SetHeaderLinks()
 	if err := categories.Init(); err != nil {
-		os.Exit(1)
+		exit()
 	}
 	if err := interwiki.Init(); err != nil {
-		os.Exit(1)
+		exit()
 	}
 
 	// Static files:
@@ -75,8 +88,31 @@ func main() {
 		slog.Error("Your wiki has no admin yet. Run Mycorrhiza with -create-admin <username> option to create an admin.")
 	}
 
-	err := serveHTTP(web.Handler())
-	if err != nil {
-		os.Exit(1)
+	server := newServer(web.Handler())
+	process.Go(func() {
+		err := serveHTTP(server)
+		if err != nil {
+			process.Shutdown()
+		}
+	})
+
+	signals := make(chan os.Signal)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case sig := <- signals:
+		slog.Info("Received signal", "sig", sig)
+		process.Shutdown()
+	case <-process.Done():
 	}
+	timeout := 8 * time.Second
+	slog.Info("Stopping HTTP server", "timeout", timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("HTTP shutdown error", "err", err)
+	} else {
+		slog.Info("Stopped HTTP server")
+	}
+	cancel()
+	process.Wait()
+	os.Exit(1)
 }

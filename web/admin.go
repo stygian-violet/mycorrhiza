@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
-	"os"
 	"sort"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
@@ -116,7 +116,7 @@ func handlerAdmin(w http.ResponseWriter, rq *http.Request) {
 func handlerAdminShutdown(w http.ResponseWriter, rq *http.Request) {
 	if user.CanProceed(rq, "admin/shutdown") {
 		slog.Info("An admin commanded the wiki to shutdown")
-		os.Exit(0)
+		process.Shutdown()
 	}
 }
 

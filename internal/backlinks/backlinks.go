@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
@@ -28,14 +29,31 @@ func yieldHyphaBacklinks(hyphaName string) iter.Seq[string] {
 	return sorted
 }
 
-var backlinkConveyor = make(chan backlinkIndexOperation) // No need to buffer because these operations are rare.
+var backlinkConveyor = make(chan backlinkIndexOperation, 4)
 
 // RunBacklinksConveyor runs an index operation processing loop. Call it somewhere in main.
 func RunBacklinksConveyor() {
-	// It is supposed to run as a goroutine for all the time. So, don't blame the infinite loop.
-	defer close(backlinkConveyor)
+	slog.Info("Starting backlinks conveyor")
+L:
 	for {
-		(<-backlinkConveyor).apply()
+		select {
+		case <-process.Done():
+			break L
+		case op, ok := <-backlinkConveyor:
+			if !ok {
+				slog.Info("Backlink operation channel closed")
+				break L
+			}
+			op.apply()
+		}
+	}
+	slog.Info("Stopping backlinks conveyor")
+}
+
+func runBacklinkOperation(op backlinkIndexOperation) {
+	select {
+	case <-process.Done():
+	case backlinkConveyor <- op:
 	}
 }
 

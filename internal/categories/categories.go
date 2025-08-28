@@ -21,7 +21,11 @@
 //   - Bind hyphae.
 package categories
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/bouncepaw/mycorrhiza/internal/process"
+)
 
 // ListOfCategories returns unsorted names of all categories.
 func ListOfCategories() (categoryList []string) {
@@ -72,7 +76,7 @@ func AddHyphaToCategory(hyphaName, catName string) {
 		categoryToHyphae[catName] = &categoryNode{hyphaList: []string{hyphaName}}
 	}
 	mutex.Unlock()
-	go saveToDisk()
+	process.Go(saveToDisk)
 }
 
 // RemoveHyphaFromCategory removes the hypha from the category and updates the records on the disk. If the hypha is not in the category, nothing happens. Pass canonical names.
@@ -92,7 +96,7 @@ func RemoveHyphaFromCategory(hyphaName, catName string) {
 		}
 	}
 	mutex.Unlock()
-	go saveToDisk()
+	process.Go(saveToDisk)
 }
 
 // RemoveHyphaFromAllCategories removes the given hypha from all the categories.
@@ -115,7 +119,7 @@ func RemoveHyphaFromAllCategories(hyphaName string) {
 			}
 		}
 	}
-	go saveToDisk()
+	process.Go(saveToDisk)
 }
 
 // RenameHyphaInAllCategories finds all mentions of oldName and replaces them with newName. Pass canonical names. Make sure newName is not taken. If oldName is not in any category, RenameHyphaInAllCategories is a no-op.
@@ -132,5 +136,5 @@ func RenameHyphaInAllCategories(oldName, newName string) {
 			}
 		}
 	}
-	go saveToDisk()
+	process.Go(saveToDisk)
 }

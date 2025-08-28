@@ -227,12 +227,11 @@ func handlerLogin(w http.ResponseWriter, rq *http.Request) {
 	if rq.Method == http.MethodGet {
 		w.WriteHeader(http.StatusOK)
 		_ = pageAuthLogin.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":            cfg.UseAuth,
-			"ErrUnknownUsername": false,
-			"ErrWrongPassword":   false,
-			"ErrTelegram":        false,
-			"Err":                nil,
-			"WikiName":           cfg.WikiName,
+			"UseAuth":     cfg.UseAuth,
+			"ErrLogin":    false,
+			"ErrTelegram": false,
+			"Err":         nil,
+			"WikiName":    cfg.WikiName,
 		})
 		slog.Info("Somebody logging in")
 		return
@@ -246,13 +245,12 @@ func handlerLogin(w http.ResponseWriter, rq *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = pageAuthLogin.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":            cfg.UseAuth,
-			"ErrUnknownUsername": errors.Is(err, user.ErrUnknownUsername),
-			"ErrWrongPassword":   errors.Is(err, user.ErrWrongPassword),
-			"ErrTelegram":        false, // TODO: ?
-			"Err":                err.Error(),
-			"WikiName":           cfg.WikiName,
-			"Username":           username,
+			"UseAuth":     cfg.UseAuth,
+			"ErrLogin":    errors.Is(err, user.ErrLogin),
+			"ErrTelegram": false, // TODO: ?
+			"Err":         err.Error(),
+			"WikiName":    cfg.WikiName,
+			"Username":    username,
 		})
 		slog.Info("Failed to log in", "username", username, "err", err.Error())
 		return
@@ -280,7 +278,7 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 	)
 	// If registering a user via Telegram failed, because a Telegram user with this name
 	// has already registered, then everything is actually ok!
-	if user.HasUsername(username) && user.ByName(username).Source == "telegram" {
+	if user.ByName(username).Source == "telegram" {
 		err = nil
 	}
 

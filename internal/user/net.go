@@ -18,6 +18,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var ErrLogin error = errors.New("wrong username or password")
+
 // CanProceed returns `true` if the user in `rq` has enough rights to access `route`.
 func CanProceed(rq *http.Request, route string) bool {
 	return FromRequest(rq).CanProceed(route)
@@ -79,25 +81,15 @@ func Register(username, password, group, source string, force bool) error {
 	return SaveUserDatabase()
 }
 
-var (
-	ErrUnknownUsername = errors.New("unknown username")
-	ErrWrongPassword   = errors.New("wrong password")
-)
-
 // LoginDataHTTP logs such user in and returns string representation of an error if there is any.
 //
 // The HTTP parameters are used for setting header status (bad request, if it is bad) and saving a cookie.
 func LoginDataHTTP(w http.ResponseWriter, username, password string) error {
 	w.Header().Set("Content-Type", "text/html;charset=utf-8")
-	if !HasUsername(username) {
-		w.WriteHeader(http.StatusBadRequest)
-		slog.Info("Unknown username entered", "username", username)
-		return ErrUnknownUsername
-	}
 	if !CredentialsOK(username, password) {
 		w.WriteHeader(http.StatusBadRequest)
-		slog.Info("Wrong password entered", "username", username)
-		return ErrWrongPassword
+		slog.Info("Wrong username or password entered", "username", username)
+		return ErrLogin
 	}
 	token, err := AddSession(username)
 	if err != nil {

@@ -22,9 +22,11 @@ func YieldUsers() iter.Seq[*User] {
 func ListUsersWithGroup(group string) []string {
 	var filtered []string
 	for u := range YieldUsers() {
+		u.RLock()
 		if u.Group == group {
 			filtered = append(filtered, u.Name)
 		}
+		u.RUnlock()
 	}
 	return filtered
 }
@@ -40,7 +42,10 @@ func Count() (i uint64) {
 
 func HasAnyAdmins() bool {
 	for u := range YieldUsers() {
-		if u.Group == "admin" {
+		u.RLock()
+		admin := u.Group == "admin"
+		u.RUnlock()
+		if admin {
 			return true
 		}
 	}
@@ -82,9 +87,11 @@ func DeleteUser(name string) error {
 	user, loaded := users.LoadAndDelete(name)
 	if loaded {
 		u := user.(*User)
+		u.Lock()
 		u.Name = "anon"
 		u.Group = "anon"
 		u.Password = ""
+		u.Unlock()
 		return SaveUserDatabase()
 	}
 	return nil
@@ -102,6 +109,7 @@ func terminateSession(token string) {
 
 func UsersInGroups() (admins []string, moderators []string, editors []string, readers []string) {
 	for u := range YieldUsers() {
+		u.RLock()
 		switch u.Group {
 		// What if we place the users into sorted slices?
 		case "admin":
@@ -113,6 +121,7 @@ func UsersInGroups() (admins []string, moderators []string, editors []string, re
 		case "reader":
 			readers = append(readers, u.Name)
 		}
+		u.RUnlock()
 	}
 	sort.Strings(admins)
 	sort.Strings(moderators)

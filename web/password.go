@@ -23,7 +23,11 @@ func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 	f := util.FormDataFromRequest(rq, []string{"current_password", "password", "password_confirm"})
 	currentPassword := f.Get("current_password")
 
-	if user.CredentialsOK(u.Name, currentPassword) {
+	u.RLock()
+	username := u.Name
+	u.RUnlock()
+
+	if user.CredentialsOK(username, currentPassword) {
 		password := f.Get("password")
 		passwordConfirm := f.Get("password_confirm")
 		// server side validation
@@ -32,12 +36,16 @@ func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 			f = f.WithError(err)
 		}
 		if password == passwordConfirm {
+			u.RLock()
 			previousPassword := u.Password // for rollback
+			u.RUnlock()
 			if err := u.ChangePassword(password); err != nil {
 				f = f.WithError(err)
 			} else {
 				if err := user.SaveUserDatabase(); err != nil {
+					u.Lock()
 					u.Password = previousPassword
+					u.Unlock()
 					f = f.WithError(err)
 				} else {
 					http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)

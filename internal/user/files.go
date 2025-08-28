@@ -97,8 +97,13 @@ func dumpUserCredentials() error {
 	for u := range YieldUsers() {
 		userList = append(userList, u)
 	}
-
+	for _, u := range userList {
+		u.RLock()
+	}
 	blob, err := json.MarshalIndent(userList, "", "\t")
+	for _, u := range userList {
+		u.RUnlock()
+	}
 	if err != nil {
 		slog.Error("Failed to marshal users.json", "err", err)
 		return err

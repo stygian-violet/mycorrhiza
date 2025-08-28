@@ -4,10 +4,8 @@
 <main class="main-width">
     <section>
         {{if .UseAuth}}
-            {{if .ErrUnknownUsername}}
-                <p class="error">{{block "error username" .}}Unknown username.{{end}}</p>
-            {{else if .ErrWrongPassword}}
-                <p class="error">{{block "error password" .}}Wrong password.{{end}}</p>
+            {{if .ErrLogin}}
+                <p class="error">{{block "error login" .}}Wrong username or password.{{end}}</p>
             {{else if .ErrTelegram}}
                 <p class="error">{{block "error telegram" .}}Could not authorize using Telegram.{{end}}</p>
             {{else if .Err}}

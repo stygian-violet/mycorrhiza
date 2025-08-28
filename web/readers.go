@@ -230,17 +230,20 @@ func handlerBinary(w http.ResponseWriter, rq *http.Request) {
 // handlerHypha is the main hypha action that displays the hypha and the binary upload form along with some navigation.
 func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
+	meta := viewutil.MetaFrom(w, rq)
+	meta.U.RLock()
+	username := meta.U.Name
+	meta.U.RUnlock()
 	var (
 		hyphaName                               = util.HyphaNameFromRq(rq, "page", "hypha")
 		h                                       = hyphae.ByName(hyphaName)
 		contents                                template.HTML
 		openGraph                               template.HTML
 		lc                                      = l18n.FromRequest(rq)
-		meta                                    = viewutil.MetaFrom(w, rq)
 		subhyphae, prevHyphaName, nextHyphaName = tree.Tree(h.CanonicalName())
 		cats                                    = categories.CategoriesWithHypha(h.CanonicalName())
 		category_list                           = ":" + strings.Join(cats, ":") + ":"
-		isMyProfile                             = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && meta.U.Name == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
+		isMyProfile                             = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
 
 		data = map[string]any{
 			"HyphaName":               h.CanonicalName(),

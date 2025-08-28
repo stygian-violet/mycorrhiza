@@ -115,5 +115,7 @@ func (p *Page) RenderTo(meta viewutil.Meta, data map[string]any) error {
 		tmpl = p.TemplateRussian
 	}
 
+	meta.U.RLock()
+	defer meta.U.RUnlock()
 	return tmpl.ExecuteTemplate(meta.W, "page", data)
 }

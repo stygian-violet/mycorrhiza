@@ -64,16 +64,20 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 	)
 
 	if !u.CanProceed("delete") {
+		u.RLock()
 		slog.Info("No rights to delete hypha",
 			"username", u.Name, "hyphaName", h.CanonicalName())
+		u.RUnlock()
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "No rights")
 		return
 	}
 
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
+		u.RLock()
 		slog.Info("Trying to delete empty hyphae",
 			"username", u.Name, "hyphaName", h.CanonicalName())
+		u.RUnlock()
 		// TODO: localize
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Cannot delete an empty hypha")
 		return
@@ -107,15 +111,19 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
+		u.RLock()
 		slog.Info("Trying to rename empty hypha",
 			"username", u.Name, "hyphaName", h.CanonicalName())
+		u.RUnlock()
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Cannot rename an empty hypha") // TODO: localize
 		return
 	}
 
 	if !u.CanProceed("rename") {
+		u.RLock()
 		slog.Info("No rights to rename hypha",
 			"username", u.Name, "hyphaName", h.CanonicalName())
+		u.RUnlock()
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "No rights")
 		return
 	}
@@ -133,8 +141,10 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	if err := shroom.Rename(oldHypha, newName, recursive, leaveRedirections, u); err != nil {
+		u.RLock()
 		slog.Error("Failed to rename hypha",
 			"err", err, "username", u.Name, "hyphaName", oldHypha.CanonicalName())
+		u.RUnlock()
 		viewutil.HttpErr(meta, http.StatusForbidden, oldHypha.CanonicalName(), lc.Get(err.Error())) // TODO: localize
 		return
 	}

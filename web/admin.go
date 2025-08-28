@@ -155,13 +155,16 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 	f := util.FormDataFromRequest(rq, []string{"group"})
 
 	if rq.Method == http.MethodPost {
-		oldGroup := u.Group
 		newGroup := f.Get("group")
-
 		if user.ValidGroup(newGroup) {
+			u.Lock()
+			oldGroup := u.Group
 			u.Group = newGroup
+			u.Unlock()
 			if err := user.SaveUserDatabase(); err != nil {
+				u.Lock()
 				u.Group = oldGroup
+				u.Unlock()
 				slog.Info("Failed to save user database", "err", err)
 				f = f.WithError(err)
 			} else {
@@ -173,7 +176,9 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 		}
 	}
 
+	u.RLock()
 	f.Put("group", u.Group)
+	u.RUnlock()
 
 	if f.HasError() {
 		w.WriteHeader(http.StatusBadRequest)
@@ -201,12 +206,16 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 		f = f.WithError(err)
 	}
 	if password == passwordConfirm {
+		u.RLock()
 		previousPassword := u.Password // for rollback
+		u.RUnlock()
 		if err := u.ChangePassword(password); err != nil {
 			f = f.WithError(err)
 		} else {
 			if err := user.SaveUserDatabase(); err != nil {
+				u.Lock()
 				u.Password = previousPassword
+				u.Unlock()
 				f = f.WithError(err)
 			} else {
 				http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
@@ -237,7 +246,10 @@ func handlerAdminUserDelete(w http.ResponseWriter, rq *http.Request) {
 	f := util.NewFormData()
 
 	if rq.Method == http.MethodPost {
-		f = f.WithError(user.DeleteUser(u.Name))
+		u.RLock()
+		name := u.Name
+		u.RUnlock()
+		f = f.WithError(user.DeleteUser(name))
 		if !f.HasError() {
 			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
 		} else {

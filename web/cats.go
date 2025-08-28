@@ -100,8 +100,10 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 	if len(hyphaNames) == 0 || catName == "" {
+		u.RLock()
 		slog.Info("No data for removal of hyphae from category passed",
 			"username", u.Name, "catName", catName)
+		u.RUnlock()
 		http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 		return
 	}
@@ -109,8 +111,10 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		// TODO: Make it more effective.
 		categories.RemoveHyphaFromCategory(hyphaName, catName)
 	}
+	u.RLock()
 	slog.Info("Remove hyphae from category",
 		"username", u.Name, "catName", catName, "hyphaNames", hyphaNames)
+	u.RUnlock()
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }
 

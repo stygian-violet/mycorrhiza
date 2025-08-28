@@ -60,6 +60,7 @@ type naviTitleData struct {
 func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
 	parts, partsWithParents := naviTitleify(hyphaName)
 	var buf strings.Builder
+	meta.U.RLock()
 	err := chainNaviTitle.Get(meta).ExecuteTemplate(&buf, "navititle", naviTitleData{
 		HyphaNameParts:            parts,
 		HyphaNamePartsWithParents: partsWithParents,
@@ -67,6 +68,7 @@ func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
 		HomeHypha:                 cfg.HomeHypha,
 		Root:                      cfg.Root,
 	})
+	meta.U.RUnlock()
 	if err != nil {
 		slog.Error("Failed to render NaviTitle properly; using nevertheless", "err", err)
 	}

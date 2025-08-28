@@ -123,7 +123,9 @@ func (user *User) CanProceed(route string) bool {
 func (user *User) isCorrectPassword(password string) bool {
 	user.RLock()
 	defer user.RUnlock()
-
+	if password == "" {
+		return false
+	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
 }
@@ -137,24 +139,28 @@ func (user *User) IsEmpty() bool {
 
 // ShowLockMaybe redirects to the lock page if the user is anon and the wiki has been configured to use the lock. It returns true if the user was redirected.
 func (user *User) ShowLockMaybe(w http.ResponseWriter, rq *http.Request) bool {
-	if cfg.Locked && user.Group == "anon" {
+	user.RLock()
+	lock := cfg.Locked && user.Group == "anon"
+	user.RUnlock()
+	if lock {
 		http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
-		return true
 	}
-	return false
+	return lock
 }
 
 // Sets a new password for the user.
 func (user *User) ChangePassword(password string) error {
-	if user.Source != "local" {
-		return fmt.Errorf("Only local users can change their passwords.")
-	}
-
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
+	user.Lock()
+	if user.Source != "local" {
+		user.Unlock()
+		return fmt.Errorf("Only local users can change their passwords.")
+	}
 	user.Password = string(hash)
+	user.Unlock()
 	return SaveUserDatabase()
 }
 

@@ -90,6 +90,7 @@ html { height:100%; padding:0; }
 body { margin: 0; font-size:16px; font-family: sans-serif; color: black; }
 input, kbd { font: inherit; color: inherit; }
 textarea {font-size:16px; font-family: inherit; line-height: 150%; }
+select { cursor: pointer; }
 
 .edit_no-preview { height: 90vh; }
 .edit_with-preview .edit-form { height: 90vh; }
@@ -226,7 +227,7 @@ a:visited, .wikilink_external:visited { color: #ffb86c; }
 
 .transclusion .transclusion__link, a.shy-link { color: #ddd; }
 
-input[type="text"], input[type="password"],
+input[type="text"], input[type="password"], input[type="url"], select, option,
 ::-webkit-file-upload-button,
 ::file-selector-button,
 .btn,
@@ -237,6 +238,8 @@ article .codeblock,
 textarea,
 table { border: 0; background-color: #444444; color: #ddd; }
 .transclusion_stand-out { background-color: rgba(68, 68, 68, 0.5); }
+
+:focus { outline: 2px solid #aaa; }
 
 .transclusion code,
 .transclusion .codeblock { background-color: #454545; }
@@ -720,6 +723,9 @@ a.btn_destructive:visited,
 	.subhyphae__link:hover {
 		background-color: #444;
 	}
+	select:hover {
+		background-color: #555;
+	}
 }
 
 @media screen and (min-width: 800px) {
@@ -869,19 +875,19 @@ dd + dt {
  * Interwiki page
  * A possible improvement: show those two fields when Generic is selected, hide otherwise
  */
-body[data-rrh-addr^="/interwiki"] label,
-body[data-rrh-addr^="/interwiki"] input[type="text"],
-body[data-rrh-addr^="/interwiki"] input[type="url"] {
+body[data-rrh-addr$="/interwiki"] label,
+body[data-rrh-addr$="/interwiki"] input[type="text"],
+body[data-rrh-addr$="/interwiki"] input[type="url"] {
 	display: block;
 	width: 100%;
 	max-width: 35rem;
 }
-body[data-rrh-addr^="/interwiki"] main form {
+body[data-rrh-addr$="/interwiki"] main form {
 	padding: 0 16px 16px 16px;
 	margin: 0 -16px 16px -16px;
 	border: 2px solid #999;
 }
-body[data-rrh-addr^="/interwiki"] main form + form {
+body[data-rrh-addr$="/interwiki"] main form + form {
 	margin-top: -18px;
 }
 .required-field::after {

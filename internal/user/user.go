@@ -128,6 +128,13 @@ func (user *User) isCorrectPassword(password string) bool {
 	return err == nil
 }
 
+func (user *User) IsEmpty() bool {
+	user.RLock()
+	res := user.Name == "anon"
+	user.RUnlock()
+	return res
+}
+
 // ShowLockMaybe redirects to the lock page if the user is anon and the wiki has been configured to use the lock. It returns true if the user was redirected.
 func (user *User) ShowLockMaybe(w http.ResponseWriter, rq *http.Request) bool {
 	if cfg.Locked && user.Group == "anon" {

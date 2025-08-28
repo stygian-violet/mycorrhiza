@@ -147,7 +147,7 @@ func handlerAdminUsers(w http.ResponseWriter, rq *http.Request) {
 func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 	vars := mux.Vars(rq)
 	u := user.ByName(vars["username"])
-	if u == nil {
+	if u.IsEmpty() {
 		util.HTTP404Page(w, "404 page not found")
 		return
 	}
@@ -186,7 +186,7 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 	vars := mux.Vars(rq)
 	u := user.ByName(vars["username"])
-	if u == nil {
+	if u.IsEmpty() {
 		util.HTTP404Page(w, "404 page not found")
 		return
 	}
@@ -229,7 +229,7 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 func handlerAdminUserDelete(w http.ResponseWriter, rq *http.Request) {
 	vars := mux.Vars(rq)
 	u := user.ByName(vars["username"])
-	if u == nil {
+	if u.IsEmpty() {
 		util.HTTP404Page(w, "404 page not found")
 		return
 	}

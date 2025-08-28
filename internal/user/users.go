@@ -1,20 +1,33 @@
 package user
 
 import (
+	"fmt"
 	"iter"
+	"log/slog"
+	"slices"
 	"sort"
 	"sync"
+	"time"
+
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/util"
 )
 
-var users sync.Map
-var tokens sync.Map
+var users map[string]*User
+var tokens map[string]*Session
 
-// YieldUsers creates a channel which iterates existing users.
+var usersMutex sync.RWMutex
+var tokensMutex sync.RWMutex
+
 func YieldUsers() iter.Seq[*User] {
 	return func(yield func(*User) bool) {
-		users.Range(func(_, v any) bool {
-			return yield(v.(*User))
-		})
+		usersMutex.RLock()
+		for _, user := range users {
+			if !yield(user) {
+				break
+			}
+		}
+		usersMutex.RUnlock()
 	}
 }
 
@@ -33,10 +46,9 @@ func ListUsersWithGroup(group string) []string {
 
 // Count returns total users count
 func Count() (i uint64) {
-	users.Range(func(k, v interface{}) bool {
-		i++
-		return true
-	})
+	usersMutex.RLock()
+	i = uint64(len(users))
+	usersMutex.RUnlock()
 	return i
 }
 
@@ -52,12 +64,6 @@ func HasAnyAdmins() bool {
 	return false
 }
 
-// HasUsername checks whether the desired user exists
-func HasUsername(username string) bool {
-	_, has := users.Load(username)
-	return has
-}
-
 // CredentialsOK checks whether a correct user-password pair is provided
 func CredentialsOK(username, password string) bool {
 	return ByName(username).isCorrectPassword(password)
@@ -65,18 +71,41 @@ func CredentialsOK(username, password string) bool {
 
 // ByToken finds a user by provided session token
 func ByToken(token string) *User {
-	// TODO: Needs more session data -- chekoopa
-	if usernameUntyped, ok := tokens.Load(token); ok {
-		username := usernameUntyped.(string)
-		return ByName(username)
+	tokensMutex.RLock()
+	session, ok := tokens[token]
+	tokensMutex.RUnlock()
+	switch {
+	case !ok:
+		return EmptyUser()
+	case session.Expired():
+		slog.Info("Session expired", "data", session)
+		terminateSession(token)
+		return EmptyUser()
+	default:
+		session.Lock()
+		username := session.Username
+		session.LastUsed = time.Now()
+		session.Unlock()
+		usersMutex.RLock()
+		user, ok := users[username]
+		usersMutex.RUnlock()
+		if !ok {
+			slog.Info("Session user does not exist", "data", session)
+			terminateSession(token)
+			return EmptyUser()
+		} else {
+			sessionEvents <- SessionActive
+		}
+		return user
 	}
-	return EmptyUser()
 }
 
 // ByName finds a user by one's username
 func ByName(username string) *User {
-	if userUntyped, ok := users.Load(username); ok {
-		user := userUntyped.(*User)
+	usersMutex.RLock()
+	user, ok := users[username]
+	usersMutex.RUnlock()
+	if ok {
 		return user
 	}
 	return EmptyUser()
@@ -84,27 +113,105 @@ func ByName(username string) *User {
 
 // DeleteUser removes a user by one's name and saves user database.
 func DeleteUser(name string) error {
-	user, loaded := users.LoadAndDelete(name)
-	if loaded {
-		u := user.(*User)
-		u.Lock()
-		u.Name = "anon"
-		u.Group = "anon"
-		u.Password = ""
-		u.Unlock()
-		return SaveUserDatabase()
+	usersMutex.Lock()
+	user, exists := users[name]
+	if exists {
+		delete(users, name)
 	}
-	return nil
+	usersMutex.Unlock()
+	if !exists {
+		return nil
+	}
+	user.Lock()
+	user.Name = "anon"
+	user.Group = "anon"
+	user.Password = ""
+	user.Unlock()
+	sessions := 0
+	tokensMutex.Lock()
+	for token, session := range tokens {
+		session.RLock()
+		if session.Username == name {
+			delete(tokens, token)
+			sessions++
+		}
+		session.RUnlock()
+	}
+	tokensMutex.Unlock()
+	if sessions > 0 {
+		sessionEvents <- SessionChanged
+	}
+	return SaveUserDatabase()
 }
 
-func commenceSession(username, token string) {
-	tokens.Store(token, username)
-	dumpTokens()
+func limitSessions(username string) {
+	if cfg.SessionLimit == 0 {
+		return
+	}
+	var sessions []*Session
+	for _, session := range tokens {
+		session.RLock()
+		if session.Username == username {
+			sessions = append(sessions, session)
+		}
+		session.RUnlock()
+	}
+	if uint(len(sessions)) > cfg.SessionLimit {
+		slog.Info(
+			"Session limit exceeded",
+			"username", username, "sessions", len(sessions),
+		)
+		slices.SortFunc(sessions, LeastRecentlyUsedSession)
+		sessions = sessions[:uint(len(sessions)) - cfg.SessionLimit]
+		for _, session := range sessions {
+			session.Lock()
+			slog.Info("Terminating session", "data", session)
+			session.Username = "anon"
+			delete(tokens, session.Token)
+			session.Unlock()
+		}
+	}
+}
+
+func AddSession(username string) (*Session, error) {
+	i := 0
+	tries := 4
+	for i = 0; i < tries; i++ {
+		token, err := util.RandomString(16)
+		if err != nil {
+			return nil, err
+		}
+		session := NewSession(token, username)
+		tokensMutex.Lock()
+		_, exists := tokens[token]
+		if !exists {
+			tokens[token] = session
+			limitSessions(username)
+		}
+		tokensMutex.Unlock()
+		if !exists {
+			slog.Info("Added session", "username", username, "session", session)
+			sessionEvents <- SessionChanged
+			return session, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to generate a unique token after %d tries", i)
 }
 
 func terminateSession(token string) {
-	tokens.Delete(token)
-	dumpTokens()
+	tokensMutex.Lock()
+	session, exists := tokens[token]
+	if exists {
+		delete(tokens, token)
+	}
+	tokensMutex.Unlock()
+	if exists {
+		session.Lock()
+		slog.Info("Terminating session", "data", session)
+		session.Username = "anon"
+		session.Unlock()
+		sessionEvents <- SessionChanged
+	}
 }
 
 func UsersInGroups() (admins []string, moderators []string, editors []string, readers []string) {

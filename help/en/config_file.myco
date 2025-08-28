@@ -39,6 +39,8 @@ Referrer = no-referrer
 [Authorization]
 UseAuth = true
 AllowRegistration = true
+SessionLimit = 4
+SessionTimeout = 30d
 ```
 
 == Fields
@@ -64,6 +66,9 @@ AllowRegistration = true
 * `Locked`: //boolean//. Whether the users have to authorize first to access the wiki. **Default:** `false`.
 * `UseWhiteList`: //boolean//. Whether to use a whitelist to allow specific users in. **Default:** `false`.
 * `WhiteList`: //list of strings//. Usernames of people to allow in, if `UseWhiteList` is turned on. **Default:** `[]`.
+* `SessionLimit`: //number//. Maximum number of login sessions per user. If exceeded, the least recently used session is terminated. If the number is zero, there is no limit. **Default:** `0`.
+* `SessionTimeout`: //duration//. Maximum period of inactivity before a session is terminated. **Default:** `1y`.
+* `SessionUpdateInterval`: //duration//. How often session activity time is saved. **Default:** `1d`.
 
 === [CustomScripts]
 You can specify URLs of JavaScript files you want to load.

@@ -57,10 +57,6 @@ func Register(username, password, group, source string, force bool) error {
 		return fmt.Errorf("invalid group ‘%s’", group)
 	case !ValidSource(source):
 		return fmt.Errorf("invalid source ‘%s’", source)
-	case HasUsername(username):
-		return fmt.Errorf("username ‘%s’ is already taken", username)
-	case !force && cfg.RegistrationLimit > 0 && Count() >= cfg.RegistrationLimit:
-		return fmt.Errorf("reached the limit of registered users (%d)", cfg.RegistrationLimit)
 	case password == "" && source != "telegram":
 		return fmt.Errorf("password must not be empty")
 	}
@@ -70,14 +66,28 @@ func Register(username, password, group, source string, force bool) error {
 		return err
 	}
 
-	u := User{
+	usersMutex.Lock()
+	_, exists := users[username]
+
+	switch {
+	case exists:
+		err = fmt.Errorf("username ‘%s’ is already taken", username)
+	case !force && cfg.RegistrationLimit > 0 && uint64(len(users)) >= cfg.RegistrationLimit:
+		err = fmt.Errorf("reached the limit of registered users (%d)", cfg.RegistrationLimit)
+	}
+	if err != nil {
+		usersMutex.Unlock()
+		return err
+	}
+
+	users[username] = &User{
 		Name:         username,
 		Group:        group,
 		Source:       source,
 		Password:     string(hash),
 		RegisteredAt: time.Now(),
 	}
-	users.Store(username, &u)
+	usersMutex.Unlock()
 	return SaveUserDatabase()
 }
 
@@ -91,24 +101,14 @@ func LoginDataHTTP(w http.ResponseWriter, username, password string) error {
 		slog.Info("Wrong username or password entered", "username", username)
 		return ErrLogin
 	}
-	token, err := AddSession(username)
+	session, err := AddSession(username)
 	if err != nil {
 		slog.Error("Failed to add session", "username", username, "err", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
-	http.SetCookie(w, cookie("token", token, time.Now().Add(365*24*time.Hour)))
+	http.SetCookie(w, cookie("token", session.Token, time.Now().Add(365*24*time.Hour)))
 	return nil
-}
-
-// AddSession saves a session for `username` and returns a token to use.
-func AddSession(username string) (string, error) {
-	token, err := util.RandomString(16)
-	if err == nil {
-		commenceSession(username, token)
-		slog.Info("Added session", "username", username)
-	}
-	return token, err
 }
 
 // A handy cookie constructor

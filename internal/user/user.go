@@ -28,6 +28,13 @@ type User struct {
 	// acceptable.
 }
 
+type Session struct {
+	Token     string    `json: "token"`
+	Username  string    `json: "username"`
+	LastUsed  time.Time `json: "last_used"`
+	sync.RWMutex
+}
+
 // Route — Right (more is more right)
 var minimalRights = map[string]int{
 	"text":                 0,
@@ -162,6 +169,33 @@ func (user *User) ChangePassword(password string) error {
 	user.Password = string(hash)
 	user.Unlock()
 	return SaveUserDatabase()
+}
+
+func NewSession(token string, username string) *Session {
+	return &Session {
+		Token: token,
+		Username: username,
+		LastUsed: time.Now(),
+	}
+}
+
+func LeastRecentlyUsedSession(a, b *Session) int {
+	return a.LastUsed.Compare(b.LastUsed)
+}
+
+func MostRecentlyUsedSession(a, b *Session) int {
+	return b.LastUsed.Compare(a.LastUsed)
+}
+
+func (session *Session) Expired() bool {
+	session.RLock()
+	defer session.RUnlock()
+	now := time.Now()
+	/*if now.Compare(session.LastUsed) < 0 {
+		slog.Warn("Session last used in the future", "now", now, "session", session)
+		return false
+	}*/
+	return now.Sub(session.LastUsed) > cfg.SessionTimeout
 }
 
 // IsValidUsername checks if the given username is valid.

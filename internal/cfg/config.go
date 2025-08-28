@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-ini/ini"
+	"github.com/SiverPineValley/parseduration"
 )
 
 // These variables represent the configuration. You are not meant to modify
@@ -31,12 +33,15 @@ var (
 	CSP        string
 	Referrer   string
 
-	UseAuth           bool
-	AllowRegistration bool
-	RegistrationLimit uint64
-	Locked            bool
-	UseWhiteList      bool
-	WhiteList         []string
+	UseAuth               bool
+	AllowRegistration     bool
+	RegistrationLimit     uint64
+	Locked                bool
+	UseWhiteList          bool
+	WhiteList             []string
+	SessionLimit          uint
+	SessionTimeout        time.Duration
+	SessionUpdateInterval time.Duration
 
 	CommonScripts []string
 	ViewScripts   []string
@@ -95,13 +100,15 @@ type CustomScripts struct {
 // Authorization is a section of Config that has fields related to
 // authorization and authentication.
 type Authorization struct {
-	UseAuth           bool
-	AllowRegistration bool
-	RegistrationLimit uint64   `comment:"This field controls the maximum amount of allowed registrations."`
-	Locked            bool     `comment:"Set if users have to authorize to see anything on the wiki."`
-	UseWhiteList      bool     `comment:"If true, WhiteList is used. Else it is not used."`
-	WhiteList         []string `delim:"," comment:"Usernames of people who can log in to your wiki separated by comma."`
-
+	UseAuth               bool
+	AllowRegistration     bool
+	RegistrationLimit     uint64   `comment:"This field controls the maximum amount of allowed registrations."`
+	Locked                bool     `comment:"Set if users have to authorize to see anything on the wiki."`
+	UseWhiteList          bool     `comment:"If true, WhiteList is used. Else it is not used."`
+	WhiteList             []string `delim:"," comment:"Usernames of people who can log in to your wiki separated by comma."`
+	SessionLimit          uint     `comment:"Maximum number of login sessions per user. If exceeded, the least recently used session is terminated. If the number is zero, there is no limit."`
+	SessionTimeout        string   `comment:"Maximum period of inactivity before a session is terminated."`
+	SessionUpdateInterval string   `comment:"How often session activity time is saved."`
 	// TODO: let admins enable auth-less editing
 }
 
@@ -132,12 +139,15 @@ func ReadConfigFile(path string) error {
 			Referrer:   "no-referrer",
 		},
 		Authorization: Authorization{
-			UseAuth:           false,
-			AllowRegistration: false,
-			RegistrationLimit: 0,
-			Locked:            false,
-			UseWhiteList:      false,
-			WhiteList:         []string{},
+			UseAuth:               false,
+			AllowRegistration:     false,
+			RegistrationLimit:     0,
+			Locked:                false,
+			UseWhiteList:          false,
+			WhiteList:             []string{},
+			SessionLimit:          0,
+			SessionTimeout:        "1y",
+			SessionUpdateInterval: "1d",
 		},
 		CustomScripts: CustomScripts{
 			CommonScripts: []string{},
@@ -198,6 +208,15 @@ func ReadConfigFile(path string) error {
 	Locked = cfg.Locked && cfg.UseAuth // Makes no sense to have the lock but no auth
 	UseWhiteList = cfg.UseWhiteList
 	WhiteList = cfg.WhiteList
+	SessionLimit = cfg.SessionLimit
+	SessionTimeout, err = parseduration.ParseDuration(cfg.SessionTimeout)
+	if err != nil {
+		return err
+	}
+	SessionUpdateInterval, err = parseduration.ParseDuration(cfg.SessionUpdateInterval)
+	if err != nil {
+		return err
+	}
 	CommonScripts = cfg.CommonScripts
 	ViewScripts = cfg.ViewScripts
 	EditScripts = cfg.EditScripts

@@ -46,20 +46,15 @@ func handlerList(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	// TODO: make this more effective, there are too many loops and vars
 	var (
-		hyphaNames  = make(chan string)
-		sortedHypha = hyphae.PathographicSort(hyphaNames)
+		sortedHypha = hyphae.PathographicSort(hyphae.YieldExistingHyphaNames())
 		entries     []listDatum
 	)
-	for hypha := range hyphae.YieldExistingHyphae() {
-		hyphaNames <- hypha.CanonicalName()
-	}
-	close(hyphaNames)
 	for hyphaName := range sortedHypha {
 		switch h := hyphae.ByName(hyphaName).(type) {
 		case *hyphae.TextualHypha:
-			entries = append(entries, listDatum{h.CanonicalName(), ""})
+			entries = append(entries, listDatum{hyphaName, ""})
 		case *hyphae.MediaHypha:
-			entries = append(entries, listDatum{h.CanonicalName(), filepath.Ext(h.MediaFilePath())[1:]})
+			entries = append(entries, listDatum{hyphaName, filepath.Ext(h.MediaFilePath())[1:]})
 		}
 	}
 	viewList(viewutil.MetaFrom(w, rq), entries)
@@ -108,6 +103,7 @@ func handlerRandom(w http.ResponseWriter, rq *http.Request) {
 	for h := range hyphae.YieldExistingHyphae() {
 		if i == 0 {
 			randomHyphaName = h.CanonicalName()
+			break
 		}
 		i--
 	}

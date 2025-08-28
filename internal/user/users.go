@@ -1,6 +1,7 @@
 package user
 
 import (
+	"iter"
 	"sort"
 	"sync"
 )
@@ -9,16 +10,12 @@ var users sync.Map
 var tokens sync.Map
 
 // YieldUsers creates a channel which iterates existing users.
-func YieldUsers() chan *User {
-	ch := make(chan *User)
-	go func(ch chan *User) {
+func YieldUsers() iter.Seq[*User] {
+	return func(yield func(*User) bool) {
 		users.Range(func(_, v any) bool {
-			ch <- v.(*User)
-			return true
+			return yield(v.(*User))
 		})
-		close(ch)
-	}(ch)
-	return ch
+	}
 }
 
 // ListUsersWithGroup returns a slice with users of desired group.

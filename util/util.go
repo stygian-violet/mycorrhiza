@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"iter"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -180,4 +181,26 @@ var sanitizeExtensionRegexp = regexp.MustCompile(`[^.a-zA-Z0-9-_]+`)
 func SanitizeExtension(ext string) string {
 	ext = sanitizeExtensionRegexp.ReplaceAllString(ext, "")
 	return Truncate(ext, 16)
+}
+
+func Map[T any, U any](fn func(T) U, seq iter.Seq[T]) iter.Seq[U] {
+	return func(yield func(U) bool) {
+		for val := range seq {
+			if !yield(fn(val)) {
+				return
+			}
+		}
+	}
+}
+
+func Filter[T any](cond func(T) bool, seq iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for val := range seq {
+			if cond(val) {
+				if !yield(val) {
+					return
+				}
+			}
+		}
+	}
 }

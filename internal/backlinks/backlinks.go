@@ -2,28 +2,29 @@
 package backlinks
 
 import (
-	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
+	"iter"
 	"log/slog"
 	"os"
 	"sort"
 
+	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 // yieldHyphaBacklinks gets backlinks for the desired hypha, sorts and yields them one by one.
-func yieldHyphaBacklinks(hyphaName string) <-chan string {
+func yieldHyphaBacklinks(hyphaName string) iter.Seq[string] {
 	hyphaName = util.CanonicalName(hyphaName)
-	out := make(chan string)
-	sorted := hyphae.PathographicSort(out)
-	go func() {
+	var out iter.Seq[string] = func(yield func(string) bool) {
 		backlinks, exists := backlinkIndex[hyphaName]
 		if exists {
 			for link := range backlinks {
-				out <- link
+				if !yield(link) {
+					break
+				}
 			}
 		}
-		close(out)
-	}()
+	}
+	sorted := hyphae.PathographicSort(out)
 	return sorted
 }
 

@@ -5,6 +5,7 @@ package history
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -71,6 +72,26 @@ func (hop *Op) gitop(args ...string) *Op {
 	return hop
 }
 
+func (hop *Op) gitfileop(args []string, files ...string) *Op {
+	if hop.HasError() {
+		return hop
+	}
+	chunkSize := 64
+	nargs := len(args)
+	cmd := make([]string, nargs + chunkSize)
+	copy(cmd, args)
+	for chunk := range slices.Chunk(files, chunkSize) {
+		hop.SetFilesChanged()
+		nfiles := copy(cmd[nargs:], chunk)
+		_, err := gitsh(cmd[:nargs + nfiles]...)
+		if err != nil {
+			hop.Error = err
+			return hop
+		}
+	}
+	return hop
+}
+
 // withErr appends the `err` to the list of errors.
 func (hop *Op) withErr(err error) *Op {
 	hop.Error = err
@@ -89,14 +110,10 @@ func (hop *Op) SetFilesChanged() *Op {
 
 // WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
 func (hop *Op) WithFilesRemoved(paths ...string) *Op {
-	hop.SetFilesChanged()
-	args := []string{"rm", "--"}
-	for _, path := range paths {
-		if path != "" {
-			args = append(args, path)
-		}
-	}
-	return hop.gitop(args...)
+	paths = slices.DeleteFunc(paths, func(path string) bool {
+		return path == ""
+	})
+	return hop.gitfileop([]string{"rm", "--"}, paths...)
 }
 
 // WithFilesRenamed git-mv-s all passed keys of `pairs` to values of `pairs`. Paths can be rooted ot not. Empty keys are ignored.
@@ -116,12 +133,11 @@ func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
 
 // WithFiles stages all passed `paths`. Paths can be rooted or not.
 func (hop *Op) WithFiles(paths ...string) *Op {
-	hop.SetFilesChanged()
 	for i, path := range paths {
 		paths[i] = util.ShorterPath(path)
 	}
 	// 1 git operation is more effective than n operations.
-	return hop.gitop(append([]string{"add"}, paths...)...)
+	return hop.gitfileop([]string{"add"}, paths...)
 }
 
 // Apply applies history operation by doing the commit. You do not need to call Abort afterwards.

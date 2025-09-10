@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
 )
@@ -59,6 +60,8 @@ func Index(path string) {
 // channel. Handling of duplicate entries and media and counting them is
 // up to the caller.
 func indexHelper(path string, nestLevel uint, ch chan ExistingHypha) {
+	hop := history.ReadOperation()
+	defer hop.End()
 	nodes, err := os.ReadDir(path)
 	if err != nil {
 		slog.Error("Failed to read directory", "path", path, "err", err)

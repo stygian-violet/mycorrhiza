@@ -14,7 +14,7 @@ import (
 )
 
 // gitMutex is used for blocking git operations to avoid clashes.
-var gitMutex = sync.Mutex{}
+var gitMutex = sync.RWMutex{}
 
 // OpType is the type a history operation has. Callers shall set appropriate optypes when creating history operations.
 type OpType int
@@ -45,6 +45,10 @@ type Op struct {
 	name         string
 	email        string
 	filesChanged bool
+}
+
+type ReadOp struct {
+	Error        error
 }
 
 // Operation is a constructor of a history operation.
@@ -198,4 +202,16 @@ func (hop *Op) HasError() bool {
 // FirstErrorText extracts first error appended to the operation.
 func (hop *Op) ErrorText() string {
 	return hop.Error.Error()
+}
+
+func ReadOperation() *ReadOp {
+	gitMutex.RLock()
+	return &ReadOp{
+		Error: nil,
+	}
+}
+
+func (hop *ReadOp) End() *ReadOp {
+	gitMutex.RUnlock()
+	return hop
 }

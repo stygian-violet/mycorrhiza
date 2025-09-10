@@ -48,7 +48,7 @@ func WithRevisions(hyphaName string, revs []Revision) string {
 
 			if rev.Username != "anon" {
 				buf.WriteString(fmt.Sprintf(
-					`<span class="history-entry__author">by <a href="%shypha/%s/%s" rel="author">%s</a></span>`,
+					` <span class="history-entry__author">by <a href="%shypha/%s/%s" rel="author">%s</a></span>`,
 					cfg.Root, cfg.UserHypha, rev.Username, rev.Username,
 				))
 			}

@@ -11,9 +11,9 @@ import (
 )
 
 // UpdateBacklinksAfterEdit is a creation/editing hook for backlinks index
-func UpdateBacklinksAfterEdit(h hyphae.Hypha, oldText string) {
+func UpdateBacklinksAfterEdit(h hyphae.Hypha, newText string, oldText string) {
 	oldLinks := extractHyphaLinksFromContent(h.CanonicalName(), oldText)
-	newLinks := extractHyphaLinks(h)
+	newLinks := extractHyphaLinksFromContent(h.CanonicalName(), newText)
 	runBacklinkOperation(backlinkIndexEdit{h.CanonicalName(), oldLinks, newLinks})
 }
 

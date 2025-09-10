@@ -117,7 +117,7 @@ func leaveRedirection(oldName, newName string, hop *history.Op) error {
 		h := hyphae.ExtendEmptyToTextual(emptyHypha, filepath.Join(files.HyphaeDir(), oldName+".myco"))
 		hyphae.Insert(h)
 		categories.AddHyphaToCategory(oldName, cfg.RedirectionCategory)
-		defer backlinks.UpdateBacklinksAfterEdit(h, "")
+		defer backlinks.UpdateBacklinksAfterEdit(h, text, "")
 		return writeTextToDisk(h, text, hop)
 	default:
 		return errors.New("invalid state for hypha " + oldName + " renamed to " + newName)

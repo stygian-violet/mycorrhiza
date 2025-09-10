@@ -99,7 +99,7 @@ func UploadText(h hyphae.Hypha, text string, userMessage string, u *user.User) e
 		return err
 	}
 
-	backlinks.UpdateBacklinksAfterEdit(h, oldText)
+	backlinks.UpdateBacklinksAfterEdit(h, text, oldText)
 	if insert {
 		hyphae.Insert(H)
 	}

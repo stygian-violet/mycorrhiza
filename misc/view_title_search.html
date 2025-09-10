@@ -4,18 +4,62 @@
 <main class="main-width">
 	<h1>{{block "search results for" .Query}}Search results for ‘{{.}}’{{end}}</h1>
 	{{if .MatchedHyphaName}}
-	<p>{{block "go to hypha" .}}Go to hypha <a class="wikilink{{if .HasExactMatch | not}} wikilink_new{{end}}" href="{{.Meta.Root}}hypha/{{.MatchedHyphaName}}">{{beautifulName .MatchedHyphaName}}</a>.{{end}}</p>
+	<section>
+		<p>{{block "go to hypha" .}}Go to hypha <a class="wikilink{{if .HasExactMatch | not}} wikilink_new{{end}}" href="{{.Meta.Root}}hypha/{{.MatchedHyphaName}}">{{beautifulName .MatchedHyphaName}}</a>.{{end}}</p>
+	</section>
 	{{end}}
 	{{if len .Results}}
+	<section>
+		<h2>{{block "title search results" .}}In title{{end}}</h2>
 		<ol>
-        {{range .Results}}
+		{{range .Results}}
 			<li>
 				<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.}}">{{beautifulName .}}</a>
 			</li>
-        {{end}}
+		{{end}}
 		</ol>
-    {{else}}
-	    <p>{{block "search no results" .}}No results{{end}}</p>
-    {{end}}
+	</section>
+	{{end}}
+	{{if .HasTextResults}}
+	<section>
+		<h2>{{block "text search results" .}}In text{{end}}</h2>
+		<ol>
+			{{range .TextResults.Hyphae}}
+			<li>
+				<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.Hypha}}">{{beautifulName .Hypha}}</a>
+				{{range .Lines}}
+				<blockquote>
+					{{- range $index, $part := . -}}
+					{{- if mod $index 2 | lt 0 -}}
+					<mark>{{- $part -}}</mark>
+					{{- else -}}
+					{{- $part -}}
+					{{- end -}}
+					{{- end -}}
+				</blockquote>
+				{{end}}
+			</li>
+			{{end}}
+		</ol>
+	</section>
+	{{end}}
+	{{if not .HasAnyResults}}
+	<section>
+		<p>{{block "search no results" .}}No results{{end}}</p>
+	</section>
+	{{end}}
+	{{if .HasTextSearchLink}}
+	<section>
+		<p>
+			<a class="wikilink" href="{{$.Meta.Root}}text-search?q={{.Query}}">
+				{{- if .HasTextResults -}}
+				{{block "search more" .}}More search results{{end}}
+				{{- else -}}
+				{{block "search in text" .}}Search in text{{end}}
+				{{- end -}}
+			</a>
+		</p>
+	</section>
+	{{end}}
 </main>
 {{end}}

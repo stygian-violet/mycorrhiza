@@ -22,7 +22,7 @@ var (
 )
 
 const ruText = `
-{{define "search by title"}}Поиск по названию{{end}}
+{{define "search by title"}}Поиск{{end}}
 {{define "login"}}Войти{{end}}
 {{define "register"}}Регистрация{{end}}
 {{define "confirm"}}Подтвердить{{end}}
@@ -41,6 +41,7 @@ func Init() {
 		Funcs(template.FuncMap{
 			"beautifulName": util.BeautifulName,
 			"inc":           func(i int) int { return i + 1 },
+			"mod":           func(x int, y int) int { return x % y },
 		}).ParseFS(fsys, "base.html")).
 		Parse(dataText))
 	if cfg.UseAuth {

@@ -51,6 +51,18 @@ var (
 	TelegramEnabled  bool
 	TelegramBotToken string
 	TelegramBotName  string
+
+	FullTextSearch       FullTextSearchType
+	FullTextSearchPage   bool
+	FullTextPermission   string
+	FullTextLineLength   int
+	FullTextLowerLimit   int
+	FullTextUpperLimit   int
+
+	GrepIgnoreMedia bool
+	GrepMatchLimitPerHypha uint
+	GrepProcessLimit uint
+	GrepTimeout time.Duration
 )
 
 // WikiDir is a full path to the wiki storage directory, which also must be a
@@ -65,6 +77,8 @@ type Config struct {
 	Hyphae
 	Network
 	Authorization
+	Search
+	Grep          `comment:"Full text search with git grep."`
 	CustomScripts `comment:"You can specify additional scripts to load on different kinds of pages, delimited by a comma ',' sign."`
 	Telegram      `comment:"You can enable Telegram authorization. Follow these instructions: https://core.telegram.org/widgets/login#setting-up-a-bot"`
 }
@@ -118,6 +132,55 @@ type Telegram struct {
 	TelegramBotName  string `comment:"Username of your bot, sans @."`
 }
 
+type Search struct {
+	FullText             string `comment:"Full text search type. Options: none, grep"`
+	FullTextPermission   string `comment:"Minimum permission level required for full text search. Options: anon, reader, editor, trusted, moderator, admin."`
+	FullTextLineLength   int   `comment:"Maximum length of a single line of a full text search result. If the number is zero, only hypha links are shown. If the number is negative, there is no limit."`
+	FullTextLowerLimit   int    `comment:"Maximum number of full text search results shown in the /title-search/ page. If the number is zero, full text search is disabled for the page. If the number is negative, there is no limit."`
+	FullTextUpperLimit   int    `comment:"Maximum number of search results shown in the /text-search/ page. If the number is zero, the page does not exist. If the number is negative, there is no limit."`
+}
+
+type Grep struct {
+	GrepIgnoreMedia        bool   `comment:"Whether to exclude non-binary media files from full text search"`
+	GrepMatchLimitPerHypha uint   `comment:"Maximum number of matched lines per hypha. If the number is zero, there is no limit."`
+	GrepProcessLimit       uint   `comment:"Maximum number of parallel grep processes. If exceeded, full text search returns an error. If the number is zero, there is no limit."`
+	GrepTimeout            string `comment:"Maximum execution time of grep processes. If the duration is zero, there is no limit."`
+}
+
+type FullTextSearchType int
+
+const (
+	FullTextDisabled FullTextSearchType = iota
+	FullTextGrep
+)
+
+var (
+	ErrFullTextInvalid = errors.New("invalid full text search type")
+)
+
+func FullTextSearchTypeFromString(value string) (FullTextSearchType, error) {
+	value = strings.ToLower(value)
+	switch value {
+	case "none", "off", "false", "disabled":
+		return FullTextDisabled, nil
+	case "grep":
+		return FullTextGrep, nil
+	default:
+		return FullTextDisabled, ErrFullTextInvalid
+	}
+}
+
+func (t FullTextSearchType) String() string {
+	switch t {
+	case FullTextDisabled:
+		return "none"
+	case FullTextGrep:
+		return "grep"
+	default:
+		return "none"
+	}
+}
+
 // ReadConfigFile reads a config on the given path and stores the
 // configuration. Call it sometime during the initialization.
 func ReadConfigFile(path string) error {
@@ -148,6 +211,19 @@ func ReadConfigFile(path string) error {
 			SessionLimit:          0,
 			SessionTimeout:        "1y",
 			SessionUpdateInterval: "1d",
+		},
+		Search: Search{
+			FullText:             "grep",
+			FullTextPermission:   "anon",
+			FullTextLineLength:   256,
+			FullTextLowerLimit:   0,
+			FullTextUpperLimit:   256,
+		},
+		Grep: Grep{
+			GrepIgnoreMedia:        true,
+			GrepMatchLimitPerHypha: 1,
+			GrepProcessLimit:       16,
+			GrepTimeout:            "10s",
 		},
 		CustomScripts: CustomScripts{
 			CommonScripts: []string{},
@@ -214,6 +290,25 @@ func ReadConfigFile(path string) error {
 		return err
 	}
 	SessionUpdateInterval, err = parseduration.ParseDuration(cfg.SessionUpdateInterval)
+	if err != nil {
+		return err
+	}
+	FullTextSearch, err = FullTextSearchTypeFromString(cfg.FullText)
+	if err != nil {
+		return err
+	}
+	FullTextPermission = cfg.FullTextPermission
+	FullTextLineLength = cfg.FullTextLineLength
+	if FullTextLineLength == 0 {
+		cfg.GrepMatchLimitPerHypha = 1
+	}
+	FullTextLowerLimit = cfg.FullTextLowerLimit
+	FullTextUpperLimit = cfg.FullTextUpperLimit
+	FullTextSearchPage = FullTextSearch != FullTextDisabled && FullTextUpperLimit != 0
+	GrepIgnoreMedia = cfg.GrepIgnoreMedia
+	GrepMatchLimitPerHypha = cfg.GrepMatchLimitPerHypha
+	GrepProcessLimit = cfg.GrepProcessLimit
+	GrepTimeout, err = parseduration.ParseDuration(cfg.GrepTimeout)
 	if err != nil {
 		return err
 	}

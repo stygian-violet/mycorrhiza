@@ -28,6 +28,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 		Funcs(template.FuncMap{
 			"beautifulName": util.BeautifulName,
 			"inc":           func(i int) int { return i + 1 },
+			"mod":           func(x int, y int) int { return x % y },
 			"base": func(hyphaName string) string {
 				parts := strings.Split(hyphaName, "/")
 				return parts[len(parts)-1]
@@ -76,7 +77,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 {{end}}`))
 	}
 
-	russianTranslation["search by title"] = "Поиск по названию"
+	russianTranslation["search by title"] = "Поиск"
 	russianTranslation["login"] = "Войти"
 	russianTranslation["register"] = "Регистрация"
 	russianTranslation["cancel"] = "Отмена"

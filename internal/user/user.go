@@ -40,6 +40,7 @@ var minimalRights = map[string]int{
 	"text":                 0,
 	"backlinks":            0,
 	"history":              0,
+	"text-search":          0,
 	"media":                1,
 	"edit":                 1,
 	"upload-binary":        1,
@@ -72,6 +73,15 @@ var groupRight = map[string]int{
 	"trusted":   2,
 	"moderator": 3,
 	"admin":     4,
+}
+
+func setRoutePermission(route string, group string) error {
+	level, ok := groupRight[group]
+	if !ok {
+		return fmt.Errorf("invalid group name: %s", group)
+	}
+	minimalRights[route] = level
+	return nil
 }
 
 // ValidGroup checks whether provided user group name exists.

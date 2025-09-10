@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
@@ -92,14 +93,14 @@ func HyphaNameFromRq(rq *http.Request, actions ...string) string {
 // FormData is a convenient struct for passing user input and errors to HTML
 // forms and showing to the user.
 type FormData struct {
-	err    error
+	err	   error
 	fields map[string]string
 }
 
 // NewFormData constructs empty form data instance.
 func NewFormData() FormData {
 	return FormData{
-		err:    nil,
+		err:	nil,
 		fields: map[string]string{},
 	}
 }
@@ -157,12 +158,25 @@ func IsRevHash(revHash string) bool {
 	return true
 }
 
-func Truncate(str string, maxlen int) string {
-    runes := []rune(str)
-    if len(runes) <= maxlen {
-        return str
-    }
-    return string(runes[0:maxlen])
+func Truncate(str string, maxlen int) (string, bool) {
+	if utf8.RuneCountInString(str) <= max(0, maxlen) {
+		return str, false
+	}
+	if maxlen <= 0 {
+		return "", true
+	}
+	return string(([]rune(str))[:maxlen]), true
+}
+
+func TruncateLeft(str string, maxlen int) (string, bool) {
+	count := utf8.RuneCountInString(str)
+	if count <= max(0, maxlen) {
+		return str, false
+	}
+	if maxlen <= 0 {
+		return "", true
+	}
+	return string(([]rune(str))[count - maxlen:]), true
 }
 
 var newlineRegexp = regexp.MustCompile("\r\n?|\n\r?")
@@ -180,7 +194,8 @@ var sanitizeExtensionRegexp = regexp.MustCompile(`[^.a-zA-Z0-9-_]+`)
 
 func SanitizeExtension(ext string) string {
 	ext = sanitizeExtensionRegexp.ReplaceAllString(ext, "")
-	return Truncate(ext, 16)
+	ext, _ = Truncate(ext, 16)
+	return ext
 }
 
 func Map[T any, U any](fn func(T) U, seq iter.Seq[T]) iter.Seq[U] {

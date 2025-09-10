@@ -13,6 +13,7 @@ import (
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
+	"github.com/bouncepaw/mycorrhiza/internal/search"
 	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/l18n"
@@ -38,6 +39,9 @@ func InitHandlers(rtr *mux.Router) {
 	rtr.HandleFunc("/random", handlerRandom)
 	rtr.HandleFunc("/about", handlerAbout)
 	rtr.HandleFunc("/title-search/", handlerTitleSearch)
+	if cfg.FullTextSearchPage {
+		rtr.HandleFunc("/text-search/", handlerTextSearch)
+	}
 	initViews()
 }
 
@@ -164,14 +168,54 @@ func handlerTitleSearch(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	_ = rq.ParseForm()
 	var (
-		query       = rq.FormValue("q")
+		meta        = viewutil.MetaFrom(w, rq)
+		query       = normalizeQuery(rq.FormValue("q"))
 		hyphaName   = util.CanonicalName(query)
 		_, nameFree = hyphae.AreFreeNames(hyphaName)
 		results     []string
+		textResults *search.SearchResults = nil
 	)
-	for hyphaName := range shroom.YieldHyphaNamesContainingString(query) {
-		results = append(results, hyphaName)
+	if query != "" {
+		for hyphaName := range shroom.YieldHyphaNamesContainingString(query) {
+			results = append(results, hyphaName)
+		}
+		if (cfg.FullTextSearch != cfg.FullTextDisabled &&
+			cfg.FullTextLowerLimit != 0 &&
+			meta.U.CanProceed("text-search")) {
+			textResults, _ = fullTextSearch(query, cfg.FullTextLowerLimit)
+		}
 	}
 	w.WriteHeader(http.StatusOK)
-	viewTitleSearch(viewutil.MetaFrom(w, rq), query, hyphaName, !nameFree, results)
+	viewTitleSearch(meta, query, hyphaName, !nameFree, results, textResults)
+}
+
+func handlerTextSearch(w http.ResponseWriter, rq *http.Request) {
+	util.PrepareRq(rq)
+	_ = rq.ParseForm()
+	meta := viewutil.MetaFrom(w, rq)
+	if !meta.U.CanProceed("text-search") {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = io.WriteString(w, "403 Forbidden")
+		return
+	}
+	if cfg.FullTextSearch == cfg.FullTextDisabled || cfg.FullTextUpperLimit == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, "404 Not found")
+		return
+	}
+	var (
+		query = normalizeQuery(rq.FormValue("q"))
+		results *search.SearchResults = nil
+		err error = nil
+	)
+	if query != "" {
+		results, err = fullTextSearch(query, cfg.FullTextUpperLimit)
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = io.WriteString(w, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	viewTextSearch(meta, query, results)
 }

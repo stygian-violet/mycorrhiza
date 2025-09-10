@@ -11,6 +11,10 @@ var (
 	wg sync.WaitGroup
 )
 
+func Context() context.Context {
+	return ctx
+}
+
 func Shutdown() {
 	slog.Info("Shutting down")
 	cancel()

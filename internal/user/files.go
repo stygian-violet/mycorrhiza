@@ -31,6 +31,10 @@ func InitUserDatabase() error {
 	if !cfg.UseAuth {
 		return nil
 	}
+	if err := setRoutePermission("text-search", cfg.FullTextPermission); err != nil {
+		slog.Error("Failed to set full text search permission", "err", err)
+		return err
+	}
 	if err := ReadUsersFromFilesystem(); err != nil {
 		return err
 	}

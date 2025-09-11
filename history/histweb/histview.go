@@ -42,7 +42,7 @@ func handlerPrimitiveDiff(w http.ResponseWriter, rq *http.Request) {
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root + "primitive-diff/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
-		http.Error(w, "403 bad request", http.StatusBadRequest)
+		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
 	var (
@@ -68,6 +68,7 @@ func handlerRecentChanges(w http.ResponseWriter, rq *http.Request) {
 	// Error ignored: filtered by regex
 	editCount, _ := strconv.Atoi(mux.Vars(rq)["count"])
 	if editCount > 100 {
+		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
 	recentChanges(viewutil.MetaFrom(w, rq), editCount, history.RecentChanges(editCount))
@@ -101,7 +102,7 @@ func genericHandlerOfFeeds(w http.ResponseWriter, rq *http.Request, f func(histo
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "An error while generating "+name+": "+err.Error())
+		fmt.Fprintf(w, "An error while generating %s: %s", name, err.Error())
 	} else {
 		w.Header().Set("Content-Type", fmt.Sprintf("%s;charset=utf-8", contentType))
 		w.WriteHeader(http.StatusOK)

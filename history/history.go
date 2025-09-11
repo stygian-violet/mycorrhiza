@@ -2,6 +2,9 @@
 package history
 
 import (
+	"bufio"
+	"context"
+	"io"
 	"log/slog"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/files"
+	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
@@ -76,6 +80,79 @@ func gitsh(args ...string) ([]byte, error) {
 		)
 	}
 	return out, err
+}
+
+func gitPipeStart(
+	ctx context.Context,
+	args... string,
+) (*exec.Cmd, io.ReadCloser, error) {
+	slog.Info(gitstr(args...))
+	cmd := exec.CommandContext(ctx, gitpath, args...)
+	cmd.Dir = files.HyphaeDir()
+	cmd.Env = append(cmd.Environ(), gitEnv...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		slog.Error("Failed to pipe git stdout", "err", err)
+		return nil, stdout, err
+	}
+	cmd.Stderr = cmd.Stdout
+	err = cmd.Start()
+	if err != nil {
+		slog.Error("Failed to start git", "args", args, "err", err)
+		stdout.Close()
+		return nil, stdout, err
+	}
+	return cmd, stdout, nil
+}
+
+func gitPipeContext(
+	args []string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	parse func([]byte) (bool, error),
+) error {
+	cmd, stdout, err := gitPipeStart(ctx, args...)
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(stdout)
+	parseNext, parseErr := true, error(nil)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		parseNext, parseErr = parse(line)
+		if parseErr != nil {
+			cancel()
+			break
+		}
+		if !parseNext {
+			cancel()
+			break
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		slog.Error("Git scanner error", "args", args, "err", err)
+		if parseErr == nil {
+			parseErr = err
+		}
+	}
+	err = cmd.Wait()
+	switch {
+	case parseErr != nil:
+		return parseErr
+	case !parseNext:
+		return nil
+	case ctx.Err() != nil:
+		return ctx.Err()
+	default:
+		return err
+	}
+}
+
+func gitPipe(args []string, parse func([]byte) (bool, error)) error {
+	ctx, cancel := context.WithCancel(process.Context())
+	defer cancel()
+	return gitPipeContext(args, ctx, cancel, parse)
 }
 
 func gitReset() error {

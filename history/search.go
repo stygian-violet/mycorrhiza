@@ -1,7 +1,6 @@
 package history
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"log/slog"
@@ -11,7 +10,6 @@ import (
 	"sync/atomic"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
 	"github.com/bouncepaw/mycorrhiza/internal/search"
@@ -25,9 +23,13 @@ var (
 	color = regexp.MustCompile(`\033\[[0-9]*(;[0-9]+)?m`)
 )
 
-func gitgrep(query string, ctx context.Context) *exec.Cmd {
-	var limit string
-	var path string
+func gitgrep(query string, parse func([]byte) (bool, error)) error {
+	var (
+		limit string
+		path string
+		ctx context.Context
+		cancel context.CancelFunc
+	)
 	if cfg.GrepMatchLimitPerHypha > 0 {
 		limit = strconv.FormatUint(uint64(cfg.GrepMatchLimitPerHypha), 10)
 	} else {
@@ -44,11 +46,13 @@ func gitgrep(query string, ctx context.Context) *exec.Cmd {
 		"-e", query,
 		"--", ":!.*", path,
 	}
-	slog.Info(gitstr(args...))
-	cmd := exec.CommandContext(ctx, gitpath, args...)
-	cmd.Dir = files.HyphaeDir()
-	cmd.Env = append(cmd.Environ(), gitEnv...)
-	return cmd
+	if cfg.GrepTimeout > 0 {
+		ctx, cancel = context.WithTimeout(process.Context(), cfg.GrepTimeout)
+	} else {
+		ctx, cancel = context.WithCancel(process.Context())
+	}
+	defer cancel()
+	return gitPipeContext(args, ctx, cancel, parse)
 }
 
 func grepCountInc() bool {
@@ -71,12 +75,11 @@ func grepExitError(err error) bool {
 	if err == nil {
 		return false
 	}
-	switch e := err.(type) {
-	case *exec.ExitError:
+	var e *exec.ExitError
+	if errors.As(err, &e) {
 		return e.ExitCode() != 1
-	default:
-		return true
 	}
+	return true
 }
 
 func grepParse(line []byte, res *search.SearchResults) error {
@@ -109,66 +112,30 @@ func Grep(query string, limit int) (*search.SearchResults, error) {
 	}
 	gitMutex.RLock()
 	defer gitMutex.RUnlock()
-	var (
-		ctx context.Context
-		cancel context.CancelFunc
-	)
-	if cfg.GrepTimeout > 0 {
-		ctx, cancel = context.WithTimeout(process.Context(), cfg.GrepTimeout)
-	} else {
-		ctx, cancel = context.WithCancel(process.Context())
-	}
-	defer cancel()
-	cmd := gitgrep(query, ctx)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		slog.Error("Failed to pipe grep stdout", "err", err)
-		return nil, err
-	}
-	err = cmd.Start()
-	if err != nil {
-		slog.Error("Failed to start grep", "err", err)
-		stdout.Close()
-		return nil, err
-	}
+
 	res := search.NewSearchResults()
-	var res2 error = nil
-	limited := false
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		err = grepParse(line, res)
+	err := gitgrep(query, func(line []byte) (bool, error) {
+		err := grepParse(line, res)
 		if err != nil {
-			cancel()
-			res2 = err
-			break
+			return false, err
 		}
-		if !res.Limit(limit) {
-			limited = true
-			cancel()
-			break
+		parseNext := res.Limit(limit)
+		if !parseNext {
+			res.Complete = false
 		}
-	}
-	err = scanner.Err()
-	if err != nil {
-		slog.Error("Grep scanner error", "err", err)
-		res.Complete = false
-		if res2 == nil {
-			res2 = err
-		}
-	}
-	err = cmd.Wait()
+		return parseNext, nil
+	})
+
 	switch {
-	case limited:
-	case ctx.Err() == context.DeadlineExceeded:
-		slog.Info("Grep timeout")
+	case errors.Is(err, context.DeadlineExceeded):
+		slog.Info("Grep timeout", "query", query)
 		res.Complete = false
+		err = nil
 	case grepExitError(err):
-		slog.Error("Grep exited with error", "err", err)
+		slog.Error("Grep exited with error", "query", query, "err", err)
 		res.Complete = false
-		if res2 == nil {
-			res2 = err
-		}
+	default:
+		err = nil
 	}
-	return res, res2
+	return res, err
 }

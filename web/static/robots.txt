@@ -10,6 +10,7 @@ Disallow: /text/
 Disallow: /binary/
 Disallow: /rev/
 Disallow: /rev-text/
+Disallow: /rev-binary/
 Disallow: /primitive-diff/
 Disallow: /media/
 Disallow: /edit/

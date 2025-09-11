@@ -2,17 +2,22 @@ package history
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html"
+	"io"
 	"log/slog"
 	"net/url"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
+	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
+	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 // WithRevisions returns an HTML representation of `revs` that is meant to be inserted in a history page.
@@ -362,7 +367,53 @@ func (rev *Revision) bestLink(includeRoot bool) string {
 
 // FileAtRevision shows how the file with the given file path looked at the commit with the hash. It may return an error if git fails.
 func FileAtRevision(filepath string, hash string) ([]byte, error) {
-	return gitsh("show", hash+":"+strings.TrimPrefix(filepath, files.HyphaeDir()+"/"))
+	return gitsh("show", hash + ":" + util.ShorterPath(filepath))
+}
+
+func MediaAtRevision(hyphaName string, hash string) (string, uint64, error) {
+	hyphaDir := filepath.Dir(hyphaName) + "/"
+	args := []string{
+		"ls-tree", hash,
+		"--full-tree",
+		"--format", "%(objectsize)\t%(path)",
+		"--", hyphaDir,
+	}
+	fname := ""
+	fsize := uint64(0)
+	err := gitPipe(args, func(line []byte) (bool, error) {
+		size, name, found := bytes.Cut(line, []byte{'\t'})
+		if !found {
+			return false, fmt.Errorf(
+				"failed to parse git ls-tree output: %s", string(line),
+			)
+		}
+		if bytes.Equal(size, []byte{'-'}) {
+			return true, nil
+		}
+		nameStr := string(name)
+		hypha, isText, skip := mimetype.DataFromFilename(nameStr)
+		if skip || isText || hypha != hyphaName {
+			return true, nil
+		}
+		fname = nameStr
+		var e error
+		fsize, e = strconv.ParseUint(string(size), 10, 64)
+		if e != nil {
+			return false, e
+		}
+		return false, nil
+	})
+	return fname, fsize, err
+}
+
+func OpenFileAtRevision(
+	filepath string,
+	hash string,
+) (*exec.Cmd, io.ReadCloser, error) {
+	return gitPipeStart(
+		context.Background(),
+		"show", hash + ":" + util.ShorterPath(filepath),
+	)
 }
 
 // PrimitiveDiffAtRevision generates a plain-text diff for the given filepath at the commit with the given hash. It may return an error if git fails.

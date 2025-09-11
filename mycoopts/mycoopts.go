@@ -63,29 +63,27 @@ func mediaRaw(h *hyphae.MediaHypha) string {
 	return Media(h, l18n.New("en", "en"))
 }
 
-func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
-	name := html.EscapeString(h.CanonicalName())
-
-	switch filepath.Ext(h.MediaFilePath()) {
+func MediaFile(path string, url string, lc *l18n.Localizer) string {
+	switch filepath.Ext(path) {
 	case ".jpg", ".gif", ".png", ".webp", ".svg", ".ico":
 		return fmt.Sprintf(
 			`<div class="binary-container binary-container_with-img">
-	<a href="%sbinary/%s"><img src="%sbinary/%s"/></a>
+	<a href="%s"><img src="%s"/></a>
 </div>`,
-			cfg.Root, name, cfg.Root, name,
+			url, url,
 		)
 
 	case ".ogg", ".webm", ".mp4":
 		return fmt.Sprintf(
 			`<div class="binary-container binary-container_with-video">
 	<video controls>
-		<source src="%sbinary/%s"/>
-		<p>%s <a href="%sbinary/%s">%s</a></p>
+		<source src="%s"/>
+		<p>%s <a href="%s">%s</a></p>
 	</video>
 </div>`,
-			cfg.Root, name,
+			url,
 			html.EscapeString(lc.Get("ui.media_novideo")),
-			cfg.Root, name,
+			url,
 			html.EscapeString(lc.Get("ui.media_novideo_link")),
 		)
 
@@ -93,23 +91,30 @@ func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
 		return fmt.Sprintf(
 			`<div class="binary-container binary-container_with-audio">
 	<audio controls>
-		<source src="%sbinary/%s"/>
-		<p>%s <a href="%sbinary/%s">%s</a></p>
+		<source src="%s"/>
+		<p>%s <a href="%s">%s</a></p>
 	</audio>
 </div>`,
-			cfg.Root, name,
+			url,
 			html.EscapeString(lc.Get("ui.media_noaudio")),
-			cfg.Root, name,
+			url,
 			html.EscapeString(lc.Get("ui.media_noaudio_link")),
 		)
 
 	default:
 		return fmt.Sprintf(
 			`<div class="binary-container binary-container_with-nothing">
-	<p><a href="%sbinary/%s">%s</a></p>
+	<p><a href="%s">%s</a></p>
 </div>`,
-			cfg.Root, name,
+			url,
 			html.EscapeString(lc.Get("ui.media_download")),
 		)
 	}
+}
+
+func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
+	name := html.EscapeString(h.CanonicalName())
+	path := h.MediaFilePath()
+	url := fmt.Sprintf("%sbinary/%s", cfg.Root, name)
+	return MediaFile(path, url, lc)
 }

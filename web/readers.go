@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ func initReaders(r *mux.Router) {
 	r.PathPrefix("/binary/").HandlerFunc(handlerBinary)
 	r.PathPrefix("/rev/").HandlerFunc(handlerRevision)
 	r.PathPrefix("/rev-text/").HandlerFunc(handlerRevisionText)
+	r.PathPrefix("/rev-binary/").HandlerFunc(handlerRevisionBinary)
 	r.PathPrefix("/media/").HandlerFunc(handlerMedia)
 	r.Path("/today").HandlerFunc(handlerToday)
 	r.Path("/edit-today").HandlerFunc(handlerEditToday)
@@ -104,7 +106,7 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev-text/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
-		http.Error(w, "403 bad request", http.StatusBadRequest)
+		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
 	var (
@@ -151,7 +153,76 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 	}
 }
 
-// handlerRevision displays a specific revision of the text part the hypha
+// handlerRevisionBinary sends hypha media at the given revision. See also: handlerRevision, handlerBinary.
+//
+// /rev-binary/<revHash>/<hyphaName>
+func handlerRevisionBinary(w http.ResponseWriter, rq *http.Request) {
+	util.PrepareRq(rq)
+	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root + "rev-binary/")
+	revHash, slug, found := strings.Cut(shorterURL, "/")
+	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+	hyphaName := util.CanonicalName(slug)
+
+	path, size, err := history.MediaAtRevision(hyphaName, revHash)
+	switch {
+	case err != nil:
+		w.WriteHeader(http.StatusInternalServerError)
+		slog.Error(
+			"Failed to find media file",
+			"err", err, "hyphaName", hyphaName, "revHash", revHash,
+		)
+		_, _ = io.WriteString(w, "Error: " + err.Error())
+		return
+	case path == "":
+		http.Error(w, "404 not found", http.StatusNotFound)
+		return
+	}
+
+	slog.Info("Serving media file", "path", path)
+	w.Header().Set("Content-Type", mimetype.FromExtension(filepath.Ext(path)))
+	w.Header().Set("Content-Length", strconv.FormatUint(size, 10))
+	filename := filepath.Base(path)
+	filename = fmt.Sprintf(
+		`attachment; filename="%s"; filename*=UTF-8''%s`,
+		filename,
+		url.QueryEscape(filename),
+	)
+	w.Header().Set("Content-Disposition", filename)
+
+	cmd, contents, err := history.OpenFileAtRevision(path, revHash)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		slog.Error(
+			"Failed to open media file",
+			"err", err, "hyphaName", hyphaName,
+			"revHash", revHash, "path", path,
+		)
+		_, _ = io.WriteString(w, "Error: " + err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, err = io.Copy(w, contents)
+	if err != nil {
+		slog.Error(
+			"Failed to serve media file",
+			"err", err, "hyphaName", hyphaName,
+			"revHash", revHash, "path", path,
+		)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		slog.Error(
+			"Failed to serve media file",
+			"err", err, "hyphaName", hyphaName,
+			"revHash", revHash, "path", path,
+		)
+	}
+}
+
+// handlerRevision displays a specific revision of the hypha
 func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	lc := l18n.FromRequest(rq)
@@ -162,12 +233,13 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 	var (
-		hyphaName    = util.CanonicalName(slug)
-		h            = hyphae.ByName(hyphaName)
-		contents     = template.HTML(fmt.Sprintf(`<p>%s</p>`, lc.Get("ui.revision_no_text")))
-		textContents []byte
-		err          error
-		mycoFilePath string
+		hyphaName     = util.CanonicalName(slug)
+		h             = hyphae.ByName(hyphaName)
+		contents      = template.HTML(fmt.Sprintf(`<p>%s</p>`, lc.Get("ui.revision_no_text")))
+		textContents  []byte
+		err           error
+		mycoFilePath  string
+		mediaFilePath string
 	)
 	switch h := h.(type) {
 	case hyphae.ExistingHypha:
@@ -175,6 +247,18 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 	case *hyphae.EmptyHypha:
 		mycoFilePath = filepath.Join(files.HyphaeDir(), h.CanonicalName()+".myco")
 	}
+
+	mediaFilePath, _, err = history.MediaAtRevision(hyphaName, revHash)
+	if err != nil {
+		slog.Error(
+			"Failed to find media file",
+			"err", err, "hyphaName", hyphaName, "revHash", revHash,
+		)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = io.WriteString(w, "Error: " + err.Error())
+		return
+	}
+
 	textContents, err = history.FileAtRevision(mycoFilePath, revHash)
 	if err == nil {
 		ctx, _ := mycocontext.ContextFromBytes(
@@ -182,6 +266,15 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 			mycoopts.MarkupOptions(hyphaName),
 		)
 		contents = template.HTML(mycomarkup.BlocksToHTML(ctx, mycomarkup.BlockTree(ctx)))
+	}
+	if mediaFilePath != "" {
+		mediaFileUrl := fmt.Sprintf(
+			"%srev-binary/%s/%s",
+			cfg.Root, revHash, hyphaName,
+		)
+		contents = template.HTML(
+			mycoopts.MediaFile(mediaFilePath, mediaFileUrl, lc),
+		) + contents
 	}
 
 	meta := viewutil.MetaFrom(w, rq)

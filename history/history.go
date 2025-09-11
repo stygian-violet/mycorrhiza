@@ -2,7 +2,6 @@
 package history
 
 import (
-	"bytes"
 	"log/slog"
 	"os/exec"
 	"path/filepath"
@@ -40,7 +39,7 @@ func InitGitRepo() error {
 		isGitRepo = false
 	}
 	if isGitRepo {
-		gitDir := buf.String()
+		gitDir := string(buf)
 		if filepath.IsAbs(gitDir) && !filepath.HasPrefix(gitDir, files.HyphaeDir()) {
 			isGitRepo = false
 		}
@@ -63,17 +62,20 @@ func gitstr(args ...string) string {
 
 // I pronounce it as [gɪt͡ʃ].
 // gitsh is async-safe, therefore all other git-related functions in this module are too.
-func gitsh(args ...string) (out bytes.Buffer, err error) {
+func gitsh(args ...string) ([]byte, error) {
 	slog.Info(gitstr(args...))
 	cmd := exec.Command(gitpath, args...)
 	cmd.Dir = files.HyphaeDir()
 	cmd.Env = append(cmd.Environ(), gitEnv...)
 
-	b, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error("Git command failed", "args", args, "err", err, "output", string(b))
+		slog.Error(
+			"Git command failed",
+			"args", args, "err", err, "output", string(out),
+		)
 	}
-	return *bytes.NewBuffer(b), err
+	return out, err
 }
 
 func gitReset() error {

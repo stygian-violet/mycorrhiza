@@ -128,7 +128,7 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 		slog.Info("Serving text part",
 			"hyphaName", hyphaName, "revHash", revHash, "mycoFilePath", mycoFilePath)
 		w.WriteHeader(http.StatusOK)
-		_, _ = io.WriteString(w, textContents)
+		_, _ = w.Write(textContents)
 
 	case hyphae.ExistingHypha:
 		if !h.HasTextFile() {
@@ -147,7 +147,7 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 		}
 		slog.Info("Serving text part", "hyphaName", h.CanonicalName(), "revHash", revHash)
 		w.WriteHeader(http.StatusOK)
-		_, _ = io.WriteString(w, textContents)
+		_, _ = w.Write(textContents)
 	}
 }
 
@@ -165,7 +165,7 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 		hyphaName    = util.CanonicalName(slug)
 		h            = hyphae.ByName(hyphaName)
 		contents     = template.HTML(fmt.Sprintf(`<p>%s</p>`, lc.Get("ui.revision_no_text")))
-		textContents string
+		textContents []byte
 		err          error
 		mycoFilePath string
 	)
@@ -177,7 +177,10 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 	}
 	textContents, err = history.FileAtRevision(mycoFilePath, revHash)
 	if err == nil {
-		ctx, _ := mycocontext.ContextFromStringInput(textContents, mycoopts.MarkupOptions(hyphaName))
+		ctx, _ := mycocontext.ContextFromBytes(
+			textContents,
+			mycoopts.MarkupOptions(hyphaName),
+		)
 		contents = template.HTML(mycomarkup.BlocksToHTML(ctx, mycomarkup.BlockTree(ctx)))
 	}
 

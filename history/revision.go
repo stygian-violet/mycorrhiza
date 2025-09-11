@@ -1,6 +1,7 @@
 package history
 
 import (
+	"bytes"
 	"fmt"
 	"html"
 	"log/slog"
@@ -140,22 +141,18 @@ func gitLog(args ...string) ([]Revision, error) {
 	}, args...)
 	args = append(args, "--")
 	out, err := gitsh(args...)
-	if strings.Contains(out.String(), "bad revision 'HEAD'") {
-		// Then we have no recent changes! It's a hack.
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	outStr := out.String()
-	if outStr == "" {
+	switch {
+	case len(out) == 0:
 		// if there are no commits to return
 		return nil, nil
+	case bytes.Contains(out, []byte("bad revision 'HEAD'")):
+		// Then we have no recent changes! It's a hack.
+		return nil, nil
+	case err != nil:
+		return nil, err
 	}
-
 	var revs []Revision
-	for _, line := range strings.Split(outStr, "\n") {
+	for _, line := range bytes.Split(out, []byte("\n")) {
 		revs = append(revs, parseRevisionLine(line))
 	}
 	return revs, nil
@@ -252,13 +249,13 @@ func unixTimestampAsTime(ts string) *time.Time {
 	return &tm
 }
 
-func parseRevisionLine(line string) Revision {
-	results := revisionLinePattern.FindStringSubmatch(line)
+func parseRevisionLine(line []byte) Revision {
+	results := revisionLinePattern.FindSubmatch(line)
 	return Revision{
-		Hash:     results[1],
-		Username: results[2],
-		Time:     *unixTimestampAsTime(results[3]),
-		Message:  results[4],
+		Hash:     string(results[1]),
+		Username: string(results[2]),
+		Time:     *unixTimestampAsTime(string(results[3])),
+		Message:  string(results[4]),
 	}
 }
 
@@ -273,7 +270,7 @@ func (rev *Revision) filesAffected() (filenames []string) {
 	if err != nil {
 		rev.filesAffectedBuf = []string{}
 	} else {
-		rev.filesAffectedBuf = strings.Split(out.String(), "\n")
+		rev.filesAffectedBuf = strings.Split(string(out), "\n")
 	}
 	return rev.filesAffectedBuf
 }
@@ -364,12 +361,8 @@ func (rev *Revision) bestLink(includeRoot bool) string {
 }
 
 // FileAtRevision shows how the file with the given file path looked at the commit with the hash. It may return an error if git fails.
-func FileAtRevision(filepath, hash string) (string, error) {
-	out, err := gitsh("show", hash+":"+strings.TrimPrefix(filepath, files.HyphaeDir()+"/"))
-	if err != nil {
-		return "", err
-	}
-	return out.String(), err
+func FileAtRevision(filepath string, hash string) ([]byte, error) {
+	return gitsh("show", hash+":"+strings.TrimPrefix(filepath, files.HyphaeDir()+"/"))
 }
 
 // PrimitiveDiffAtRevision generates a plain-text diff for the given filepath at the commit with the given hash. It may return an error if git fails.
@@ -378,7 +371,7 @@ func PrimitiveDiffAtRevision(filepath, hash string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return out.String(), err
+	return string(out), err
 }
 
 // SplitPrimitiveDiff splits a primitive diff of a single file into hunks.

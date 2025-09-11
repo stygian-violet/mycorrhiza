@@ -116,7 +116,7 @@ func genericLineMigrator(
 
 	if hop.WithFiles(mycoFiles...).Apply().HasError() {
 		slog.Error(commitErrorMessage + hop.ErrorText())
-		return hop.Error
+		return hop.Err()
 	}
 
 	slog.Info("Migrated Mycomarkup documents", "n", len(mycoFiles))
@@ -212,7 +212,7 @@ func genericFileMigrator(
 
 	if hop.WithFiles(changedFiles...).Apply().HasError() {
 		slog.Error(commitErrorMessage + hop.ErrorText())
-		return hop.Error
+		return hop.Err()
 	}
 
 	slog.Info("Migrated files", "n", len(changedFiles))

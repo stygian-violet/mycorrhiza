@@ -20,7 +20,7 @@ func RemoveMedia(u *user.User, h *hyphae.MediaHypha) error {
 	if hop.HasError() {
 		rejectRemoveMediaLog(h, u, "fail")
 		// FIXME: something may be wrong here
-		return fmt.Errorf("Could not unattach this hypha due to internal server errors: <code>%v</code>", hop.Error)
+		return fmt.Errorf("Could not unattach this hypha due to internal server errors: <code>%v</code>", hop.Err())
 	}
 
 	if h.HasTextFile() {

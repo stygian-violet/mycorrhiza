@@ -38,7 +38,7 @@ func writeTextToDisk(h hyphae.ExistingHypha, data string, hop *history.Op) error
 	if err := hyphae.WriteToMycoFile(h, []byte(data)); err != nil {
 		return err
 	}
-	return hop.WithFiles(h.TextFilePath()).Error
+	return hop.WithFiles(h.TextFilePath()).Err()
 }
 
 // UploadText edits the hypha's text part and makes a history record about that.
@@ -108,7 +108,7 @@ func UploadText(h hyphae.Hypha, text string, userMessage string, u *user.User) e
 	if hop.HasError() {
 		Reindex()
 	}
-	return hop.Error
+	return hop.Err()
 }
 
 func historyMessageForMediaUpload(h hyphae.Hypha, mime string) string {
@@ -197,7 +197,7 @@ func UploadBinary(h hyphae.Hypha, filename string, mime string, file multipart.F
 	hop.WithFiles(uploadedFilePath)
 	if hop.HasError() {
 		hop.Abort()
-		return hop.Error
+		return hop.Err()
 	}
 
 	if insert {
@@ -210,5 +210,5 @@ func UploadBinary(h hyphae.Hypha, filename string, mime string, file multipart.F
 	if hop.HasError() {
 		Reindex()
 	}
-	return hop.Error
+	return hop.Err()
 }

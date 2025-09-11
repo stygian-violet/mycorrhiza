@@ -3,9 +3,12 @@ package history
 // history/operations.go
 // 	Things related to writing history.
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -36,30 +39,34 @@ const (
 	TypeMarkupMigration
 )
 
+var (
+	ErrOperationDone = errors.New("history operation is already done")
+)
+
 // Op is an object representing a history operation.
 type Op struct {
-	// All errors are appended here.
-	Error        error
 	Type         OpType
 	userMsg      string
 	name         string
 	email        string
 	filesChanged bool
+	err          error
+	done         bool
 }
 
 type ReadOp struct {
-	Error        error
 }
 
 // Operation is a constructor of a history operation.
 func Operation(opType OpType) *Op {
 	gitMutex.Lock()
 	hop := &Op{
-		name:  "anon",
-		email: "anon@mycorrhiza",
+		Type:         opType,
+		name:         "anon",
+		email:        "anon@mycorrhiza",
 		filesChanged: false,
-		Type:  opType,
-		Error: nil,
+		err:          nil,
+		done:         false,
 	}
 	return hop
 }
@@ -69,9 +76,12 @@ func (hop *Op) gitop(args ...string) *Op {
 	if hop.HasError() {
 		return hop
 	}
+	if hop.done {
+		return hop.withErr(ErrOperationDone)
+	}
 	_, err := gitsh(args...)
 	if err != nil {
-		hop.Error = err
+		return hop.withErr(err)
 	}
 	return hop
 }
@@ -79,6 +89,9 @@ func (hop *Op) gitop(args ...string) *Op {
 func (hop *Op) gitfileop(args []string, files ...string) *Op {
 	if hop.HasError() {
 		return hop
+	}
+	if hop.done {
+		return hop.withErr(ErrOperationDone)
 	}
 	chunkSize := 64
 	nargs := len(args)
@@ -89,8 +102,7 @@ func (hop *Op) gitfileop(args []string, files ...string) *Op {
 		nfiles := copy(cmd[nargs:], chunk)
 		_, err := gitsh(cmd[:nargs + nfiles]...)
 		if err != nil {
-			hop.Error = err
-			return hop
+			return hop.withErr(err)
 		}
 	}
 	return hop
@@ -98,7 +110,7 @@ func (hop *Op) gitfileop(args []string, files ...string) *Op {
 
 // withErr appends the `err` to the list of errors.
 func (hop *Op) withErr(err error) *Op {
-	hop.Error = err
+	hop.err = err
 	return hop
 }
 
@@ -122,12 +134,17 @@ func (hop *Op) WithFilesRemoved(paths ...string) *Op {
 
 // WithFilesRenamed git-mv-s all passed keys of `pairs` to values of `pairs`. Paths can be rooted ot not. Empty keys are ignored.
 func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
+	if hop.HasError() {
+		return hop
+	}
+	if hop.done {
+		return hop.withErr(ErrOperationDone)
+	}
 	hop.SetFilesChanged()
 	for from, to := range pairs {
 		if from != "" {
 			if err := os.MkdirAll(filepath.Dir(to), os.ModeDir|0770); err != nil {
-				hop.Error = err
-				return hop
+				return hop.withErr(err)
 			}
 			hop.gitop("mv", "--force", from, to)
 		}
@@ -146,11 +163,14 @@ func (hop *Op) WithFiles(paths ...string) *Op {
 
 // Apply applies history operation by doing the commit. You do not need to call Abort afterwards.
 func (hop *Op) Apply() *Op {
+	if hop.done {
+		return hop
+	}
 	if hop.filesChanged {
 		hop.gitop(
 			"commit",
-			"--author='"+hop.name+" <"+hop.email+">'",
-			"--message="+hop.userMsg,
+			"--author", fmt.Sprintf("%s<%s>", hop.name, hop.email),
+			"-m", hop.userMsg,
 			"--no-gpg-sign",
 		)
 	}
@@ -158,28 +178,32 @@ func (hop *Op) Apply() *Op {
 		return hop.Abort()
 	}
 	gitMutex.Unlock()
+	hop.done = true
 	return hop
 }
 
 // Abort aborts the history operation.
 func (hop *Op) Abort() *Op {
+	if hop.done {
+		return hop
+	}
 	if hop.filesChanged {
 		if err := gitReset(); err != nil {
 			process.Shutdown()
 		}
 	}
 	gitMutex.Unlock()
+	hop.done = true
 	return hop
 }
 
 // WithMsg sets what message will be used for the future commit. If user message exceeds one line, it is stripped down.
 func (hop *Op) WithMsg(userMsg string) *Op {
-	for _, ch := range userMsg {
-		if ch == '\r' || ch == '\n' {
-			break
-		}
-		hop.userMsg += string(ch)
+	i := strings.IndexAny(userMsg, "\r\n")
+	if i >= 0 {
+		userMsg = userMsg[:i]
 	}
+	hop.userMsg = userMsg
 	return hop
 }
 
@@ -196,22 +220,26 @@ func (hop *Op) WithUser(u *user.User) *Op {
 
 // HasErrors checks whether operation has errors appended.
 func (hop *Op) HasError() bool {
-	return hop.Error != nil
+	return hop.err != nil
+}
+
+// HasErrors checks whether operation has errors appended.
+func (hop *Op) Err() error {
+	return hop.err
 }
 
 // FirstErrorText extracts first error appended to the operation.
 func (hop *Op) ErrorText() string {
-	return hop.Error.Error()
+	return hop.err.Error()
 }
 
 func ReadOperation() *ReadOp {
 	gitMutex.RLock()
-	return &ReadOp{
-		Error: nil,
-	}
+	return &ReadOp{}
 }
 
 func (hop *ReadOp) End() *ReadOp {
 	gitMutex.RUnlock()
 	return hop
 }
+

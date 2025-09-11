@@ -76,7 +76,7 @@ func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leave
 	hop.WithFilesRenamed(renameMap)
 
 	if hop.HasError() {
-		return hop.Abort().Error
+		return hop.Abort().Err()
 	}
 
 	for _, h := range hyphaeToRename {
@@ -100,7 +100,7 @@ func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leave
 	if hop.HasError() {
 		Reindex()
 	}
-	return hop.Error
+	return hop.Err()
 }
 
 const redirectionTemplate = `=> %[1]s | 👁️➡️ %[2]s

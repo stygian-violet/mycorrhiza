@@ -74,10 +74,18 @@ func gitsh(args ...string) ([]byte, error) {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error(
-			"Git command failed",
-			"args", args, "err", err, "output", string(out),
-		)
+		outStr := string(out)
+		if (len(args) > 0 &&
+			args[0] == "commit" &&
+			strings.Contains(outStr, "nothing to commit")) {
+			slog.Info("Nothing to commit", "output", outStr)
+			err = nil
+		} else {
+			slog.Error(
+				"Git command failed",
+				"args", args, "err", err, "output", outStr,
+			)
+		}
 	}
 	return out, err
 }

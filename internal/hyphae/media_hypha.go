@@ -44,3 +44,10 @@ func ShrinkMediaToTextual(m *MediaHypha) *TextualHypha {
 		mycoFilePath:  m.TextFilePath(),
 	}
 }
+
+func (m *MediaHypha) FilePaths() []string {
+	if m.mycoFilePath == "" {
+		return []string{m.mediaFilePath}
+	}
+	return []string{m.mycoFilePath, m.mediaFilePath}
+}

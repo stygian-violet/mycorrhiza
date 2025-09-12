@@ -16,6 +16,7 @@ Disallow: /media/
 Disallow: /edit/
 Disallow: /delete/
 Disallow: /rename/
+Disallow: /revert/
 Disallow: /remove-media/
 Disallow: /history/
 Disallow: /orphans

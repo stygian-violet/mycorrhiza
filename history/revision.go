@@ -406,6 +406,57 @@ func MediaAtRevision(hyphaName string, hash string) (string, uint64, error) {
 	return fname, fsize, err
 }
 
+func HyphaFilesAtRevision(hyphaName string, hash string) (string, string, error) {
+	hyphaDir := filepath.Dir(hyphaName) + "/"
+	args := []string{
+		"ls-tree", hash,
+		"--full-tree",
+		"--format", "%(objectsize)\t%(path)",
+		"--", hyphaDir,
+	}
+	text, media := "", ""
+	err := gitPipe(args, func(line []byte) (bool, error) {
+		size, name, found := bytes.Cut(line, []byte{'\t'})
+		if !found {
+			return false, fmt.Errorf(
+				"failed to parse git ls-tree output: %s", string(line),
+			)
+		}
+		if bytes.Equal(size, []byte{'-'}) {
+			return true, nil
+		}
+		nameStr := string(name)
+		hypha, isText, skip := mimetype.DataFromFilename(nameStr)
+		switch {
+		case skip || hypha != hyphaName:
+			return true, nil
+		case isText:
+			if text == "" {
+				text = nameStr
+			} else {
+				slog.Warn(
+					"Multiple text files for hypha at revision",
+					"hypha", hyphaName, "revision", hash,
+					"file", text, "file2", nameStr,
+				)
+			}
+			return media == "", nil
+		default:
+			if media == "" {
+				media = nameStr
+			} else {
+				slog.Warn(
+					"Multiple media files for hypha at revision",
+					"hypha", hyphaName, "revision", hash,
+					"file", media, "file2", nameStr,
+				)
+			}
+			return text == "", nil
+		}
+	})
+	return text, media, err
+}
+
 func OpenFileAtRevision(
 	filepath string,
 	hash string,

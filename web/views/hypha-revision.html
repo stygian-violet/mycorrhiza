@@ -1,17 +1,25 @@
 {{define "hypha at rev"}}{{.HyphaName}} at {{.RevHash}}{{end}}
 {{define "title"}}{{template "hypha at rev" .}}{{end}}
 {{define "body"}}
-    <main class="main-width">
-        <section>
-            <p>
-                <a href="{{ .Meta.Root }}rev-text/{{.RevHash}}/{{.HyphaName}}">
-                    {{block "revision link" .}}Get Mycomarkup source of this revision{{end}}
-                </a>
-            </p>
-            {{.NaviTitle}}
-            {{.Contents}}
-        </section>
-    </main>
-    {{range .ViewScripts}}<script src="{{.}}"></script>
-    {{end}}
+<main class="main-width">
+	<section>
+		{{if .Meta.U.CanProceed "revert"}}
+		<div class="btn btn_navititle">
+			<a class="btn__link_navititle" href="{{ .Meta.Root }}revert/{{.RevHash}}/{{.HyphaName}}">
+				{{block "revert" .}}Revert{{end}}
+			</a>
+		</div>
+		{{end}}
+		<div class="btn btn_navititle">
+			<a class="btn__link_navititle" href="{{ .Meta.Root }}rev-text/{{.RevHash}}/{{.HyphaName}}">
+				{{block "revision link" .}}View markup{{end}}
+			</a>
+		</div>
+		{{.NaviTitle}}
+		{{.Contents}}
+	</section>
+</main>
+{{range .ViewScripts}}
+<script src="{{.}}"></script>
+{{end}}
 {{end}}

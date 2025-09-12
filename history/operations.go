@@ -37,6 +37,8 @@ const (
 	TypeRemoveMedia
 	// TypeMarkupMigration represents a wikimind-powered automatic markup migration procedure
 	TypeMarkupMigration
+	// TypeRevertHypha represents a hypha reversion
+	TypeRevertHypha
 )
 
 var (
@@ -130,6 +132,14 @@ func (hop *Op) WithFilesRemoved(paths ...string) *Op {
 		return path == ""
 	})
 	return hop.gitfileop([]string{"rm", "--"}, paths...)
+}
+
+// WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
+func (hop *Op) WithFilesReverted(revHash string, paths ...string) *Op {
+	paths = slices.DeleteFunc(paths, func(path string) bool {
+		return path == ""
+	})
+	return hop.gitfileop([]string{"checkout", revHash, "--"}, paths...)
 }
 
 // WithFilesRenamed git-mv-s all passed keys of `pairs` to values of `pairs`. Paths can be rooted ot not. Empty keys are ignored.

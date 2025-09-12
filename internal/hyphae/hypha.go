@@ -2,9 +2,13 @@
 package hyphae
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/bouncepaw/mycorrhiza/history"
+	"github.com/bouncepaw/mycorrhiza/internal/files"
 )
 
 // hyphaNamePattern is a pattern which all hyphae names must match.
@@ -31,6 +35,8 @@ type Hypha interface {
 	//
 	//     util.CanonicalName(h.CanonicalName()) == h.CanonicalName()
 	CanonicalName() string
+
+	FilePaths() []string
 }
 
 // ByName returns a hypha by name. It returns an *EmptyHypha if there is no such hypha. This function is the only source of empty hyphae.
@@ -43,5 +49,36 @@ func ByName(hyphaName string) (h Hypha) {
 	}
 	return &EmptyHypha{
 		canonicalName: hyphaName,
+	}
+}
+
+func AtRevision(hyphaName string, revHash string) (Hypha, error) {
+	text, media, err := history.HyphaFilesAtRevision(hyphaName, revHash)
+	if text != "" {
+		text = filepath.Join(files.HyphaeDir(), text)
+	}
+	if media != "" {
+		media = filepath.Join(files.HyphaeDir(), media)
+	}
+	switch {
+	case err != nil:
+		return &EmptyHypha{
+			canonicalName: hyphaName,
+		}, err
+	case text == "" && media == "":
+		return &EmptyHypha{
+			canonicalName: hyphaName,
+		}, nil
+	case media == "":
+		return &TextualHypha{
+			canonicalName: hyphaName,
+			mycoFilePath: text,
+		}, nil
+	default:
+		return &MediaHypha{
+			canonicalName: hyphaName,
+			mycoFilePath: text,
+			mediaFilePath: media,
+		}, nil
 	}
 }

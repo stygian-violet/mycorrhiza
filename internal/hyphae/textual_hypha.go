@@ -24,6 +24,10 @@ func (t *TextualHypha) TextFilePath() string {
 	return t.mycoFilePath
 }
 
+func (t *TextualHypha) FilePaths() []string {
+	return []string{t.mycoFilePath}
+}
+
 // ExtendTextualToMedia returns a new media hypha with the same name and text file as the given textual hypha. The new hypha is not stored yet.
 func ExtendTextualToMedia(t *TextualHypha, mediaFilePath string) *MediaHypha {
 	return &MediaHypha{

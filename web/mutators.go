@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/hypview"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -24,6 +25,7 @@ func initMutators(r *mux.Router) {
 	r.PathPrefix("/edit/").HandlerFunc(handlerEdit)
 	r.PathPrefix("/rename/").HandlerFunc(handlerRename).Methods("GET", "POST")
 	r.PathPrefix("/delete/").HandlerFunc(handlerDelete).Methods("GET", "POST")
+	r.PathPrefix("/revert/").HandlerFunc(handlerRevert).Methods("GET", "POST")
 	r.PathPrefix("/remove-media/").HandlerFunc(handlerRemoveMedia).Methods("POST")
 	r.PathPrefix("/upload-binary/").HandlerFunc(handlerUploadBinary)
 	r.PathPrefix("/upload-text/").HandlerFunc(handlerUploadText)
@@ -94,6 +96,55 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 
 	if err := shroom.Delete(u, h.(hyphae.ExistingHypha)); err != nil {
 		slog.Error("Failed to delete hypha", "err", err)
+		viewutil.HttpErr(meta, http.StatusInternalServerError, h.CanonicalName(), err.Error())
+		return
+	}
+	http.Redirect(w, rq, cfg.Root+"hypha/"+h.CanonicalName(), http.StatusSeeOther)
+}
+
+func handlerRevert(w http.ResponseWriter, rq *http.Request) {
+	util.PrepareRq(rq)
+
+	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"revert/")
+	revHash, slug, found := strings.Cut(shorterURL, "/")
+	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+
+	var (
+		hyphaName = util.CanonicalName(slug)
+		h         = hyphae.ByName(hyphaName)
+		meta      = viewutil.MetaFrom(w, rq)
+	)
+
+	if !meta.U.CanProceed("revert") {
+		meta.U.RLock()
+		slog.Info(
+			"No permission to revert hypha",
+			"username", meta.U.Name, "hyphaName", hyphaName,
+		)
+		meta.U.RUnlock()
+		viewutil.HttpErr(
+			meta, http.StatusForbidden,
+			hyphaName, "Permission denied",
+		)
+		return
+	}
+
+	if rq.Method == "GET" {
+		_ = pageHyphaRevert.RenderTo(
+			meta,
+			map[string]any{
+				"HyphaName": hyphaName,
+				"RevHash": revHash,
+			})
+		return
+	}
+
+	h, err := shroom.Revert(meta.U, h, revHash)
+	if err != nil {
+		slog.Error("Failed to revert hypha", "err", err)
 		viewutil.HttpErr(meta, http.StatusInternalServerError, h.CanonicalName(), err.Error())
 		return
 	}

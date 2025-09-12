@@ -11,7 +11,7 @@ import (
 var fs embed.FS
 
 var pageOrphans, pageBacklinks, pageUserList, pageChangePassword *newtmpl.Page
-var pageHyphaDelete, pageHyphaEdit, pageHyphaEmpty, pageHypha *newtmpl.Page
+var pageHyphaDelete, pageHyphaRevert, pageHyphaEdit, pageHyphaEmpty, pageHypha *newtmpl.Page
 var pageRevision, pageMedia *newtmpl.Page
 var pageAuthLock, pageAuthLogin, pageAuthLogout, pageAuthRegister *newtmpl.Page
 var pageCatPage, pageCatList, pageCatEdit *newtmpl.Page
@@ -54,8 +54,12 @@ func initPages() {
 		"delete hypha?":     "Удалить {{beautifulName .}}?",
 		"delete [[hypha]]?": "Удалить <a href=\"{{.Meta.Root}}hypha/{{.HyphaName}}\">{{beautifulName .HyphaName}}</a>?",
 		"want to delete?":   "Вы действительно хотите удалить эту гифу?",
-		"delete tip":        "Нельзя отменить удаление гифы, но её история останется доступной.",
 	}, "views/hypha-delete.html")
+	pageHyphaRevert = newtmpl.NewPage(fs, map[string]string{
+		"revert":            "Откатить",
+		"to revision":       "к ревизии",
+		"want to revert?":   "Вы действительно хотите откатить эту гифу?",
+	}, "views/hypha-revert.html")
 	pageHyphaEdit = newtmpl.NewPage(fs, map[string]string{
 		"editing hypha":               `Редактирование {{beautifulName .}}`,
 		"editing [[hypha]]":           `Редактирование <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>`,
@@ -119,8 +123,8 @@ func initPages() {
 		"upload a media btn":               `Загрузить`,
 	}, "views/hypha.html")
 	pageRevision = newtmpl.NewPage(fs, map[string]string{
-		"revision warning": "Обратите внимание, просмотр медиа в истории пока что недоступен.",
-		"revision link":    "Посмотреть Микоразметку для этой ревизии",
+		"revert":           "Откатить",
+		"revision link":    "Посмотреть Микоразметку",
 		"hypha at rev":     "{{.HyphaName}} на {{.RevHash}}",
 	}, "views/hypha-revision.html")
 	pageMedia = newtmpl.NewPage(fs, map[string]string{ // TODO: сделать новый перевод

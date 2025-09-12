@@ -51,6 +51,7 @@ var minimalRights = map[string]int{
 	"remove-media":         2,
 	"update-header-links":  3,
 	"delete":               3,
+	"revert":               3,
 	"reindex":              4,
 	"admin":                4,
 	"admin/shutdown":       4,

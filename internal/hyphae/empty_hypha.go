@@ -13,6 +13,10 @@ func (e *EmptyHypha) CanonicalName() string {
 	return e.canonicalName
 }
 
+func (e *EmptyHypha) FilePaths() []string {
+	return nil
+}
+
 // ExtendEmptyToTextual returns a new textual hypha with the same name as the given empty hypha. The created hypha is not stored yet.
 func ExtendEmptyToTextual(e *EmptyHypha, mycoFilePath string) *TextualHypha {
 	return &TextualHypha{

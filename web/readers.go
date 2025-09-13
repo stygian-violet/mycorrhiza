@@ -327,19 +327,18 @@ func handlerBinary(w http.ResponseWriter, rq *http.Request) {
 func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	meta := viewutil.MetaFrom(w, rq)
-	meta.U.RLock()
-	username := meta.U.Name
-	meta.U.RUnlock()
+	username := meta.U.Name()
 	var (
-		hyphaName                               = util.HyphaNameFromRq(rq, "page", "hypha")
-		h                                       = hyphae.ByName(hyphaName)
-		contents                                template.HTML
-		openGraph                               template.HTML
-		lc                                      = l18n.FromRequest(rq)
+		hyphaName     = util.HyphaNameFromRq(rq, "page", "hypha")
+		h             = hyphae.ByName(hyphaName)
+		contents      template.HTML
+		openGraph     template.HTML
+		lc            = l18n.FromRequest(rq)
+		cats          = categories.CategoriesWithHypha(h.CanonicalName())
+		category_list = ":" + strings.Join(cats, ":") + ":"
+		isMyProfile   = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
+
 		subhyphae, prevHyphaName, nextHyphaName = tree.Tree(h.CanonicalName())
-		cats                                    = categories.CategoriesWithHypha(h.CanonicalName())
-		category_list                           = ":" + strings.Join(cats, ":") + ":"
-		isMyProfile                             = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
 
 		data = map[string]any{
 			"HyphaName":               h.CanonicalName(),

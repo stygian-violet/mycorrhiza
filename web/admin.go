@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
-	"sort"
+	"slices"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
@@ -136,11 +136,7 @@ func handlerAdminUsers(w http.ResponseWriter, rq *http.Request) {
 	for u := range user.YieldUsers() {
 		users = append(users, u)
 	}
-
-	sort.Slice(users, func(i, j int) bool {
-		less := users[i].RegisteredAt.Before(users[j].RegisteredAt)
-		return less
-	})
+	slices.SortFunc(users, user.RegisteredBefore)
 	viewList(viewutil.MetaFrom(w, rq), users)
 }
 
@@ -148,43 +144,29 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 	vars := mux.Vars(rq)
 	u := user.ByName(vars["username"])
 	if u.IsEmpty() {
-		util.HTTP404Page(w, "404 page not found")
+		util.HTTP404Page(w, "404 not found")
 		return
 	}
-
 	f := util.FormDataFromRequest(rq, []string{"group"})
 
 	if rq.Method == http.MethodPost {
 		newGroup := f.Get("group")
-		if user.ValidGroup(newGroup) {
-			u.Lock()
-			oldGroup := u.Group
-			u.Group = newGroup
-			u.Unlock()
-			if err := user.SaveUserDatabase(); err != nil {
-				u.Lock()
-				u.Group = oldGroup
-				u.Unlock()
-				slog.Info("Failed to save user database", "err", err)
-				f = f.WithError(err)
-			} else {
-				http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
-				return
-			}
+		nu, err := u.WithGroup(newGroup)
+		if err != nil {
+			f = f.WithError(err)
+		} else if err = user.ReplaceUser(u, nu); err != nil {
+			f = f.WithError(err)
 		} else {
-			f = f.WithError(fmt.Errorf("invalid group ‘%s’", newGroup))
+			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			return
 		}
 	}
 
-	u.RLock()
-	f.Put("group", u.Group)
-	u.RUnlock()
-
+	f.Put("group", u.Group())
 	if f.HasError() {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
-
 	viewEditUser(viewutil.MetaFrom(w, rq), f, u)
 }
 
@@ -192,7 +174,7 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 	vars := mux.Vars(rq)
 	u := user.ByName(vars["username"])
 	if u.IsEmpty() {
-		util.HTTP404Page(w, "404 page not found")
+		util.HTTP404Page(w, "404 not found")
 		return
 	}
 
@@ -200,27 +182,15 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 
 	password := f.Get("password")
 	passwordConfirm := f.Get("password_confirm")
-	// server side validation
-	if password == "" {
-		err := fmt.Errorf("passwords should not be empty")
-		f = f.WithError(err)
-	}
 	if password == passwordConfirm {
-		u.RLock()
-		previousPassword := u.Password // for rollback
-		u.RUnlock()
-		if err := u.ChangePassword(password); err != nil {
+		nu, err := u.WithPassword(password)
+		if err != nil {
+			f = f.WithError(err)
+		} else if err = user.ReplaceUser(u, nu); err != nil {
 			f = f.WithError(err)
 		} else {
-			if err := user.SaveUserDatabase(); err != nil {
-				u.Lock()
-				u.Password = previousPassword
-				u.Unlock()
-				f = f.WithError(err)
-			} else {
-				http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
-				return
-			}
+			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			return
 		}
 	} else {
 		err := fmt.Errorf("passwords do not match")
@@ -231,7 +201,6 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
-
 	viewEditUser(viewutil.MetaFrom(w, rq), f, u)
 }
 
@@ -246,14 +215,12 @@ func handlerAdminUserDelete(w http.ResponseWriter, rq *http.Request) {
 	f := util.NewFormData()
 
 	if rq.Method == http.MethodPost {
-		u.RLock()
-		name := u.Name
-		u.RUnlock()
-		f = f.WithError(user.DeleteUser(name))
-		if !f.HasError() {
-			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+		if err := user.DeleteUser(u.Name()); err != nil {
+			slog.Info("Failed to delete user", "err", err)
+			f = f.WithError(err)
 		} else {
-			slog.Info("Failed to delete user", "err", f.Error())
+			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			return
 		}
 	}
 
@@ -272,7 +239,10 @@ func handlerAdminUserNew(w http.ResponseWriter, rq *http.Request) {
 		// Create a user
 		f := util.FormDataFromRequest(rq, []string{"name", "password", "group"})
 
-		err := user.Register(f.Get("name"), f.Get("password"), f.Get("group"), "local", true)
+		err := user.Register(
+			f.Get("name"), f.Get("password"),
+			f.Get("group"), "local", true,
+		)
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

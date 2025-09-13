@@ -66,20 +66,16 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 	)
 
 	if !u.CanProceed("delete") {
-		u.RLock()
-		slog.Info("No rights to delete hypha",
-			"username", u.Name, "hyphaName", h.CanonicalName())
-		u.RUnlock()
+		slog.Info("No permission to delete hypha",
+			"user", u, "hypha", h.CanonicalName())
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "No rights")
 		return
 	}
 
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
-		u.RLock()
 		slog.Info("Trying to delete empty hyphae",
-			"username", u.Name, "hyphaName", h.CanonicalName())
-		u.RUnlock()
+			"user", u, "hypha", h.CanonicalName())
 		// TODO: localize
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Cannot delete an empty hypha")
 		return
@@ -119,12 +115,10 @@ func handlerRevert(w http.ResponseWriter, rq *http.Request) {
 	)
 
 	if !meta.U.CanProceed("revert") {
-		meta.U.RLock()
 		slog.Info(
 			"No permission to revert hypha",
-			"username", meta.U.Name, "hyphaName", hyphaName,
+			"user", meta.U, "hyphaName", hyphaName,
 		)
-		meta.U.RUnlock()
 		viewutil.HttpErr(
 			meta, http.StatusForbidden,
 			hyphaName, "Permission denied",
@@ -162,19 +156,15 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
-		u.RLock()
 		slog.Info("Trying to rename empty hypha",
-			"username", u.Name, "hyphaName", h.CanonicalName())
-		u.RUnlock()
+			"user", u, "hypha", h.CanonicalName())
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Cannot rename an empty hypha") // TODO: localize
 		return
 	}
 
 	if !u.CanProceed("rename") {
-		u.RLock()
-		slog.Info("No rights to rename hypha",
-			"username", u.Name, "hyphaName", h.CanonicalName())
-		u.RUnlock()
+		slog.Info("No permission to rename hypha",
+			"user", u, "hypha", h.CanonicalName())
 		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "No rights")
 		return
 	}
@@ -192,10 +182,8 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	if err := shroom.Rename(oldHypha, newName, recursive, leaveRedirections, u); err != nil {
-		u.RLock()
 		slog.Error("Failed to rename hypha",
-			"err", err, "username", u.Name, "hyphaName", oldHypha.CanonicalName())
-		u.RUnlock()
+			"err", err, "user", u, "hypha", oldHypha.CanonicalName())
 		viewutil.HttpErr(meta, http.StatusForbidden, oldHypha.CanonicalName(), lc.Get(err.Error())) // TODO: localize
 		return
 	}

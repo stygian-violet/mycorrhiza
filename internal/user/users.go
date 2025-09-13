@@ -7,7 +7,6 @@ import (
 	"slices"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -35,11 +34,9 @@ func YieldUsers() iter.Seq[*User] {
 func ListUsersWithGroup(group string) []string {
 	var filtered []string
 	for u := range YieldUsers() {
-		u.RLock()
-		if u.Group == group {
-			filtered = append(filtered, u.Name)
+		if u.Group() == group {
+			filtered = append(filtered, u.Name())
 		}
-		u.RUnlock()
 	}
 	return filtered
 }
@@ -54,9 +51,7 @@ func Count() (i uint64) {
 
 func HasAnyAdmins() bool {
 	for u := range YieldUsers() {
-		u.RLock()
-		admin := u.Group == "admin"
-		u.RUnlock()
+		admin := u.Group() == "admin"
 		if admin {
 			return true
 		}
@@ -66,7 +61,7 @@ func HasAnyAdmins() bool {
 
 // CredentialsOK checks whether a correct user-password pair is provided
 func CredentialsOK(username, password string) bool {
-	return ByName(username).isCorrectPassword(password)
+	return ByName(username).IsCorrectPassword(password)
 }
 
 // ByToken finds a user by provided session token
@@ -76,25 +71,19 @@ func ByToken(token string) *User {
 	tokensMutex.RUnlock()
 	switch {
 	case !ok:
-		return EmptyUser()
+		return EmptyUser
 	case session.Expired():
 		slog.Info("Session expired", "data", session)
 		terminateSession(token)
-		return EmptyUser()
+		return EmptyUser
 	default:
-		session.Lock()
-		username := session.Username
-		session.LastUsed = time.Now()
-		session.Unlock()
-		usersMutex.RLock()
-		user, ok := users[username]
-		usersMutex.RUnlock()
-		if !ok {
+		user := ByName(session.Username())
+		if user.IsEmpty() {
 			slog.Info("Session user does not exist", "data", session)
 			terminateSession(token)
-			return EmptyUser()
+			return EmptyUser
 		} else {
-			sendSessionEvent(SessionActive)
+			session.Touch()
 		}
 		return user
 	}
@@ -108,13 +97,44 @@ func ByName(username string) *User {
 	if ok {
 		return user
 	}
-	return EmptyUser()
+	return EmptyUser
+}
+
+func AddUser(user *User) error {
+	usersMutex.Lock()
+	users[user.Name()] = user
+	usersMutex.Unlock()
+	return SaveUserDatabase()
+}
+
+func ReplaceUser(old *User, new *User) error {
+	oldName := old.Name()
+	newName := new.Name()
+	if oldName == newName {
+		return AddUser(new)
+	}
+	usersMutex.Lock()
+	delete(users, oldName)
+	users[newName] = new
+	usersMutex.Unlock()
+	sessions := 0
+	tokensMutex.Lock()
+	for _, session := range tokens {
+		if session.Username() == oldName {
+			session.SetUsername(newName)
+		}
+	}
+	tokensMutex.Unlock()
+	if sessions > 0 {
+		sendSessionEvent(SessionChanged)
+	}
+	return SaveUserDatabase()
 }
 
 // DeleteUser removes a user by one's name and saves user database.
 func DeleteUser(name string) error {
 	usersMutex.Lock()
-	user, exists := users[name]
+	_, exists := users[name]
 	if exists {
 		delete(users, name)
 	}
@@ -122,20 +142,13 @@ func DeleteUser(name string) error {
 	if !exists {
 		return nil
 	}
-	user.Lock()
-	user.Name = "anon"
-	user.Group = "anon"
-	user.Password = ""
-	user.Unlock()
 	sessions := 0
 	tokensMutex.Lock()
 	for token, session := range tokens {
-		session.RLock()
-		if session.Username == name {
+		if session.Username() == name {
 			delete(tokens, token)
 			sessions++
 		}
-		session.RUnlock()
 	}
 	tokensMutex.Unlock()
 	if sessions > 0 {
@@ -150,11 +163,9 @@ func limitSessions(username string) {
 	}
 	var sessions []*Session
 	for _, session := range tokens {
-		session.RLock()
-		if session.Username == username {
+		if session.Username() == username {
 			sessions = append(sessions, session)
 		}
-		session.RUnlock()
 	}
 	if uint(len(sessions)) > cfg.SessionLimit {
 		slog.Info(
@@ -164,11 +175,9 @@ func limitSessions(username string) {
 		slices.SortFunc(sessions, LeastRecentlyUsedSession)
 		sessions = sessions[:uint(len(sessions)) - cfg.SessionLimit]
 		for _, session := range sessions {
-			session.Lock()
 			slog.Info("Terminating session", "data", session)
-			session.Username = "anon"
-			delete(tokens, session.Token)
-			session.Unlock()
+			session.Clear()
+			delete(tokens, session.Token())
 		}
 	}
 }
@@ -184,16 +193,16 @@ func AddSession(username string) (*Session, error) {
 		session := NewSession(token, username)
 		tokensMutex.Lock()
 		_, exists := tokens[token]
-		if !exists {
-			tokens[token] = session
-			limitSessions(username)
+		if exists {
+			tokensMutex.Unlock()
+			continue
 		}
+		tokens[token] = session
+		limitSessions(username)
 		tokensMutex.Unlock()
-		if !exists {
-			slog.Info("Added session", "username", username, "session", session)
-			sendSessionEvent(SessionChanged)
-			return session, nil
-		}
+		slog.Info("Added session", "username", username, "session", session)
+		sendSessionEvent(SessionChanged)
+		return session, nil
 	}
 	return nil, fmt.Errorf("failed to generate a unique token after %d tries", i)
 }
@@ -201,34 +210,30 @@ func AddSession(username string) (*Session, error) {
 func terminateSession(token string) {
 	tokensMutex.Lock()
 	session, exists := tokens[token]
-	if exists {
-		delete(tokens, token)
+	if !exists {
+		tokensMutex.Unlock()
+		return
 	}
+	delete(tokens, token)
 	tokensMutex.Unlock()
-	if exists {
-		session.Lock()
-		slog.Info("Terminating session", "data", session)
-		session.Username = "anon"
-		session.Unlock()
-		sendSessionEvent(SessionChanged)
-	}
+	slog.Info("Terminating session", "data", session)
+	session.Clear()
+	sendSessionEvent(SessionChanged)
 }
 
 func UsersInGroups() (admins []string, moderators []string, editors []string, readers []string) {
 	for u := range YieldUsers() {
-		u.RLock()
-		switch u.Group {
+		switch u.Group() {
 		// What if we place the users into sorted slices?
 		case "admin":
-			admins = append(admins, u.Name)
+			admins = append(admins, u.Name())
 		case "moderator":
-			moderators = append(moderators, u.Name)
+			moderators = append(moderators, u.Name())
 		case "editor", "trusted":
-			editors = append(editors, u.Name)
+			editors = append(editors, u.Name())
 		case "reader":
-			readers = append(readers, u.Name)
+			readers = append(readers, u.Name())
 		}
-		u.RUnlock()
 	}
 	sort.Strings(admins)
 	sort.Strings(moderators)

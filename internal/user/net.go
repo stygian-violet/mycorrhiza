@@ -13,9 +13,6 @@ import (
 	"time"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/util"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrLogin error = errors.New("wrong username or password")
@@ -29,7 +26,7 @@ func CanProceed(rq *http.Request, route string) bool {
 func FromRequest(rq *http.Request) *User {
 	cookie, err := rq.Cookie("mycorrhiza_token")
 	if err != nil {
-		return EmptyUser()
+		return EmptyUser
 	}
 	return ByToken(cookie.Value)
 }
@@ -45,50 +42,25 @@ func LogoutFromRequest(w http.ResponseWriter, rq *http.Request) {
 
 // Register registers the given user. If it fails, a non-nil error is returned.
 func Register(username, password, group, source string, force bool) error {
-	if !IsValidUsername(username) {
-		return fmt.Errorf("illegal username ‘%s’", username)
-	}
-	username = util.CanonicalName(username)
-
-	switch {
-	case !IsValidUsername(username):
-		return fmt.Errorf("illegal username ‘%s’", username)
-	case !ValidGroup(group):
-		return fmt.Errorf("invalid group ‘%s’", group)
-	case !ValidSource(source):
-		return fmt.Errorf("invalid source ‘%s’", source)
-	case password == "" && source != "telegram":
-		return fmt.Errorf("password must not be empty")
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user, err := NewUser(username, group, password, source)
 	if err != nil {
 		return err
 	}
-
-	usersMutex.Lock()
-	_, exists := users[username]
-
+	username = user.Name()
+	existing := ByName(username)
 	switch {
-	case exists:
+	case !existing.IsEmpty():
 		err = fmt.Errorf("username ‘%s’ is already taken", username)
-	case !force && cfg.RegistrationLimit > 0 && uint64(len(users)) >= cfg.RegistrationLimit:
-		err = fmt.Errorf("reached the limit of registered users (%d)", cfg.RegistrationLimit)
+	case !force && cfg.RegistrationLimit > 0 && Count() >= cfg.RegistrationLimit:
+		err = fmt.Errorf(
+			"reached the limit of registered users (%d)",
+			cfg.RegistrationLimit,
+		)
 	}
 	if err != nil {
-		usersMutex.Unlock()
 		return err
 	}
-
-	users[username] = &User{
-		Name:         username,
-		Group:        group,
-		Source:       source,
-		Password:     string(hash),
-		RegisteredAt: time.Now(),
-	}
-	usersMutex.Unlock()
-	return SaveUserDatabase()
+	return AddUser(user)
 }
 
 // LoginDataHTTP logs such user in and returns string representation of an error if there is any.

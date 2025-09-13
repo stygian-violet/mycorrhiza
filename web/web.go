@@ -65,7 +65,10 @@ func Handler() http.Handler {
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 			user := user.FromRequest(rq)
-			if !user.ShowLockMaybe(w, rq) {
+			switch {
+			case user.ShowLock():
+				http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
+			default:
 				next.ServeHTTP(w, rq)
 			}
 		})
@@ -278,7 +281,7 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 	)
 	// If registering a user via Telegram failed, because a Telegram user with this name
 	// has already registered, then everything is actually ok!
-	if user.ByName(username).Source == "telegram" {
+	if user.ByName(username).Source() == user.UserSourceTelegram {
 		err = nil
 	}
 

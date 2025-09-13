@@ -1,123 +1,184 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/util"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserSource int
+
+const (
+	UserSourceLocal = iota
+	UserSourceTelegram
+)
+
 // User contains information about a given user required for identification.
 type User struct {
+	name         string
+	group        string
+	passwordHash []byte
+	registeredAt time.Time
+	source       UserSource
+}
+
+type userJson struct {
 	// Name is a username. It must follow hypha naming rules.
 	Name         string    `json:"name"`
 	Group        string    `json:"group"`
-	Password     string    `json:"hashed_password"`
+	PasswordHash string    `json:"hashed_password"`
 	RegisteredAt time.Time `json:"registered_on"`
 	// Source is where the user from. Valid values: local, telegram.
-	Source string `json:"source"`
-	sync.RWMutex
-
+	Source       string    `json:"source"`
 	// A note about why HashedPassword is string and not []byte. The reason is
 	// simple: golang's json marshals []byte as slice of numbers, which is not
 	// acceptable.
 }
 
-type Session struct {
-	Token     string    `json: "token"`
-	Username  string    `json: "username"`
-	LastUsed  time.Time `json: "last_used"`
-	sync.RWMutex
-}
-
-// Route — Right (more is more right)
-var minimalRights = map[string]int{
-	"text":                 0,
-	"backlinks":            0,
-	"history":              0,
-	"text-search":          0,
-	"media":                1,
-	"edit":                 1,
-	"upload-binary":        1,
-	"rename":               1,
-	"upload-text":          1,
-	"add-to-category":      1,
-	"remove-from-category": 1,
-	"remove-media":         2,
-	"update-header-links":  3,
-	"delete":               3,
-	"revert":               3,
-	"reindex":              4,
-	"admin":                4,
-	"admin/shutdown":       4,
-}
-
-var groups = []string{
-	"anon",
-	"reader",
-	"editor",
-	"trusted",
-	"moderator",
-	"admin",
-}
-
-// Group — Right level
-var groupRight = map[string]int{
-	"anon":      0,
-	"reader":    0,
-	"editor":    1,
-	"trusted":   2,
-	"moderator": 3,
-	"admin":     4,
-}
-
-func setRoutePermission(route string, group string) error {
-	level, ok := groupRight[group]
-	if !ok {
-		return fmt.Errorf("invalid group name: %s", group)
+var (
+	// EmptyUser is an anonymous user.
+	EmptyUser = &User{
+		name:         "anon",
+		group:        "anon",
+		passwordHash: nil,
+		source:       UserSourceLocal,
 	}
-	minimalRights[route] = level
-	return nil
-}
-
-// ValidGroup checks whether provided user group name exists.
-func ValidGroup(group string) bool {
-	for _, grp := range groups {
-		if grp == group {
-			return true
-		}
+	// WikimindUser constructs the wikimind user, which is to be used for automated wiki edits and has admin privileges.
+	WikimindUser = &User{
+		name:         "wikimind",
+		group:        "admin",
+		passwordHash: nil,
+		source:       UserSourceLocal,
 	}
-	return false
-}
+)
 
 // ValidSource checks whether provided user source name exists.
 func ValidSource(source string) bool {
 	return source == "local" || source == "telegram"
 }
 
-// EmptyUser constructs an anonymous user.
-func EmptyUser() *User {
-	return &User{
-		Name:     "anon",
-		Group:    "anon",
-		Password: "",
-		Source:   "local",
+func UserSourceFromString(source string) (UserSource, error) {
+	switch source {
+	case "local":
+		return UserSourceLocal, nil
+	case "telegram":
+		return UserSourceTelegram, nil
+	default:
+		return UserSourceLocal, fmt.Errorf("invalid user source '%s'", source)
 	}
 }
 
-// WikimindUser constructs the wikimind user, which is to be used for automated wiki edits and has admin privileges.
-func WikimindUser() *User {
-	return &User{
-		Name:     "wikimind",
-		Group:    "admin",
-		Password: "",
-		Source:   "local",
+func (user *User) String() string {
+	return fmt.Sprintf("<user %s (%s)>", user.name, user.group)
+}
+
+func (user *User) MarshalJSON() ([]byte, error) {
+	var src string
+	switch user.source {
+	case UserSourceTelegram:
+		src = "telegram"
+	default:
+		src = "local"
 	}
+	return json.Marshal(userJson{
+		Name:         user.name,
+		Group:        user.group,
+		PasswordHash: string(user.passwordHash),
+		RegisteredAt: user.registeredAt,
+		Source:       src,
+	})
+}
+
+func (user *User) UnmarshalJSON(b []byte) error {
+	var data userJson
+	err := json.Unmarshal(b, &data);
+	if err != nil {
+		return err
+	}
+	var source UserSource = UserSourceLocal
+	if data.Source == "telegram" {
+		source = UserSourceTelegram
+	}
+	user.name = util.CanonicalName(data.Name)
+	user.group = data.Group
+	user.passwordHash = []byte(data.PasswordHash)
+	user.registeredAt = data.RegisteredAt
+	user.source = source
+	return nil
+}
+
+func NewUser(
+	name string, group string,
+	password string, source string,
+) (*User, error) {
+	src, err := UserSourceFromString(source)
+	if err != nil {
+		return nil, err
+	}
+	return newUserPassword(name, group, password, time.Now(), src)
+}
+
+func newUserPassword(
+	name string, group string, password string,
+	registeredAt time.Time, source UserSource,
+) (*User, error) {
+	hash := []byte(nil)
+	if source != UserSourceTelegram {
+		if password == "" {
+			return nil, fmt.Errorf("password must not be empty")
+		}
+		var err error
+		hash, err = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return newUser(name, group, hash, registeredAt, source)
+}
+
+func newUser(
+	name string, group string, passwordHash []byte,
+	registeredAt time.Time, source UserSource,
+) (*User, error) {
+	switch {
+	case !IsValidUsername(name):
+		return nil, fmt.Errorf("invalid username ‘%s’", name)
+	case !IsValidGroup(group):
+		return nil, fmt.Errorf("invalid group '%s'", group)
+	}
+	return &User{
+		name:         util.CanonicalName(name),
+		group:        group,
+		passwordHash: passwordHash,
+		registeredAt: registeredAt,
+		source:       source,
+	}, nil
+}
+
+func (user *User) Name() string {
+	return user.name
+}
+
+func (user *User) Group() string {
+	return user.group
+}
+
+func (user *User) RegisteredAt() time.Time {
+	return user.registeredAt
+}
+
+func (user *User) Source() UserSource {
+	return user.source
+}
+
+func (user *User) IsLocal() bool {
+	return user.source == UserSourceLocal
 }
 
 // CanProceed checks whether user has rights to visit the provided path (and perform an action).
@@ -125,99 +186,62 @@ func (user *User) CanProceed(route string) bool {
 	if !cfg.UseAuth {
 		return true
 	}
-
-	user.RLock()
-	defer user.RUnlock()
-
-	right := groupRight[user.Group]
-	minimalRight, specified := minimalRights[route]
-
+	permission := groupPermission[user.group]
+	required, specified := routePermission[route]
 	if !specified {
 		return false
 	}
-	return right >= minimalRight
+	return permission >= required
 }
 
-func (user *User) isCorrectPassword(password string) bool {
-	user.RLock()
-	defer user.RUnlock()
+func (user *User) IsCorrectPassword(password string) bool {
 	if password == "" {
 		return false
 	}
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err := bcrypt.CompareHashAndPassword(user.passwordHash, []byte(password))
 	return err == nil
 }
 
 func (user *User) IsEmpty() bool {
-	user.RLock()
-	res := user.Name == "anon"
-	user.RUnlock()
-	return res
+	return user == EmptyUser
 }
 
-// ShowLockMaybe redirects to the lock page if the user is anon and the wiki has been configured to use the lock. It returns true if the user was redirected.
-func (user *User) ShowLockMaybe(w http.ResponseWriter, rq *http.Request) bool {
-	user.RLock()
-	lock := cfg.Locked && user.Group == "anon"
-	user.RUnlock()
-	if lock {
-		http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
+// ShowLock returns true if the user is anon and the wiki has been configured to use the lock.
+func (user *User) ShowLock() bool {
+	return cfg.Locked && user.group == EmptyUser.group
+}
+
+func (user *User) WithPassword(password string) (*User, error) {
+	if user.source != UserSourceLocal {
+		return nil, fmt.Errorf("Only local users can change their passwords.")
 	}
-	return lock
+	return newUserPassword(
+		user.name, user.group, password,
+		user.registeredAt, user.source,
+	)
 }
 
-// Sets a new password for the user.
-func (user *User) ChangePassword(password string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	user.Lock()
-	if user.Source != "local" {
-		user.Unlock()
-		return fmt.Errorf("Only local users can change their passwords.")
-	}
-	user.Password = string(hash)
-	user.Unlock()
-	return SaveUserDatabase()
+func (user *User) WithGroup(group string) (*User, error) {
+	return newUser(
+		user.name, group, user.passwordHash,
+		user.registeredAt, user.source,
+	)
 }
 
-func NewSession(token string, username string) *Session {
-	return &Session {
-		Token: token,
-		Username: username,
-		LastUsed: time.Now(),
-	}
-}
-
-func LeastRecentlyUsedSession(a, b *Session) int {
-	return a.LastUsed.Compare(b.LastUsed)
-}
-
-func MostRecentlyUsedSession(a, b *Session) int {
-	return b.LastUsed.Compare(a.LastUsed)
-}
-
-func (session *Session) Expired() bool {
-	session.RLock()
-	defer session.RUnlock()
-	now := time.Now()
-	/*if now.Compare(session.LastUsed) < 0 {
-		slog.Warn("Session last used in the future", "now", now, "session", session)
-		return false
-	}*/
-	return now.Sub(session.LastUsed) > cfg.SessionTimeout
+func (user *User) WithName(name string) (*User, error) {
+	return newUser(
+		name, user.group, user.passwordHash,
+		user.registeredAt, user.source,
+	)
 }
 
 // IsValidUsername checks if the given username is valid.
 func IsValidUsername(username string) bool {
-	for _, r := range username {
-		if strings.ContainsRune("?!:#@><*|\"'&%{}/", r) {
-			return false
-		}
+	if strings.ContainsAny(username, "?!:#@><*|\"'&%{}/") {
+		return false
 	}
-	return username != "anon" &&
-		username != "wikimind" &&
+	return username != EmptyUser.name &&
+		username != WikimindUser.name &&
 		usernameIsWhiteListed(username)
 }
 
@@ -231,4 +255,8 @@ func usernameIsWhiteListed(username string) bool {
 		}
 	}
 	return false
+}
+
+func RegisteredBefore(a, b *User) int {
+	return a.RegisteredAt().Compare(b.RegisteredAt())
 }

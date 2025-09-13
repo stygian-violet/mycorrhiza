@@ -125,9 +125,7 @@ type interwikiData struct {
 }
 
 func viewInterwiki(meta viewutil.Meta) {
-	meta.U.RLock()
-	canEdit := meta.U.Group == "admin"
-	meta.U.RUnlock()
+	canEdit := meta.U.Group() == "admin"
 	viewutil.ExecutePage(meta, chainInterwiki, interwikiData{
 		BaseData: &viewutil.BaseData{},
 		Entries:  listOfEntries,

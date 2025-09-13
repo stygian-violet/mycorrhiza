@@ -219,12 +219,10 @@ func (hop *Op) WithMsg(userMsg string) *Op {
 
 // WithUser sets a user for the commit.
 func (hop *Op) WithUser(u *user.User) *Op {
-	u.RLock()
-	if u.Group != "anon" {
-		hop.name = u.Name
-		hop.email = u.Name + "@mycorrhiza"
+	if u.Group() != "anon" {
+		hop.name = u.Name()
+		hop.email = hop.name + "@mycorrhiza"
 	}
-	u.RUnlock()
 	return hop
 }
 
@@ -252,4 +250,3 @@ func (hop *ReadOp) End() *ReadOp {
 	gitMutex.RUnlock()
 	return hop
 }
-

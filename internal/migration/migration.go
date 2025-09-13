@@ -49,7 +49,7 @@ func genericLineMigrator(
 		hop = history.
 			Operation(history.TypeMarkupMigration).
 			WithMsg(commitMessage).
-			WithUser(user.WikimindUser())
+			WithUser(user.WikimindUser)
 		mycoFiles = []string{}
 	)
 
@@ -133,7 +133,7 @@ func genericFileMigrator(
 		hop = history.
 			Operation(history.TypeMarkupMigration).
 			WithMsg(commitMessage).
-			WithUser(user.WikimindUser())
+			WithUser(user.WikimindUser)
 		changedFiles = []string{}
 	)
 

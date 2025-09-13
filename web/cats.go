@@ -100,10 +100,8 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 	if len(hyphaNames) == 0 || catName == "" {
-		u.RLock()
 		slog.Info("No data for removal of hyphae from category passed",
-			"username", u.Name, "catName", catName)
-		u.RUnlock()
+			"user", u, "catName", catName)
 		http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 		return
 	}
@@ -111,10 +109,8 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		// TODO: Make it more effective.
 		categories.RemoveHyphaFromCategory(hyphaName, catName)
 	}
-	u.RLock()
 	slog.Info("Remove hyphae from category",
-		"username", u.Name, "catName", catName, "hyphaNames", hyphaNames)
-	u.RUnlock()
+		"user", u, "catName", catName, "hyphaNames", hyphaNames)
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }
 
@@ -124,8 +120,9 @@ func handlerAddToCategory(w http.ResponseWriter, rq *http.Request) {
 		hyphaName  = util.CanonicalName(rq.PostFormValue("hypha"))
 		catName    = util.CanonicalName(rq.PostFormValue("cat"))
 		redirectTo = rq.PostFormValue("redirect-to")
+		u          = user.FromRequest(rq)
 	)
-	if !user.FromRequest(rq).CanProceed("add-to-category") {
+	if !u.CanProceed("add-to-category") {
 		w.WriteHeader(http.StatusForbidden)
 		_, _ = io.WriteString(w, "403 Forbidden")
 		return
@@ -134,7 +131,8 @@ func handlerAddToCategory(w http.ResponseWriter, rq *http.Request) {
 		http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 		return
 	}
-	slog.Info(user.FromRequest(rq).Name, "added", hyphaName, "to", catName)
+	slog.Info("Add hypha to category",
+		"user", u, "catName", catName, "hyphaName", hyphaName)
 	categories.AddHyphaToCategory(hyphaName, catName)
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }

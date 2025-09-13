@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -15,6 +16,12 @@ import (
 
 	"git.sr.ht/~bouncepaw/mycomarkup/v5/util"
 )
+
+type RWLocker interface {
+	sync.Locker
+	RLock()
+	RUnlock()
+}
 
 // PrepareRq strips the trailing / in rq.URL.Path. In the future it might do more stuff for making all request structs uniform.
 func PrepareRq(rq *http.Request) {

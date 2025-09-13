@@ -115,7 +115,6 @@ func Base(meta Meta, title, body string, bodyAttributes map[string]string, headE
 	var w strings.Builder
 	meta.W = &w
 	t := localizedBaseWithWeirdBody(meta)
-	meta.U.RLock()
 	err := t.ExecuteTemplate(&w, "page", BaseData{
 		Meta:           meta,
 		Title:          title,
@@ -126,7 +125,6 @@ func Base(meta Meta, title, body string, bodyAttributes map[string]string, headE
 		Body:           body,
 		BodyAttributes: bodyAttributes,
 	})
-	meta.U.RUnlock()
 	if err != nil {
 		slog.Info("Failed to execute the legacy Base template; proceeding anyway", "err", err)
 	}
@@ -151,8 +149,6 @@ func ExecutePage(meta Meta, chain Chain, data interface {
 	withBaseValues(meta Meta, headerLinks []HeaderLink, commonScripts []string)
 }) {
 	data.withBaseValues(meta, HeaderLinks, cfg.CommonScripts)
-	meta.U.RLock()
-	defer meta.U.RUnlock()
 	if err := chain.Get(meta).ExecuteTemplate(meta.W, "page", data); err != nil {
 		slog.Info("Failed to execute page; proceeding anyway", "err", err)
 	}

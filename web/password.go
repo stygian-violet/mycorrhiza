@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"reflect"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -14,52 +13,37 @@ import (
 
 func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 	u := user.FromRequest(rq)
-	// TODO: is there a better way?
-	if reflect.DeepEqual(u, user.EmptyUser()) || u == nil {
-		util.HTTP404Page(w, "404 page not found")
+	if u.IsEmpty() {
+		util.HTTP404Page(w, "404 not found")
 		return
 	}
 
 	f := util.FormDataFromRequest(rq, []string{"current_password", "password", "password_confirm"})
-	currentPassword := f.Get("current_password")
 
-	u.RLock()
-	username := u.Name
-	u.RUnlock()
+	if rq.Method == "POST" {
+		currentPassword := f.Get("current_password")
 
-	if user.CredentialsOK(username, currentPassword) {
-		password := f.Get("password")
-		passwordConfirm := f.Get("password_confirm")
-		// server side validation
-		if password == "" {
-			err := fmt.Errorf("passwords should not be empty")
-			f = f.WithError(err)
-		}
-		if password == passwordConfirm {
-			u.RLock()
-			previousPassword := u.Password // for rollback
-			u.RUnlock()
-			if err := u.ChangePassword(password); err != nil {
-				f = f.WithError(err)
-			} else {
-				if err := user.SaveUserDatabase(); err != nil {
-					u.Lock()
-					u.Password = previousPassword
-					u.Unlock()
+		if u.IsCorrectPassword(currentPassword) {
+			password := f.Get("password")
+			passwordConfirm := f.Get("password_confirm")
+			if password == passwordConfirm {
+				nu, err := u.WithPassword(password)
+				if err != nil {
+					f = f.WithError(err)
+				} else if err = user.ReplaceUser(u, nu); err != nil {
 					f = f.WithError(err)
 				} else {
 					http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 					return
 				}
+			} else {
+				err := fmt.Errorf("passwords do not match")
+				f = f.WithError(err)
 			}
 		} else {
-			err := fmt.Errorf("passwords do not match")
+			err := fmt.Errorf("incorrect password")
 			f = f.WithError(err)
 		}
-	} else {
-		// TODO: handle first attempt different
-		err := fmt.Errorf("incorrect password")
-		f = f.WithError(err)
 	}
 
 	if f.HasError() {

@@ -12,7 +12,6 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
-	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 type SessionEvent int
@@ -31,8 +30,8 @@ func InitUserDatabase() error {
 	if !cfg.UseAuth {
 		return nil
 	}
-	if err := setRoutePermission("text-search", cfg.FullTextPermission); err != nil {
-		slog.Error("Failed to set full text search permission", "err", err)
+	if err := initPermissions(); err != nil {
+		slog.Error("Failed to initialize permissions", "err", err)
 		return err
 	}
 	if err := ReadUsersFromFilesystem(); err != nil {
@@ -123,29 +122,36 @@ func usersFromFile() ([]*User, error) {
 		return users, err
 	}
 
-	for _, u := range users {
-		u.Name = util.CanonicalName(u.Name)
-		if u.Source == "" {
-			u.Source = "local"
-		}
-	}
 	slog.Info("Indexed users", "n", len(users))
 	return users, nil
 }
 
 func rememberUsers(userList []*User) {
-	usersMutex.Lock()
-	users = make(map[string]*User, len(userList))
+	newUsers := make(map[string]*User, len(userList))
 	for _, user := range userList {
-		if IsValidUsername(user.Name) {
-			user2, exists := users[user.Name]
+		name := user.Name()
+		if !IsValidGroup(user.Group()) {
+			slog.Warn("Invalid user group", "user", user)
+			u, err := user.WithGroup(EmptyUser.Group())
+			if err != nil {
+				slog.Error("Failed to change group", "user", user, "err", err)
+			} else {
+				user = u
+			}
+		}
+		if IsValidUsername(name) {
+			user2, exists := newUsers[name]
 			if exists {
 				slog.Error("User already exists", "new", user, "existing", user2)
 			} else {
-				users[user.Name] = user
+				newUsers[name] = user
 			}
+		} else {
+			slog.Warn("Invalid username", "user", user)
 		}
 	}
+	usersMutex.Lock()
+	users = newUsers
 	usersMutex.Unlock()
 }
 
@@ -167,20 +173,24 @@ func readTokensToUsers() error {
 	err = json.Unmarshal(contents, &sessions)
 	if err != nil {
 		slog.Error("Failed to unmarshal tokens.json contents", "err", err)
-		// return err
+		tokensMutex.Lock()
+		tokens = make(map[string]*Session)
+		tokensMutex.Unlock()
+		return nil
 	}
 	slices.SortFunc(sessions, MostRecentlyUsedSession)
 
 	active := 0
 	invalid := 0
-	tokensMutex.Lock()
-	tokens = make(map[string]*Session, len(sessions))
+
+	newTokens := make(map[string]*Session, len(sessions))
 	for _, session := range sessions {
 		switch {
 		case session.Expired():
 			slog.Info("Session expired", "session", session)
 			invalid++
-		case cfg.SessionLimit > 0 && userSessions[session.Username] == cfg.SessionLimit:
+		case (cfg.SessionLimit > 0 &&
+			userSessions[session.Username()] == cfg.SessionLimit):
 			slog.Info(
 				"Session limit exceeded",
 				"user", session.Username,
@@ -190,10 +200,12 @@ func readTokensToUsers() error {
 			invalid++
 		default:
 			active++
-			userSessions[session.Username]++
-			tokens[session.Token] = session
+			userSessions[session.Username()]++
+			newTokens[session.Token()] = session
 		}
 	}
+	tokensMutex.Lock()
+	tokens = newTokens
 	tokensMutex.Unlock()
 	slog.Info("Indexed sessions", "active", active, "invalid", invalid)
 	return nil
@@ -212,13 +224,7 @@ func writeUserCredentials() error {
 	for u := range YieldUsers() {
 		userList = append(userList, u)
 	}
-	for _, u := range userList {
-		u.RLock()
-	}
 	blob, err := json.MarshalIndent(userList, "", "\t")
-	for _, u := range userList {
-		u.RUnlock()
-	}
 	if err != nil {
 		slog.Error("Failed to marshal users.json", "err", err)
 		return err
@@ -246,13 +252,7 @@ func writeTokens() error {
 	}
 	tokensMutex.Unlock()
 
-	for _, session := range sessionList {
-		session.RLock()
-	}
 	blob, err := json.MarshalIndent(sessionList, "", "\t")
-	for _, session := range sessionList {
-		session.RUnlock()
-	}
 	if err != nil {
 		slog.Error("Failed to marshal tokens.json", "err", err)
 		return err

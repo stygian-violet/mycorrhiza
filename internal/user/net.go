@@ -107,7 +107,8 @@ func LoginDataHTTP(w http.ResponseWriter, username, password string) error {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
-	http.SetCookie(w, cookie("token", session.Token, time.Now().Add(365*24*time.Hour)))
+	t := time.Now().Add(cfg.SessionCookieDuration)
+	http.SetCookie(w, cookie("token", session.Token(), t))
 	return nil
 }
 

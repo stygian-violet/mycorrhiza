@@ -75,6 +75,7 @@ FullTextUpperLimit = 100
 * `SessionLimit`: //number//. Maximum number of login sessions per user. If exceeded, the least recently used session is terminated. If the number is zero, there is no limit. **Default:** `0`.
 * `SessionTimeout`: //duration//. Maximum period of inactivity before a session is terminated. **Default:** `1y`.
 * `SessionUpdateInterval`: //duration//. How often session activity time is saved. **Default:** `1d`.
+* `SessionCookieDuration`: //duration//. How long session cookies last. **Default:** `1y`.
 
 === [Search]
 * `FullText`: //string//. Full text search type. **Options:** `none`, `grep`. **Default:** `grep`.

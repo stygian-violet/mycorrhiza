@@ -42,6 +42,7 @@ var (
 	SessionLimit          uint
 	SessionTimeout        time.Duration
 	SessionUpdateInterval time.Duration
+	SessionCookieDuration time.Duration
 
 	CommonScripts []string
 	ViewScripts   []string
@@ -123,6 +124,7 @@ type Authorization struct {
 	SessionLimit          uint     `comment:"Maximum number of login sessions per user. If exceeded, the least recently used session is terminated. If the number is zero, there is no limit."`
 	SessionTimeout        string   `comment:"Maximum period of inactivity before a session is terminated."`
 	SessionUpdateInterval string   `comment:"How often session activity time is saved."`
+	SessionCookieDuration string   `comment:"How long session cookies last."`
 	// TODO: let admins enable auth-less editing
 }
 
@@ -211,6 +213,7 @@ func ReadConfigFile(path string) error {
 			SessionLimit:          0,
 			SessionTimeout:        "1y",
 			SessionUpdateInterval: "1d",
+			SessionCookieDuration: "1y",
 		},
 		Search: Search{
 			FullText:             "grep",
@@ -290,6 +293,10 @@ func ReadConfigFile(path string) error {
 		return err
 	}
 	SessionUpdateInterval, err = parseduration.ParseDuration(cfg.SessionUpdateInterval)
+	if err != nil {
+		return err
+	}
+	SessionCookieDuration, err = parseduration.ParseDuration(cfg.SessionCookieDuration)
 	if err != nil {
 		return err
 	}

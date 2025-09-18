@@ -89,7 +89,8 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
-	if err := shroom.Delete(meta.U, h.(hyphae.ExistingHypha)); err != nil {
+	recursive := rq.PostFormValue("recursive") == "true"
+	if err := shroom.Delete(meta.U, h.(hyphae.ExistingHypha), recursive); err != nil {
 		slog.Error("Failed to delete hypha", "hypha", h, "err", err)
 		viewutil.HttpErr(meta, http.StatusInternalServerError, h.CanonicalName(), err.Error())
 		return

@@ -31,7 +31,7 @@ func (op *Op) Exists(hyphaName string) bool {
 	return res
 }
 
-func (op *Op) YieldSubhyphae(hypha ExistingHypha) iter.Seq[ExistingHypha] {
+func (op *Op) YieldSubhyphae(hypha Hypha) iter.Seq[ExistingHypha] {
 	return yieldSubhyphae(hypha, false)
 }
 

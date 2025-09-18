@@ -51,9 +51,10 @@ func initPages() {
 		"submit":                    "Поменять",
 	}, "views/change-password.html")
 	pageHyphaDelete = newtmpl.NewPage(fs, map[string]string{
-		"delete hypha?":     "Удалить {{beautifulName .}}?",
-		"delete [[hypha]]?": "Удалить <a href=\"{{.Meta.Root}}hypha/{{.HyphaName}}\">{{beautifulName .HyphaName}}</a>?",
-		"want to delete?":   "Вы действительно хотите удалить эту гифу?",
+		"delete hypha?":      "Удалить {{beautifulName .}}?",
+		"delete [[hypha]]?":  "Удалить <a href=\"{{.Meta.Root}}hypha/{{.HyphaName}}\">{{beautifulName .HyphaName}}</a>?",
+		"want to delete?":    "Вы действительно хотите удалить эту гифу?",
+		"delete recursively": "Также удалить подгифы",
 	}, "views/hypha-delete.html")
 	pageHyphaRevert = newtmpl.NewPage(fs, map[string]string{
 		"revert":            "Откатить",

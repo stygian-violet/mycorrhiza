@@ -2,9 +2,9 @@ package shroom
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/bouncepaw/mycorrhiza/history"
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -13,26 +13,24 @@ import (
 // Delete deletes the hypha and makes a history record about that.
 func Delete(u *user.User, h hyphae.ExistingHypha) error {
 	hop := history.
-		Operation(history.TypeDeleteHypha).
+		Operation().
 		WithMsg(fmt.Sprintf("Delete ‘%s’", h.CanonicalName())).
 		WithUser(u)
-
-	originalText, _ := hyphae.FetchMycomarkupFile(h)
-	switch h := h.(type) {
-	case *hyphae.MediaHypha:
-		if h.HasTextFile() {
-			hop.WithFilesRemoved(h.MediaFilePath(), h.TextFilePath())
-		} else {
-			hop.WithFilesRemoved(h.MediaFilePath())
-		}
-	case *hyphae.TextualHypha:
-		hop.WithFilesRemoved(h.TextFilePath())
+	originalText, err := h.Text(hop)
+	if err != nil {
+		slog.Error("Failed to read hypha text", "hypha", h, "err", err)
+		hop.Abort()
+		return err
 	}
-	if hop.Apply().HasError() {
+	iop := hyphae.IndexOperation()
+	hop.WithFilesRemoved(h.FilePaths()...)
+	iop.WithHyphaDeleted(h, originalText)
+	hop.Apply()
+	if hop.HasError() {
+		iop.Abort()
 		return hop.Err()
 	}
-	backlinks.UpdateBacklinksAfterDelete(h, originalText)
 	categories.RemoveHyphaFromAllCategories(h.CanonicalName())
-	hyphae.DeleteHypha(h)
+	iop.Apply()
 	return nil
 }

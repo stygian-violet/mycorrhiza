@@ -6,6 +6,7 @@ import (
 	"html"
 	"path/filepath"
 
+	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/interwiki"
@@ -40,9 +41,9 @@ func MarkupOptions(hyphaName string) options.Options {
 			case *hyphae.EmptyHypha:
 				err = errors.New("Hypha " + hyphaName + " does not exist")
 			case *hyphae.TextualHypha:
-				rawText, err = hyphae.FetchMycomarkupFile(h)
+				rawText, err = h.Text(history.FileReader())
 			case *hyphae.MediaHypha:
-				rawText, err = hyphae.FetchMycomarkupFile(h)
+				rawText, err = h.Text(history.FileReader())
 				binaryBlock = mediaRaw(h)
 			}
 			return
@@ -61,6 +62,13 @@ func MarkupOptions(hyphaName string) options.Options {
 
 func mediaRaw(h *hyphae.MediaHypha) string {
 	return Media(h, l18n.New("en", "en"))
+}
+
+func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
+	name := html.EscapeString(h.CanonicalName())
+	path := h.MediaFilePath()
+	url := fmt.Sprintf("%sbinary/%s", cfg.Root, name)
+	return MediaFile(path, url, lc)
 }
 
 func MediaFile(path string, url string, lc *l18n.Localizer) string {
@@ -110,11 +118,4 @@ func MediaFile(path string, url string, lc *l18n.Localizer) string {
 			html.EscapeString(lc.Get("ui.media_download")),
 		)
 	}
-}
-
-func Media(h *hyphae.MediaHypha, lc *l18n.Localizer) string {
-	name := html.EscapeString(h.CanonicalName())
-	path := h.MediaFilePath()
-	url := fmt.Sprintf("%sbinary/%s", cfg.Root, name)
-	return MediaFile(path, url, lc)
 }

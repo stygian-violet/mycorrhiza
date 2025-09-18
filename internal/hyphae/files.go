@@ -10,58 +10,95 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/process"
 )
 
+type foundFile struct {
+	hypha string
+	path  string
+	text  bool
+}
+
 // Index finds all hypha files in the full `path` and saves them to the hypha storage.
 func Index(path string) {
-	byNames = make(map[string]ExistingHypha)
-	ch := make(chan ExistingHypha, 5)
+	hop := history.ReadOperation()
+
+	newByNames := make(map[string]ExistingHypha)
+	newBacklinks := make(map[string]linkSet)
+	newCount := 0
+	ch := make(chan foundFile, 8)
 
 	process.Go(func() {
 		indexHelper(path, 0, ch)
 		close(ch)
 	})
 
-	for foundHypha := range ch {
-		switch storedHypha := ByName(foundHypha.CanonicalName()).(type) {
-		case *EmptyHypha:
-			Insert(foundHypha)
-
-		case *TextualHypha:
-			switch foundHypha := foundHypha.(type) {
-			case *TextualHypha: // conflict! overwrite
-				storedHypha.mycoFilePath = foundHypha.mycoFilePath
-				slog.Info("File collision",
-					"hypha", foundHypha.CanonicalName(),
-					"usingFile", foundHypha.TextFilePath(),
-					"insteadOf", storedHypha.TextFilePath(),
-				)
-			case *MediaHypha: // no conflict
-				Insert(ExtendTextualToMedia(storedHypha, foundHypha.mediaFilePath))
-			}
-
-		case *MediaHypha:
-			switch foundHypha := foundHypha.(type) {
-			case *TextualHypha: // no conflict
-				storedHypha.mycoFilePath = foundHypha.mycoFilePath
-			case *MediaHypha: // conflict! overwrite
-				storedHypha.mediaFilePath = foundHypha.mediaFilePath
-
-				slog.Info("File collision",
-					"hypha", foundHypha.CanonicalName(),
-					"usingFile", foundHypha.MediaFilePath(),
-					"insteadOf", storedHypha.MediaFilePath(),
-				)
+	for file := range ch {
+		var storedHypha Hypha
+		storedHypha, exists := newByNames[file.hypha]
+		if !exists {
+			storedHypha = &EmptyHypha{canonicalName: file.hypha}
+			newCount++
+		} else {
+			switch h := storedHypha.(type) {
+			case *TextualHypha:
+				if file.text {
+					slog.Warn("File collision", "hypha", file.hypha,
+						"usingFile", h.TextFilePath(), "insteadOf", file.path)
+					continue
+				}
+			case *MediaHypha:
+				if !file.text {
+					slog.Warn("File collision", "hypha", file.hypha,
+						"usingFile", h.MediaFilePath(), "insteadOf", file.path)
+					continue
+				}
 			}
 		}
+		var updatedHypha ExistingHypha
+		if file.text {
+			updatedHypha = storedHypha.WithTextPath(file.path)
+			err := indexBacklinks(hop, updatedHypha, newBacklinks)
+			if err != nil {
+				slog.Error("Failed to index backlinks", "hypha", storedHypha)
+			}
+		} else {
+			updatedHypha = storedHypha.WithMediaPath(file.path)
+		}
+		newByNames[file.hypha] = updatedHypha
 	}
-	slog.Info("Indexed hyphae", "n", Count())
+
+	indexMutex.Lock()
+	byNames = newByNames
+	backlinksByName = newBacklinks
+	setCount(newCount)
+	indexMutex.Unlock()
+
+	hop.Close()
+
+	slog.Info("Indexed hyphae", "n", newCount)
+}
+
+func indexBacklinks(
+	hop *history.ReadOp,
+	h ExistingHypha,
+	backlinks map[string]linkSet,
+) error {
+	text, err := h.Text(hop)
+	if err != nil {
+		return err
+	}
+	foundLinks := extractHyphaLinksFromContent(h.CanonicalName(), text)
+	for _, link := range foundLinks {
+		if _, exists := backlinks[link]; !exists {
+			backlinks[link] = make(linkSet)
+		}
+		backlinks[link][h.CanonicalName()] = struct{}{}
+	}
+	return nil
 }
 
 // indexHelper finds all hypha files in the full `path` and sends them to the
 // channel. Handling of duplicate entries and media and counting them is
 // up to the caller.
-func indexHelper(path string, nestLevel uint, ch chan ExistingHypha) {
-	hop := history.ReadOperation()
-	defer hop.End()
+func indexHelper(path string, nestLevel uint, ch chan foundFile) {
 	nodes, err := os.ReadDir(path)
 	if err != nil {
 		slog.Error("Failed to read directory", "path", path, "err", err)
@@ -78,26 +115,19 @@ func indexHelper(path string, nestLevel uint, ch chan ExistingHypha) {
 		}
 
 		var (
-			hyphaPartPath           = filepath.ToSlash(filepath.Join(path, node.Name()))
+			hyphaPartPath           = filepath.Join(path, node.Name())
 			hyphaName, isText, skip = mimetype.DataFromFilename(hyphaPartPath)
 		)
 		if !skip {
-			var hypha ExistingHypha
-			if isText {
-				hypha = &TextualHypha{
-					canonicalName: hyphaName,
-					mycoFilePath:  hyphaPartPath,
-				}
-			} else {
-				hypha = &MediaHypha{
-					canonicalName: hyphaName,
-					mycoFilePath:  "",
-					mediaFilePath: hyphaPartPath,
-				}
+			file := foundFile {
+				hypha: hyphaName,
+				path: hyphaPartPath,
+				text: isText,
 			}
 			select {
 			case <-process.Done():
-			case ch <- hypha:
+				return
+			case ch <- file:
 			}
 		}
 	}

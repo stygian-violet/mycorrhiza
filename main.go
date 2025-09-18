@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bouncepaw/mycorrhiza/history"
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
@@ -59,8 +58,6 @@ func main() {
 	// TODO: keep all crashes in main rather than somewhere there
 	viewutil.Init()
 	hyphae.Index(files.HyphaeDir())
-	backlinks.IndexBacklinks()
-	process.Go(backlinks.RunBacklinksConveyor)
 	if err := user.InitUserDatabase(); err != nil {
 		exit()
 	}

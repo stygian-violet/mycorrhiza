@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -108,7 +109,7 @@ func (p *Page) RenderTo(meta viewutil.Meta, data map[string]any) error {
 	data["BodyAttributes"] = meta.BodyAttributes
 	data["CommonScripts"] = cfg.CommonScripts
 	data["EditScripts"] = cfg.EditScripts
-	data["HeaderLinks"] = viewutil.HeaderLinks
+	data["HeaderLinks"] = viewutil.HeaderLinks()
 	data["UseAuth"] = cfg.UseAuth
 
 	tmpl := p.TemplateEnglish
@@ -116,5 +117,12 @@ func (p *Page) RenderTo(meta viewutil.Meta, data map[string]any) error {
 		tmpl = p.TemplateRussian
 	}
 
-	return tmpl.ExecuteTemplate(meta.W, "page", data)
+	err := tmpl.ExecuteTemplate(meta.W, "page", data)
+	if err != nil {
+		slog.Error(
+			"Failed to render template",
+			"err", err, "meta", meta, "data", data,
+		)
+	}
+	return err
 }

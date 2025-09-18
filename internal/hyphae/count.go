@@ -7,11 +7,6 @@ import (
 // Its value is number of all existing hyphae. NonEmptyHypha mutators are expected to manipulate the value. It is concurrent-safe.
 var count atomic.Int32
 
-// ResetCount sets the value of hyphae count to zero. Use when reloading hyphae.
-func ResetCount() {
-	count.Store(0)
-}
-
 // Count how many hyphae there are. This is a O(1), the number of hyphae is stored in memory.
 func Count() int {
 	return int(count.Load())
@@ -25,4 +20,12 @@ func incrementCount() {
 // decrementCount decrements the value of the hyphae counter. Use when deleting existing hyphae.
 func decrementCount() {
 	count.Add(-1)
+}
+
+func addCount(value int) {
+	count.Add(int32(value))
+}
+
+func setCount(value int) {
+	count.Store(int32(value))
 }

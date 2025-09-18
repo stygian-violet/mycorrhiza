@@ -47,7 +47,7 @@ func genericLineMigrator(
 ) error {
 	var (
 		hop = history.
-			Operation(history.TypeMarkupMigration).
+			Operation().
 			WithMsg(commitMessage).
 			WithUser(user.WikimindUser)
 		mycoFiles = []string{}
@@ -131,7 +131,7 @@ func genericFileMigrator(
 ) error {
 	var (
 		hop = history.
-			Operation(history.TypeMarkupMigration).
+			Operation().
 			WithMsg(commitMessage).
 			WithUser(user.WikimindUser)
 		changedFiles = []string{}

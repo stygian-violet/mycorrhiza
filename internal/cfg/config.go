@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"git.sr.ht/~bouncepaw/mycomarkup/v5/util"
 
 	"github.com/go-ini/ini"
 	"github.com/SiverPineValley/parseduration"
@@ -270,15 +273,15 @@ func ReadConfigFile(path string) error {
 	// Map the struct to the global variables
 	WikiName = cfg.WikiName
 	NaviTitleIcon = cfg.NaviTitleIcon
-	HomeHypha = cfg.HomeHypha
-	UserHypha = cfg.UserHypha
-	HeaderLinksHypha = cfg.HeaderLinksHypha
+	HomeHypha = util.CanonicalName(filepath.ToSlash(cfg.HomeHypha))
+	UserHypha = util.CanonicalName(filepath.ToSlash(cfg.UserHypha))
+	HeaderLinksHypha = util.CanonicalName(filepath.ToSlash(cfg.HeaderLinksHypha))
 	RedirectionCategory = cfg.RedirectionCategory
 	if ListenAddr == "" {
 		ListenAddr = cfg.ListenAddr
 	}
 	URL = cfg.URL
-	Root = cfg.Root
+	Root = filepath.ToSlash(cfg.Root)
 	CSP = cfg.CSP
 	Referrer = cfg.Referrer
 	UseAuth = cfg.UseAuth

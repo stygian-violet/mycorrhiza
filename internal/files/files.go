@@ -11,6 +11,7 @@ import (
 )
 
 var paths struct {
+	wikiDir             string
 	gitRepo             string
 	cacheDir            string
 	staticFiles         string
@@ -25,7 +26,7 @@ var paths struct {
 // A separate function is needed to easily know where a general storage path is
 // needed rather than a concrete Git or the whole wiki storage path, so that we
 // could easily refactor things later if we'll ever support different storages.
-func HyphaeDir() string { return filepath.ToSlash(paths.gitRepo) }
+func HyphaeDir() string { return paths.gitRepo }
 
 // GitRepo returns the path to the Git repository of the wiki.
 func GitRepo() string { return paths.gitRepo }
@@ -46,7 +47,7 @@ func UserCredentialsJSON() string { return paths.userCredentialsJSON }
 func CategoriesJSON() string { return paths.categoriesJSON }
 
 // FileInRoot returns full path for the given filename if it was placed in the root of the wiki structure.
-func FileInRoot(filename string) string { return filepath.Join(cfg.WikiDir, filename) }
+func FileInRoot(filename string) string { return filepath.Join(paths.wikiDir, filename) }
 
 func FileInRepo(filename string) string { return filepath.Join(paths.gitRepo, filename) }
 
@@ -56,33 +57,34 @@ func InterwikiJSON() string { return paths.interwikiJSON }
 // correct permissions.
 func PrepareWikiRoot() error {
 	isFirstInit := false
-	if _, err := os.Stat(cfg.WikiDir); err != nil && os.IsNotExist(err) {
+	paths.wikiDir = filepath.FromSlash(cfg.WikiDir)
+	if _, err := os.Stat(paths.wikiDir); err != nil && os.IsNotExist(err) {
 		isFirstInit = true
 	}
-	if err := os.MkdirAll(cfg.WikiDir, os.ModeDir|0770); err != nil {
+	if err := os.MkdirAll(paths.wikiDir, os.ModeDir|0770); err != nil {
 		return err
 	}
 
-	paths.cacheDir = filepath.Join(cfg.WikiDir, "cache")
+	paths.cacheDir = filepath.Join(paths.wikiDir, "cache")
 	if err := os.MkdirAll(paths.cacheDir, os.ModeDir|0770); err != nil {
 		return err
 	}
 
-	paths.gitRepo = filepath.Join(cfg.WikiDir, "wiki.git")
+	paths.gitRepo = filepath.Join(paths.wikiDir, "wiki.git")
 	if err := os.MkdirAll(paths.gitRepo, os.ModeDir|0770); err != nil {
 		return err
 	}
 
-	paths.staticFiles = filepath.Join(cfg.WikiDir, "static")
+	paths.staticFiles = filepath.Join(paths.wikiDir, "static")
 	if err := os.MkdirAll(paths.staticFiles, os.ModeDir|0770); err != nil {
 		return err
 	}
 
-	paths.configPath = filepath.Join(cfg.WikiDir, "config.ini")
-	paths.userCredentialsJSON = filepath.Join(cfg.WikiDir, "users.json")
+	paths.configPath = filepath.Join(paths.wikiDir, "config.ini")
+	paths.userCredentialsJSON = filepath.Join(paths.wikiDir, "users.json")
 
 	paths.tokensJSON = filepath.Join(paths.cacheDir, "tokens.json")
-	paths.categoriesJSON = filepath.Join(cfg.WikiDir, "categories.json")
+	paths.categoriesJSON = filepath.Join(paths.wikiDir, "categories.json")
 	paths.interwikiJSON = FileInRoot("interwiki.json")
 
 	// Are we initializing the wiki for the first time?
@@ -107,7 +109,7 @@ func firstTimeInit() error {
 
 	defer defaultFavicon.Close()
 
-	outputFileName := filepath.Join(cfg.WikiDir, "static", "favicon.ico")
+	outputFileName := filepath.Join(paths.wikiDir, "static", "favicon.ico")
 
 	outputFile, err := os.Create(outputFileName)
 	if err != nil {

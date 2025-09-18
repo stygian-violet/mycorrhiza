@@ -3,154 +3,176 @@ package shroom
 import (
 	"errors"
 	"fmt"
-	"path"
-	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/history"
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
-// Rename renames the old hypha to the new name and makes a history record about that. Call if and only if the user has the permission to rename.
-func Rename(oldHypha hyphae.ExistingHypha, newName string, recursive bool, leaveRedirections bool, u *user.User) error {
-	hop := history.Operation(history.TypeRenameHypha).WithUser(u)
-	// * bouncepaw hates this function and related renaming functions
-	if newName == "" {
-		hop.Abort()
-		rejectRenameLog(oldHypha, u, "no new name given")
-		return errors.New("ui.rename_noname_tip")
-	}
-
-	if !hyphae.IsValidName(newName) {
-		hop.Abort()
-		rejectRenameLog(oldHypha, u, fmt.Sprintf("new name ‘%s’ invalid", newName))
-		return errors.New("ui.rename_badname_tip") // FIXME: There is a bug related to this.
-	}
-
-	switch targetHypha := hyphae.ByName(newName); targetHypha.(type) {
-	case hyphae.ExistingHypha:
-		hop.Abort()
-		if targetHypha.CanonicalName() == oldHypha.CanonicalName() {
-			return nil
-		}
-		rejectRenameLog(oldHypha, u, fmt.Sprintf("name ‘%s’ taken already", newName))
-		return errors.New("ui.rename_taken_tip") // FIXME: There is a bug related to this.
-	}
-
-	var (
-		re          = regexp.MustCompile(`(?i)` + oldHypha.CanonicalName())
-		replaceName = func(str string) string {
-			namepart := strings.TrimPrefix(str, files.HyphaeDir())
-			// Can we drop that util.CanonicalName?:
-			replaced := re.ReplaceAllString(util.CanonicalName(namepart), newName)
-			return path.Join(files.HyphaeDir(), replaced)
-		}
-		hyphaeToRename = findHyphaeToRename(oldHypha, recursive)
-		renameMap, err = renamingPairs(hyphaeToRename, replaceName)
-	)
-
-	if err != nil {
-		hop.Abort()
-		return err
-	}
-
-	if len(hyphaeToRename) > 0 {
-		hop.WithMsg(fmt.Sprintf(
-			"Rename ‘%s’ to ‘%s’ recursively",
-			oldHypha.CanonicalName(),
-			newName))
-	} else {
-		hop.WithMsg(fmt.Sprintf(
-			"Rename ‘%s’ to ‘%s’",
-			oldHypha.CanonicalName(),
-			newName))
-	}
-
-	hop.WithFilesRenamed(renameMap)
-
-	if hop.HasError() {
-		return hop.Abort().Err()
-	}
-
-	for _, h := range hyphaeToRename {
-		var (
-			oldName = h.CanonicalName()
-			newName = re.ReplaceAllString(oldName, newName)
-		)
-		hyphae.RenameHyphaTo(h, newName, replaceName)
-		backlinks.UpdateBacklinksAfterRename(h, oldName)
-		categories.RenameHyphaInAllCategories(oldName, newName)
-		if leaveRedirections {
-			if err := leaveRedirection(oldName, newName, hop); err != nil {
-				hop.WithErrAbort(err)
-				Reindex()
-				return err
-			}
-		}
-	}
-
-	hop.Apply()
-	if hop.HasError() {
-		Reindex()
-	}
-	return hop.Err()
+type hyphaToRename struct {
+	old  hyphae.ExistingHypha
+	new  hyphae.ExistingHypha
 }
 
 const redirectionTemplate = `=> %[1]s | 👁️➡️ %[2]s
 <= %[1]s | full
 `
 
-func leaveRedirection(oldName, newName string, hop *history.Op) error {
-	var (
-		text       = fmt.Sprintf(redirectionTemplate, newName, util.BeautifulName(newName))
-		emptyHypha = hyphae.ByName(oldName)
-	)
-	switch emptyHypha := emptyHypha.(type) {
-	case *hyphae.EmptyHypha:
-		h := hyphae.ExtendEmptyToTextual(emptyHypha, filepath.Join(files.HyphaeDir(), oldName+".myco"))
-		hyphae.Insert(h)
-		categories.AddHyphaToCategory(oldName, cfg.RedirectionCategory)
-		defer backlinks.UpdateBacklinksAfterEdit(h, text, "")
-		return writeTextToDisk(h, text, hop)
-	default:
-		return errors.New("invalid state for hypha " + oldName + " renamed to " + newName)
-	}
-}
+// Rename renames the old hypha to the new name and makes a history record about that. Call if and only if the user has the permission to rename.
+func Rename(
+	oldHypha hyphae.ExistingHypha,
+	newName string,
+	recursive bool,
+	leaveRedirections bool,
+	u *user.User,
+) error {
+	oldName := oldHypha.CanonicalName()
 
-func findHyphaeToRename(superhypha hyphae.ExistingHypha, recursive bool) []hyphae.ExistingHypha {
-	hyphaList := []hyphae.ExistingHypha{superhypha}
-	if recursive {
-		hyphaList = append(hyphaList, hyphae.Subhyphae(superhypha)...)
+	switch {
+	case newName == "":
+		return errors.New("ui.rename_noname_tip")
+	case !hyphae.IsValidName(newName):
+		return errors.New("ui.rename_badname_tip") // FIXME: There is a bug related to this.
+	case oldName == newName:
+		return nil
 	}
-	return hyphaList
-}
 
-func renamingPairs(hyphaeToRename []hyphae.ExistingHypha, replaceName func(string) string) (map[string]string, error) {
-	var (
-		renameMap = make(map[string]string)
-		newNames  = make([]string, len(hyphaeToRename))
+	hop := history.Operation().WithUser(u)
+	iop := hyphae.IndexOperation()
+
+	hyphaeToRename, err := findHyphaeToRename(
+		oldHypha, newName, recursive,
+		hop, iop,
 	)
+	if err != nil {
+		hop.Abort()
+		iop.Abort()
+		return err
+	}
+
+	var msg string
+	if len(hyphaeToRename) > 1 {
+		msg = "Rename ‘%s’ to ‘%s’ recursively"
+	} else {
+		msg = "Rename ‘%s’ to ‘%s’"
+	}
+	hop.WithMsg(fmt.Sprintf(msg, oldHypha.CanonicalName(), newName))
+	hop.WithFilesRenamed(renamingPairs(hyphaeToRename))
+	if hop.HasError() {
+		iop.Abort()
+		return hop.Abort().Err()
+	}
+
+	if leaveRedirections {
+		files := make([]string, len(hyphaeToRename))
+		for i, h := range hyphaeToRename {
+			nh, err := h.leaveRedirection(hop, iop)
+			if err != nil {
+				hop.Abort()
+				iop.Abort()
+				return err
+			}
+			files[i] = nh.TextFilePath()
+		}
+		hop.WithFiles(files...)
+	}
+
+	hop.Apply()
+	if hop.HasError() {
+		iop.Abort()
+		return hop.Err()
+	}
+
 	for _, h := range hyphaeToRename {
-		h.Lock()
-		newNames = append(newNames, replaceName(h.CanonicalName()))
-		if h.HasTextFile() {
-			renameMap[h.TextFilePath()] = replaceName(h.TextFilePath())
+		categories.RenameHyphaInAllCategories(
+			h.old.CanonicalName(),
+			h.new.CanonicalName(),
+		)
+		if leaveRedirections {
+			categories.AddHyphaToCategory(
+				h.old.CanonicalName(),
+				cfg.RedirectionCategory,
+			)
 		}
-		switch h := h.(type) {
-		case *hyphae.MediaHypha:
-			renameMap[h.MediaFilePath()] = replaceName(h.MediaFilePath())
+	}
+
+	iop.Apply()
+	return nil
+}
+
+func (hr hyphaToRename) leaveRedirection(
+	hop *history.Op,
+	iop *hyphae.Op,
+) (*hyphae.TextualHypha, error) {
+	text := fmt.Sprintf(
+		redirectionTemplate,
+		hr.new.CanonicalName(),
+		util.BeautifulName(hr.new.CanonicalName()),
+	)
+	h := hyphae.NewTextualHypha(hr.old.CanonicalName())
+	err := hop.WriteFile(h.TextFilePath(), []byte(text))
+	if err != nil {
+		return nil, err
+	}
+	iop.WithHyphaCreated(h, text)
+	return h, nil
+}
+
+func findHyphaeToRename(
+	superhypha hyphae.ExistingHypha,
+	newName string,
+	recursive bool,
+	hop *history.Op,
+	iop *hyphae.Op,
+) ([]hyphaToRename, error) {
+	if iop.Exists(newName) {
+		return nil, fmt.Errorf("name '%s' is already taken", newName)
+	}
+	newSuperhypha := superhypha.WithName(newName)
+	hyphaList := []hyphaToRename{{
+		old: superhypha,
+		new: newSuperhypha,
+	}}
+	text, err := superhypha.Text(hop)
+	if err != nil {
+		return nil, err
+	}
+	iop.WithHyphaRenamed(superhypha, newSuperhypha, text)
+	if recursive {
+		oldName := superhypha.CanonicalName()
+		for h := range iop.YieldSubhyphae(superhypha) {
+			name := strings.Replace(h.CanonicalName(), oldName, newName, 1)
+			if iop.Exists(newName) {
+				return nil, fmt.Errorf("name '%s' is already taken", name)
+			}
+			text, err := h.Text(hop)
+			if err != nil {
+				return nil, err
+			}
+			nh := h.WithName(name)
+			iop.WithHyphaRenamed(h, nh, text)
+			hyphaList = append(hyphaList, hyphaToRename{
+				old: h,
+				new: nh,
+			})
 		}
-		h.Unlock()
 	}
-	if firstFailure, ok := hyphae.AreFreeNames(newNames...); !ok {
-		return nil, errors.New("Hypha " + firstFailure + " already exists")
+	return hyphaList, nil
+}
+
+func renamingPairs(hyphaeToRename []hyphaToRename) map[string]string {
+	renameMap := make(map[string]string)
+	for _, h := range hyphaeToRename {
+		oldFiles := h.old.FilePaths()
+		newFiles := h.new.FilePaths()
+		n := len(oldFiles)
+		for i := 0; i < n; i++ {
+			renameMap[oldFiles[i]] = newFiles[i]
+		}
 	}
-	return renameMap, nil
+	return renameMap
 }

@@ -3,12 +3,14 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"io"
 	"iter"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"unicode/utf8"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -17,10 +19,17 @@ import (
 	"git.sr.ht/~bouncepaw/mycomarkup/v5/util"
 )
 
-type RWLocker interface {
-	sync.Locker
-	RLock()
-	RUnlock()
+type FileReader interface {
+	ReadFile(path string) ([]byte, error)
+}
+
+type FileServer interface {
+	ServeFile(w http.ResponseWriter, rq *http.Request, path string)
+}
+
+type FileReadServer interface {
+	FileReader
+	FileServer
 }
 
 // PrepareRq strips the trailing / in rq.URL.Path. In the future it might do more stuff for making all request structs uniform.
@@ -31,12 +40,9 @@ func PrepareRq(rq *http.Request) {
 // ShorterPath is used by handlerList to display shorter path to the files. It
 // simply strips the hyphae directory name.
 func ShorterPath(path string) string {
-	if strings.HasPrefix(path, files.HyphaeDir()) {
-		tmp := strings.TrimPrefix(path, files.HyphaeDir())
-		if tmp == "" {
-			return ""
-		}
-		return tmp[1:]
+	dir := files.HyphaeDir()
+	if strings.HasPrefix(path, dir) {
+		return path[min(len(dir) + 1, len(path)):]
 	}
 	return path
 }
@@ -225,4 +231,36 @@ func Filter[T any](cond func(T) bool, seq iter.Seq[T]) iter.Seq[T] {
 			}
 		}
 	}
+}
+
+func WriteFile(path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), os.ModeDir|0770); err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0660)
+}
+
+func CopyFile(path string, file io.Reader) error {
+	if err := os.MkdirAll(filepath.Dir(path), os.ModeDir|0770); err != nil {
+		return err
+	}
+	dst, err := os.OpenFile(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0660)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(dst, file)
+	dst.Close()
+	return err
+}
+
+func FileSize(file io.Seeker) (int64, error) {
+	size, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return 0, err
+	}
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+	return size, nil
 }

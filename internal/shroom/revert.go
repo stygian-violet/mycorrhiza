@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/bouncepaw/mycorrhiza/history"
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
@@ -17,25 +16,26 @@ func Revert(
 	h hyphae.Hypha,
 	revHash string,
 ) (hyphae.Hypha, error) {
+	msg := fmt.Sprintf("Revert ‘%s’ to revision %s", h.CanonicalName(), revHash)
 	hop := history.
-		Operation(history.TypeRevertHypha).
-		WithMsg(fmt.Sprintf("Revert ‘%s’ to revision %s", h.CanonicalName(), revHash)).
+		Operation().
+		WithMsg(msg).
 		WithUser(u)
-	h.Lock()
-	originalText, err := hyphae.FetchMycomarkupFile(h)
+
+	originalText, err := h.Text(hop)
 	if err != nil {
-		h.Unlock()
 		hop.Abort()
 		return h, err
 	}
 	originalFiles := h.FilePaths()
-	h.Unlock()
+
 	rh, err := hyphae.AtRevision(h.CanonicalName(), revHash)
 	if err != nil {
 		hop.Abort()
 		return h, err
 	}
 	revFiles := rh.FilePaths()
+
 	remove := 0
 	for _, path := range originalFiles {
 		if slices.Index(revFiles, path) < 0 {
@@ -43,32 +43,45 @@ func Revert(
 			remove++
 		}
 	}
+	if remove == 0 && len(revFiles) == 0 {
+		return h, nil
+	}
+
 	if remove > 0 {
 		hop.WithFilesRemoved(originalFiles[:remove]...)
 	}
 	if len(revFiles) > 0 {
 		hop.WithFilesReverted(revHash, revFiles...)
 	}
-	revText, err := hyphae.FetchMycomarkupFile(rh)
+
+	revText, err := rh.Text(hop)
 	if err != nil {
 		hop.Abort()
 		return h, err
 	}
+
+	iop := hyphae.IndexOperation()
+	rhe, rhExists := rh.(hyphae.ExistingHypha)
+	he, hExists := h.(hyphae.ExistingHypha)
+
+	switch {
+	case rhExists && hExists:
+		iop.WithHyphaTextChanged(he, originalText, rhe, revText)
+	case rhExists:
+		iop.WithHyphaCreated(rhe, revText)
+	default:
+		iop.WithHyphaDeleted(he, originalText)
+	}
+
 	if hop.Apply().HasError() {
+		iop.Abort()
 		return h, hop.Err()
 	}
-	switch rht := rh.(type) {
-	case *hyphae.EmptyHypha:
-		switch ht := h.(type) {
-		case hyphae.ExistingHypha:
-			backlinks.UpdateBacklinksAfterDelete(ht, originalText)
-			categories.RemoveHyphaFromAllCategories(ht.CanonicalName())
-			hyphae.DeleteHypha(ht)
-		case *hyphae.EmptyHypha:
-		}
-	case hyphae.ExistingHypha:
-		backlinks.UpdateBacklinksAfterEdit(rht, revText, originalText)
-		hyphae.Insert(rht)
+
+	if hExists && !rhExists {
+		categories.RemoveHyphaFromAllCategories(he.CanonicalName())
 	}
+	iop.Apply()
+
 	return rh, nil
 }

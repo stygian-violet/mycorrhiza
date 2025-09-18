@@ -6,17 +6,15 @@ import (
 	"iter"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
-var byNames = make(map[string]ExistingHypha)
-var byNamesMutex = sync.Mutex{}
-
 // YieldExistingHyphae iterates over all hyphae and yields all existing ones.
 func YieldExistingHyphae() iter.Seq[ExistingHypha] {
 	return func(yield func (ExistingHypha) bool) {
+		indexMutex.RLock()
+		defer indexMutex.RUnlock()
 		for _, h := range byNames {
 			if !yield(h) {
 				break
@@ -31,16 +29,50 @@ func YieldExistingHyphaNames() iter.Seq[string] {
 	}, YieldExistingHyphae())
 }
 
+func yieldSubhyphae(h Hypha, lock bool) iter.Seq[ExistingHypha] {
+	prefix := h.CanonicalName() + "/"
+	return func(yield func(ExistingHypha) bool) {
+		if lock {
+			indexMutex.RLock()
+			defer indexMutex.RUnlock()
+		}
+		for _, subh := range byNames {
+			if strings.HasPrefix(subh.CanonicalName(), prefix) {
+				if !yield(subh) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func YieldSubhyphae(h Hypha) iter.Seq[ExistingHypha] {
+	return yieldSubhyphae(h, true)
+}
+
+// YieldHyphaBacklinks gets backlinks for the desired hypha, sorts and yields them one by one.
+func YieldHyphaBacklinks(hyphaName string) iter.Seq[string] {
+	hyphaName = util.CanonicalName(hyphaName)
+	var out iter.Seq[string] = func(yield func(string) bool) {
+		indexMutex.RLock()
+		defer indexMutex.RUnlock()
+		backlinks, exists := backlinksByName[hyphaName]
+		if exists {
+			for link := range backlinks {
+				if !yield(link) {
+					break
+				}
+			}
+		}
+	}
+	sorted := PathographicSort(out)
+	return sorted
+}
+
 // FilterHyphaeWithText filters the source channel and yields only those hyphae than have text parts.
 func FilterHyphaeWithText(src iter.Seq[ExistingHypha]) iter.Seq[ExistingHypha] {
 	return util.Filter(func (h ExistingHypha) bool {
-		switch h := h.(type) {
-		case *TextualHypha:
-			return true
-		case *MediaHypha:
-			return h.HasTextFile()
-		}
-		return false
+		return h.HasTextFile()
 	}, src)
 }
 
@@ -88,21 +120,19 @@ func PathographicSort(src iter.Seq[string]) iter.Seq[string] {
 // Subhyphae returns slice of subhyphae.
 func Subhyphae(h Hypha) []ExistingHypha {
 	var hyphae []ExistingHypha
-	for subh := range YieldExistingHyphae() {
-		if strings.HasPrefix(subh.CanonicalName(), h.CanonicalName()+"/") {
-			hyphae = append(hyphae, subh)
-		}
+	for subh := range YieldSubhyphae(h) {
+		hyphae = append(hyphae, subh)
 	}
 	return hyphae
 }
 
 // AreFreeNames checks if all given `hyphaNames` are not taken. If they are not taken, `ok` is true. If not, `firstFailure` is the name of the first met hypha that is not free.
 func AreFreeNames(hyphaNames ...string) (firstFailure string, ok bool) {
-	for h := range YieldExistingHyphae() {
-		for _, hn := range hyphaNames {
-			if hn == h.CanonicalName() {
-				return hn, false
-			}
+	indexMutex.RLock()
+	defer indexMutex.RUnlock()
+	for _, hn := range hyphaNames {
+		if _, exists := byNames[hn]; exists {
+			return hn, false
 		}
 	}
 	return "", true

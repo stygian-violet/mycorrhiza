@@ -7,13 +7,11 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
@@ -46,15 +44,9 @@ func handlerPrimitiveDiff(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 	var (
-		mycoFilePath string
 		h            = hyphae.ByName(util.CanonicalName(slug))
-	)
-	switch h := h.(type) {
-	case hyphae.ExistingHypha:
 		mycoFilePath = h.TextFilePath()
-	case *hyphae.EmptyHypha:
-		mycoFilePath = filepath.Join(files.HyphaeDir(), h.CanonicalName()+".myco")
-	}
+	)
 	text, err := history.PrimitiveDiffAtRevision(mycoFilePath, revHash)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

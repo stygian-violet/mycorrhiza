@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -371,7 +372,7 @@ func FileAtRevision(filepath string, hash string) ([]byte, error) {
 }
 
 func MediaAtRevision(hyphaName string, hash string) (string, uint64, error) {
-	hyphaDir := filepath.Dir(hyphaName) + "/"
+	hyphaDir := path.Dir(hyphaName) + "/"
 	args := []string{
 		"ls-tree", hash,
 		"--full-tree",
@@ -390,7 +391,7 @@ func MediaAtRevision(hyphaName string, hash string) (string, uint64, error) {
 		if bytes.Equal(size, []byte{'-'}) {
 			return true, nil
 		}
-		nameStr := string(name)
+		nameStr := filepath.FromSlash(string(name))
 		hypha, isText, skip := mimetype.DataFromFilename(nameStr)
 		if skip || isText || hypha != hyphaName {
 			return true, nil
@@ -407,7 +408,7 @@ func MediaAtRevision(hyphaName string, hash string) (string, uint64, error) {
 }
 
 func HyphaFilesAtRevision(hyphaName string, hash string) (string, string, error) {
-	hyphaDir := filepath.Dir(hyphaName) + "/"
+	hyphaDir := path.Dir(hyphaName) + "/"
 	args := []string{
 		"ls-tree", hash,
 		"--full-tree",
@@ -425,7 +426,7 @@ func HyphaFilesAtRevision(hyphaName string, hash string) (string, string, error)
 		if bytes.Equal(size, []byte{'-'}) {
 			return true, nil
 		}
-		nameStr := string(name)
+		nameStr := filepath.FromSlash(string(name))
 		hypha, isText, skip := mimetype.DataFromFilename(nameStr)
 		switch {
 		case skip || hypha != hyphaName:

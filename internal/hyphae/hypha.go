@@ -2,17 +2,59 @@
 package hyphae
 
 import (
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/files"
+	"github.com/bouncepaw/mycorrhiza/util"
 )
+
+// Hypha is the hypha you know and love.
+type Hypha interface {
+	fmt.Stringer
+
+	// CanonicalName returns the canonical name of the hypha.
+	//
+	//     util.CanonicalName(h.CanonicalName()) == h.CanonicalName()
+	CanonicalName() string
+
+	Text(reader util.FileReader) (string, error)
+
+	HasTextFile() bool
+	TextFilePath() string
+	FilePaths() []string
+
+	WithTextPath(path string) ExistingHypha
+	WithMediaPath(path string) ExistingHypha
+	WithoutMedia() Hypha
+}
+
+// ExistingHypha is not EmptyHypha. *MediaHypha and *TextualHypha implement this interface.
+type ExistingHypha interface {
+	Hypha
+
+	WithName(name string) ExistingHypha
+}
 
 // hyphaNamePattern is a pattern which all hyphae names must match.
 var hyphaNamePattern = regexp.MustCompile(`^[^?!:#@><*|"'&%{}]+$`)
+
+func renameHyphaFile(path string, oldHyphaName string, newHyphaName string) string {
+	namepart := util.CanonicalName(filepath.ToSlash(util.ShorterPath(path)))
+	namepart = strings.Replace(namepart, oldHyphaName, newHyphaName, 1)
+	return filepath.Join(files.HyphaeDir(), filepath.FromSlash(namepart))
+}
+
+func FilePath(hyphaName string) string {
+	return filepath.Join(files.HyphaeDir(), filepath.FromSlash(hyphaName))
+}
+
+func TextFilePath(hyphaName string) string {
+	return FilePath(hyphaName) + ".myco"
+}
 
 // IsValidName checks for invalid characters and path traversals.
 func IsValidName(hyphaName string) bool {
@@ -20,36 +62,11 @@ func IsValidName(hyphaName string) bool {
 		return false
 	}
 	for _, segment := range strings.Split(hyphaName, "/") {
-		if segment == ".git" || segment == ".." {
+		if segment == ".git" || segment == ".." || segment == "." {
 			return false
 		}
 	}
 	return true
-}
-
-// Hypha is the hypha you know and love.
-type Hypha interface {
-	sync.Locker
-
-	// CanonicalName returns the canonical name of the hypha.
-	//
-	//     util.CanonicalName(h.CanonicalName()) == h.CanonicalName()
-	CanonicalName() string
-
-	FilePaths() []string
-}
-
-// ByName returns a hypha by name. It returns an *EmptyHypha if there is no such hypha. This function is the only source of empty hyphae.
-func ByName(hyphaName string) (h Hypha) {
-	byNamesMutex.Lock()
-	defer byNamesMutex.Unlock()
-	h, recorded := byNames[hyphaName]
-	if recorded {
-		return h
-	}
-	return &EmptyHypha{
-		canonicalName: hyphaName,
-	}
 }
 
 func AtRevision(hyphaName string, revHash string) (Hypha, error) {

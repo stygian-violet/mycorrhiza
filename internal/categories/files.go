@@ -100,11 +100,13 @@ type catRecord struct {
 }
 
 func readCategoriesFromDisk() (catFileRecord, error) {
+	fileMutex.Lock()
 	var (
 		record            catFileRecord
 		categoriesFile    = files.CategoriesJSON()
 		fileContents, err = os.ReadFile(categoriesFile)
 	)
+	fileMutex.Unlock()
 	if os.IsNotExist(err) {
 		return record, nil
 	}
@@ -124,12 +126,14 @@ var fileMutex sync.Mutex
 
 func saveToDisk() {
 	var record catFileRecord
+	mutex.RLock()
 	for name, node := range categoryToHyphae {
 		record.Categories = append(record.Categories, catRecord{
 			Name:   name,
 			Hyphae: node.hyphaList,
 		})
 	}
+	mutex.RUnlock()
 	data, err := json.MarshalIndent(record, "", "\t")
 	if err != nil {
 		slog.Error("Failed to marshal categories record", "err", err)

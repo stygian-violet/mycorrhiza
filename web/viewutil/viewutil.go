@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"strings"
+	"sync"
 	"text/template" // TODO: save the world
 
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -119,7 +120,7 @@ func Base(meta Meta, title, body string, bodyAttributes map[string]string, headE
 		Meta:           meta,
 		Title:          title,
 		HeadElements:   headElements,
-		HeaderLinks:    HeaderLinks,
+		HeaderLinks:    HeaderLinks(),
 		CommonScripts:  cfg.CommonScripts,
 		EditScripts:    cfg.EditScripts,
 		Body:           body,
@@ -148,14 +149,15 @@ func copyRuWith(fsys fs.FS, f string) *template.Template {
 func ExecutePage(meta Meta, chain Chain, data interface {
 	withBaseValues(meta Meta, headerLinks []HeaderLink, commonScripts []string)
 }) {
-	data.withBaseValues(meta, HeaderLinks, cfg.CommonScripts)
+	data.withBaseValues(meta, HeaderLinks(), cfg.CommonScripts)
 	if err := chain.Get(meta).ExecuteTemplate(meta.W, "page", data); err != nil {
 		slog.Info("Failed to execute page; proceeding anyway", "err", err)
 	}
 }
 
 // HeaderLinks is a list off current header links. Feel free to iterate it directly but do not modify it by yourself. Call ParseHeaderLinks if you need to set new header links.
-var HeaderLinks []HeaderLink
+var headerLinks []HeaderLink
+var headerLinksMutex sync.RWMutex
 
 // HeaderLink represents a header link. Header links are the links shown in the top gray bar.
 type HeaderLink struct {
@@ -163,4 +165,17 @@ type HeaderLink struct {
 	Href string
 	// Display is what is shown when the link is rendered. It goes <a href="...">here</a>.
 	Display string
+}
+
+func HeaderLinks() []HeaderLink {
+	headerLinksMutex.RLock()
+	res := headerLinks
+	headerLinksMutex.RUnlock()
+	return res
+}
+
+func SetHeaderLinks(links []HeaderLink) {
+	headerLinksMutex.Lock()
+	headerLinks = links
+	headerLinksMutex.Unlock()
 }

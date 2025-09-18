@@ -13,7 +13,6 @@ import (
 
 	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
-	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 // Path to git executable. Set at init()
@@ -176,13 +175,4 @@ func gitReset() error {
 		slog.Error("Failed to reset working tree")
 	}
 	return ret
-}
-
-// Rename renames from `from` to `to` using `git mv`.
-func Rename(from, to string) error {
-	slog.Info("Renaming file with git mv",
-		"from", util.ShorterPath(from),
-		"to", util.ShorterPath(to))
-	_, err := gitsh("mv", "--force", from, to)
-	return err
 }

@@ -35,14 +35,14 @@ func FromExtension(ext string) string {
 func DataFromFilename(fullPath string) (name string, isText bool, skip bool) {
 	shortPath := util.ShorterPath(fullPath)
 	ext := filepath.Ext(shortPath)
-	name = util.CanonicalName(strings.TrimSuffix(shortPath, ext))
+	name = filepath.ToSlash(strings.TrimSuffix(shortPath, ext))
+	name = util.CanonicalName(name)
 	switch ext {
 	case ".myco":
 		isText = true
 	case "", shortPath:
 		skip = true
 	}
-
 	return
 }
 

@@ -5,6 +5,7 @@ package history
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -17,37 +18,17 @@ import (
 )
 
 // gitMutex is used for blocking git operations to avoid clashes.
-var gitMutex = sync.RWMutex{}
-
-// OpType is the type a history operation has. Callers shall set appropriate optypes when creating history operations.
-type OpType int
-
-const (
-	// TypeNone represents an empty operation. Not to be used in practice.
-	TypeNone OpType = iota
-	// TypeEditText represents an edit of hypha text part.
-	TypeEditText
-	// TypeEditBinary represents an addition or replacement of hypha media.
-	TypeEditBinary
-	// TypeDeleteHypha represents a hypha deletion
-	TypeDeleteHypha
-	// TypeRenameHypha represents a hypha renaming
-	TypeRenameHypha
-	// TypeRemoveMedia represents media removal
-	TypeRemoveMedia
-	// TypeMarkupMigration represents a wikimind-powered automatic markup migration procedure
-	TypeMarkupMigration
-	// TypeRevertHypha represents a hypha reversion
-	TypeRevertHypha
-)
-
 var (
+	gitMutex = sync.RWMutex{}
 	ErrOperationDone = errors.New("history operation is already done")
 )
 
+type ReadOp struct {
+	done bool
+}
+
 // Op is an object representing a history operation.
 type Op struct {
-	Type         OpType
 	userMsg      string
 	name         string
 	email        string
@@ -56,14 +37,10 @@ type Op struct {
 	done         bool
 }
 
-type ReadOp struct {
-}
-
 // Operation is a constructor of a history operation.
-func Operation(opType OpType) *Op {
+func Operation() *Op {
 	gitMutex.Lock()
 	hop := &Op{
-		Type:         opType,
 		name:         "anon",
 		email:        "anon@mycorrhiza",
 		filesChanged: false,
@@ -75,24 +52,21 @@ func Operation(opType OpType) *Op {
 
 // git operation maker helper
 func (hop *Op) gitop(args ...string) *Op {
-	if hop.HasError() {
+	switch {
+	case hop.err != nil:
 		return hop
-	}
-	if hop.done {
+	case hop.done:
 		return hop.withErr(ErrOperationDone)
 	}
-	_, err := gitsh(args...)
-	if err != nil {
-		return hop.withErr(err)
-	}
+	_, hop.err = gitsh(args...)
 	return hop
 }
 
 func (hop *Op) gitfileop(args []string, files ...string) *Op {
-	if hop.HasError() {
+	switch {
+	case hop.err != nil:
 		return hop
-	}
-	if hop.done {
+	case hop.done:
 		return hop.withErr(ErrOperationDone)
 	}
 	chunkSize := 64
@@ -124,6 +98,37 @@ func (hop *Op) WithErrAbort(err error) *Op {
 func (hop *Op) SetFilesChanged() *Op {
 	hop.filesChanged = true
 	return hop
+}
+
+func (hop *Op) ReadFile(path string) ([]byte, error) {
+	if hop.done {
+		return nil, ErrOperationDone
+	}
+	return os.ReadFile(path)
+}
+
+func (hop *Op) WriteFile(path string, data []byte) error {
+	switch {
+	case hop.err != nil:
+		return hop.err
+	case hop.done:
+		return ErrOperationDone
+	}
+	hop.SetFilesChanged()
+	hop.err = util.WriteFile(path, data)
+	return hop.err
+}
+
+func (hop *Op) CopyFile(path string, file io.Reader) error {
+	switch {
+	case hop.err != nil:
+		return hop.err
+	case hop.done:
+		return ErrOperationDone
+	}
+	hop.SetFilesChanged()
+	hop.err = util.CopyFile(path, file)
+	return hop.err
 }
 
 // WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
@@ -243,10 +248,21 @@ func (hop *Op) ErrorText() string {
 
 func ReadOperation() *ReadOp {
 	gitMutex.RLock()
-	return &ReadOp{}
+	return &ReadOp{ done: false }
 }
 
-func (hop *ReadOp) End() *ReadOp {
+func (hop *ReadOp) ReadFile(path string) ([]byte, error) {
+	if hop.done {
+		return nil, ErrOperationDone
+	}
+	return os.ReadFile(path)
+}
+
+func (hop *ReadOp) Close() *ReadOp {
+	if hop.done {
+		return hop
+	}
+	hop.done = true
 	gitMutex.RUnlock()
 	return hop
 }

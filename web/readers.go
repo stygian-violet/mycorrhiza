@@ -16,10 +16,8 @@ import (
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/hypview"
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
-	"github.com/bouncepaw/mycorrhiza/internal/files"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
 	"github.com/bouncepaw/mycorrhiza/internal/tree"
@@ -115,42 +113,20 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 	)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	switch h := h.(type) {
-	case *hyphae.EmptyHypha:
-		var mycoFilePath = filepath.Join(files.HyphaeDir(), h.CanonicalName()+".myco")
-		var textContents, err = history.FileAtRevision(mycoFilePath, revHash)
-
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			slog.Error("Failed to serve text part",
-				"err", err, "hyphaName", hyphaName, "revHash", revHash)
-			_, _ = io.WriteString(w, "Error: "+err.Error())
-			return
-		}
-		slog.Info("Serving text part",
-			"hyphaName", hyphaName, "revHash", revHash, "mycoFilePath", mycoFilePath)
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(textContents)
-
-	case hyphae.ExistingHypha:
-		if !h.HasTextFile() {
-			slog.Info("Media hypha has no text part; cannot serve it",
-				"hyphaName", h.CanonicalName())
-			w.WriteHeader(http.StatusNotFound)
-		}
-		var textContents, err = history.FileAtRevision(h.TextFilePath(), revHash)
-
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			slog.Error("Failed to serve text part",
-				"err", err, "hyphaName", h.CanonicalName(), "revHash", revHash)
-			_, _ = io.WriteString(w, "Error: "+err.Error())
-			return
-		}
-		slog.Info("Serving text part", "hyphaName", h.CanonicalName(), "revHash", revHash)
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(textContents)
+	mycoFilePath := h.TextFilePath()
+	var textContents, err = history.FileAtRevision(mycoFilePath, revHash)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		slog.Error("Failed to serve text part",
+			"err", err, "hyphaName", hyphaName, "revHash", revHash)
+		_, _ = io.WriteString(w, "Error: "+err.Error())
+		return
 	}
+
+	slog.Info("Serving text part",
+		"hyphaName", hyphaName, "revHash", revHash, "mycoFilePath", mycoFilePath)
+	w.WriteHeader(http.StatusOK)
+	w.Write(textContents)
 }
 
 // handlerRevisionBinary sends hypha media at the given revision. See also: handlerRevision, handlerBinary.
@@ -205,6 +181,7 @@ func handlerRevisionBinary(w http.ResponseWriter, rq *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	_, err = io.Copy(w, contents)
+	contents.Close()
 	if err != nil {
 		slog.Error(
 			"Failed to serve media file",
@@ -229,7 +206,7 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
-		http.Error(w, "403 bad request", http.StatusBadRequest)
+		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
 	var (
@@ -238,15 +215,9 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 		contents      = template.HTML(fmt.Sprintf(`<p>%s</p>`, lc.Get("ui.revision_no_text")))
 		textContents  []byte
 		err           error
-		mycoFilePath  string
+		mycoFilePath  = h.TextFilePath()
 		mediaFilePath string
 	)
-	switch h := h.(type) {
-	case hyphae.ExistingHypha:
-		mycoFilePath = h.TextFilePath()
-	case *hyphae.EmptyHypha:
-		mycoFilePath = filepath.Join(files.HyphaeDir(), h.CanonicalName()+".myco")
-	}
 
 	mediaFilePath, _, err = history.MediaAtRevision(hyphaName, revHash)
 	if err != nil {
@@ -291,11 +262,10 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 func handlerText(w http.ResponseWriter, rq *http.Request) {
 	util.PrepareRq(rq)
 	hyphaName := util.HyphaNameFromRq(rq, "text")
-	switch h := hyphae.ByName(hyphaName).(type) {
-	case hyphae.ExistingHypha:
+	if h, ok := hyphae.ByName(hyphaName).(hyphae.ExistingHypha); ok {
 		slog.Info("Serving text part", "path", h.TextFilePath())
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		http.ServeFile(w, rq, h.TextFilePath())
+		history.FileReader().ServeFile(w, rq, h.TextFilePath())
 	}
 }
 
@@ -319,7 +289,7 @@ func handlerBinary(w http.ResponseWriter, rq *http.Request) {
 			url.QueryEscape(filename),
 		)
 		w.Header().Set("Content-Disposition", filename)
-		http.ServeFile(w, rq, h.MediaFilePath())
+		history.FileReader().ServeFile(w, rq, path)
 	}
 }
 
@@ -347,7 +317,7 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 			"NextHyphaName":           nextHyphaName,
 			"IsMyProfile":             isMyProfile,
 			"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
-			"BacklinkCount":           backlinks.BacklinksCount(h.CanonicalName()),
+			"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
 			"GivenPermissionToModify": user.CanProceed(rq, "edit"),
 			"Categories":              cats,
 			"CategoryNameOptions":     categories.ListOfCategories(),
@@ -365,16 +335,22 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		data["Contents"] = ""
 		_ = pageHypha.RenderTo(meta, data)
 	case hyphae.ExistingHypha:
-		fileContentsT, err := os.ReadFile(h.TextFilePath())
-		if err == nil {
-			ctx, _ := mycocontext.ContextFromStringInput(string(fileContentsT), mycoopts.MarkupOptions(hyphaName))
-			getOpenGraph, descVisitor, imgVisitor := tools.OpenGraphVisitors(ctx)
-			ast := mycomarkup.BlockTree(ctx, descVisitor, imgVisitor)
-			openGraph = template.HTML(getOpenGraph())
-			contents = template.HTML(mycomarkup.BlocksToHTML(ctx, ast))
+		fileContentsT, err := h.Text(history.FileReader())
+		if err != nil {
+			viewutil.HttpErr(meta, http.StatusInternalServerError, hyphaName, err.Error())
+			return
 		}
-		switch h := h.(type) {
-		case *hyphae.MediaHypha:
+
+		ctx, _ := mycocontext.ContextFromStringInput(
+			string(fileContentsT),
+			mycoopts.MarkupOptions(hyphaName),
+		)
+		getOpenGraph, descVisitor, imgVisitor := tools.OpenGraphVisitors(ctx)
+		ast := mycomarkup.BlockTree(ctx, descVisitor, imgVisitor)
+		openGraph = template.HTML(getOpenGraph())
+		contents = template.HTML(mycomarkup.BlocksToHTML(ctx, ast))
+
+		if h, ok := h.(*hyphae.MediaHypha); ok {
 			contents = template.HTML(mycoopts.Media(h, lc)) + contents
 			data["IsMediaHypha"] = true
 		}
@@ -396,7 +372,7 @@ func handlerBacklinks(w http.ResponseWriter, rq *http.Request) {
 		map[string]any{
 			"Addr":      cfg.Root + "backlinks/" + hyphaName,
 			"HyphaName": hyphaName,
-			"Backlinks": backlinks.BacklinksFor(hyphaName),
+			"Backlinks": hyphae.BacklinksFor(hyphaName),
 		})
 }
 
@@ -404,6 +380,6 @@ func handlerOrphans(w http.ResponseWriter, rq *http.Request) {
 	_ = pageOrphans.RenderTo(viewutil.MetaFrom(w, rq),
 		map[string]any{
 			"Addr":    cfg.Root + "orphans",
-			"Orphans": backlinks.Orphans(),
+			"Orphans": hyphae.Orphans(),
 		})
 }

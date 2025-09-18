@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/bouncepaw/mycorrhiza/internal/backlinks"
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
@@ -45,7 +45,7 @@ func RenameHypha(meta viewutil.Meta, hyphaName string) {
 			Addr: cfg.Root + "rename/" + hyphaName,
 		},
 		HyphaName:               hyphaName,
-		LeaveRedirectionDefault: backlinks.BacklinksCount(hyphaName) != 0,
+		LeaveRedirectionDefault: hyphae.BacklinksCount(hyphaName) != 0,
 	})
 }
 

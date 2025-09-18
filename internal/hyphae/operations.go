@@ -2,6 +2,9 @@ package hyphae
 
 import (
 	"iter"
+
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
 type renamePair struct {
@@ -10,11 +13,12 @@ type renamePair struct {
 }
 
 type Op struct {
-	done     bool
-	remove   []ExistingHypha
-	insert   []ExistingHypha
-	rename   []renamePair
-	backlink []backlinkIndexOperation
+	done        bool
+	remove      []ExistingHypha
+	insert      []ExistingHypha
+	rename      []renamePair
+	backlink    []backlinkIndexOperation
+	headerLinks []viewutil.HeaderLink
 }
 
 func IndexOperation() *Op {
@@ -42,6 +46,9 @@ func (op *Op) WithHyphaCreated(h ExistingHypha, text string) *Op {
 			updateBacklinksAfterEdit(h, "", text),
 		)
 	}
+	if h.CanonicalName() == cfg.HeaderLinksHypha {
+		op.headerLinks = ExtractHeaderLinksFromContent(h.CanonicalName(), text)
+	}
 	return op
 }
 
@@ -55,6 +62,9 @@ func (op *Op) WithHyphaDeleted(h ExistingHypha, text string) *Op {
 			op.backlink,
 			updateBacklinksAfterDelete(h, text),
 		)
+	}
+	if h.CanonicalName() == cfg.HeaderLinksHypha {
+		op.headerLinks = viewutil.DefaultHeaderLinks()
 	}
 	return op
 }
@@ -75,6 +85,12 @@ func (op *Op) WithHyphaRenamed(
 		op.backlink,
 		updateBacklinksAfterRename(new, old.CanonicalName(), text),
 	)
+	switch {
+	case new.CanonicalName() == cfg.HeaderLinksHypha:
+		op.headerLinks = ExtractHeaderLinksFromContent(new.CanonicalName(), text)
+	case old.CanonicalName() == cfg.HeaderLinksHypha:
+		op.headerLinks = viewutil.DefaultHeaderLinks()
+	}
 	return op
 }
 
@@ -92,9 +108,13 @@ func (op *Op) WithHyphaTextChanged(
 		)
 	}
 	if old.CanonicalName() != new.CanonicalName() {
-		op.WithHyphaRenamed(old, new, newText)
-	} else {
-		op.insert = append(op.insert, new)
+		return op.WithHyphaRenamed(old, new, newText)
+	}
+	op.insert = append(op.insert, new)
+	if new.CanonicalName() == cfg.HeaderLinksHypha {
+		op.headerLinks = ExtractHeaderLinksFromContent(
+			new.CanonicalName(), newText,
+		)
 	}
 	return op
 }
@@ -124,6 +144,9 @@ func (op *Op) Apply() *Op {
 	}
 	for _, b := range op.backlink {
 		b.apply()
+	}
+	if op.headerLinks != nil {
+		viewutil.SetHeaderLinks(op.headerLinks)
 	}
 	addCount(count)
 	indexMutex.Unlock()

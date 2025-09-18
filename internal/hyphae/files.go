@@ -85,7 +85,7 @@ func indexBacklinks(
 	if err != nil {
 		return err
 	}
-	foundLinks := extractHyphaLinksFromContent(h.CanonicalName(), text)
+	foundLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), text)
 	for _, link := range foundLinks {
 		if _, exists := backlinks[link]; !exists {
 			backlinks[link] = make(linkSet)

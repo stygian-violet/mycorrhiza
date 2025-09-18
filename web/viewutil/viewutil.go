@@ -162,9 +162,24 @@ var headerLinksMutex sync.RWMutex
 // HeaderLink represents a header link. Header links are the links shown in the top gray bar.
 type HeaderLink struct {
 	// Href is the URL of the link. It goes <a href="here">...</a>.
-	Href string
+	href string
 	// Display is what is shown when the link is rendered. It goes <a href="...">here</a>.
-	Display string
+	display string
+}
+
+func NewHeaderLink(href string, display string) HeaderLink {
+	return HeaderLink{
+		href: href,
+		display: display,
+	}
+}
+
+func (link HeaderLink) Href() string {
+	return link.href
+}
+
+func (link HeaderLink) Display() string {
+	return link.display
 }
 
 func HeaderLinks() []HeaderLink {
@@ -178,4 +193,15 @@ func SetHeaderLinks(links []HeaderLink) {
 	headerLinksMutex.Lock()
 	headerLinks = links
 	headerLinksMutex.Unlock()
+}
+
+// DefaultHeaderLinks returns the default list of: home hypha, recent changes, hyphae list, random hypha.
+func DefaultHeaderLinks() []HeaderLink {
+	return []HeaderLink{
+		{cfg.Root+"recent-changes", "Recent changes"},
+		{cfg.Root+"list", "All hyphae"},
+		{cfg.Root+"random", "Random"},
+		{cfg.Root+"help", "Help"},
+		{cfg.Root+"category", "Categories"},
+	}
 }

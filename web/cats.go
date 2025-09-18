@@ -105,10 +105,7 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 		return
 	}
-	for _, hyphaName := range hyphaNames {
-		// TODO: Make it more effective.
-		categories.RemoveHyphaFromCategory(hyphaName, catName)
-	}
+	categories.RemoveHyphaeFromCategory(catName, hyphaNames...)
 	slog.Info("Remove hyphae from category",
 		"user", u, "catName", catName, "hyphaNames", hyphaNames)
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
@@ -133,6 +130,6 @@ func handlerAddToCategory(w http.ResponseWriter, rq *http.Request) {
 	}
 	slog.Info("Add hypha to category",
 		"user", u, "catName", catName, "hyphaName", hyphaName)
-	categories.AddHyphaToCategory(hyphaName, catName)
+	categories.AddHyphaeToCategory(catName, hyphaName)
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }

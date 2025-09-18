@@ -133,22 +133,16 @@ func (hop *Op) CopyFile(path string, file io.Reader) error {
 
 // WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
 func (hop *Op) WithFilesRemoved(paths ...string) *Op {
-	paths = slices.DeleteFunc(paths, func(path string) bool {
-		return path == ""
-	})
 	return hop.gitfileop([]string{"rm", "--"}, paths...)
 }
 
 // WithFilesRemoved git-rm-s all passed `paths`. Paths can be rooted or not. Paths that are empty strings are ignored.
 func (hop *Op) WithFilesReverted(revHash string, paths ...string) *Op {
-	paths = slices.DeleteFunc(paths, func(path string) bool {
-		return path == ""
-	})
 	return hop.gitfileop([]string{"checkout", revHash, "--"}, paths...)
 }
 
 // WithFilesRenamed git-mv-s all passed keys of `pairs` to values of `pairs`. Paths can be rooted ot not. Empty keys are ignored.
-func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
+func (hop *Op) WithFilesRenamed(pairs... util.RenamingPair[string]) *Op {
 	if hop.HasError() {
 		return hop
 	}
@@ -156,13 +150,12 @@ func (hop *Op) WithFilesRenamed(pairs map[string]string) *Op {
 		return hop.withErr(ErrOperationDone)
 	}
 	hop.SetFilesChanged()
-	for from, to := range pairs {
-		if from != "" {
-			if err := os.MkdirAll(filepath.Dir(to), os.ModeDir|0770); err != nil {
-				return hop.withErr(err)
-			}
-			hop.gitop("mv", "--force", from, to)
+	for _, pair := range pairs {
+		err := os.MkdirAll(filepath.Dir(pair.To()), os.ModeDir|0770)
+		if err != nil {
+			return hop.withErr(err)
 		}
+		hop.gitop("mv", "--force", pair.From(), pair.To())
 	}
 	return hop
 }

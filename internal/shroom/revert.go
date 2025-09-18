@@ -79,7 +79,7 @@ func Revert(
 	}
 
 	if hExists && !rhExists {
-		categories.RemoveHyphaFromAllCategories(he.CanonicalName())
+		categories.RemoveHyphaeFromAllCategories(he.CanonicalName())
 	}
 	iop.Apply()
 

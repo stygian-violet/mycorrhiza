@@ -4,19 +4,15 @@ import (
 	"iter"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
+	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
-
-type renamePair struct {
-	old ExistingHypha
-	new ExistingHypha
-}
 
 type Op struct {
 	done        bool
 	remove      []ExistingHypha
 	insert      []ExistingHypha
-	rename      []renamePair
+	rename      []RenamingPair
 	backlink    []backlinkIndexOperation
 	headerLinks []viewutil.HeaderLink
 }
@@ -69,29 +65,35 @@ func (op *Op) WithHyphaDeleted(h ExistingHypha, text string) *Op {
 	return op
 }
 
-func (op *Op) WithHyphaRenamed(
-	old ExistingHypha,
-	new ExistingHypha,
+func (op *Op) WithHyphaRenamedPair(
+	pair RenamingPair,
 	text string,
 ) *Op {
 	if op.done {
 		return op
 	}
-	op.rename = append(op.rename, renamePair{
-		old: old,
-		new: new,
-	})
+	oldName := pair.From().CanonicalName()
+	newName := pair.To().CanonicalName()
+	op.rename = append(op.rename, pair)
 	op.backlink = append(
 		op.backlink,
-		updateBacklinksAfterRename(new, old.CanonicalName(), text),
+		updateBacklinksAfterRename(pair.To(), oldName, text),
 	)
 	switch {
-	case new.CanonicalName() == cfg.HeaderLinksHypha:
-		op.headerLinks = ExtractHeaderLinksFromContent(new.CanonicalName(), text)
-	case old.CanonicalName() == cfg.HeaderLinksHypha:
+	case newName == cfg.HeaderLinksHypha:
+		op.headerLinks = ExtractHeaderLinksFromContent(newName, text)
+	case oldName == cfg.HeaderLinksHypha:
 		op.headerLinks = viewutil.DefaultHeaderLinks()
 	}
 	return op
+}
+
+func (op *Op) WithHyphaRenamed(
+	old ExistingHypha,
+	new ExistingHypha,
+	text string,
+) *Op {
+	return op.WithHyphaRenamedPair(util.NewRenamingPair(old, new), text)
 }
 
 func (op *Op) WithHyphaTextChanged(
@@ -136,8 +138,8 @@ func (op *Op) Apply() *Op {
 		count += deleteHypha(h)
 	}
 	for _, hs := range op.rename {
-		count += deleteHypha(hs.old)
-		count += insertHypha(hs.new)
+		count += deleteHypha(hs.From())
+		count += insertHypha(hs.To())
 	}
 	for _, h := range op.insert {
 		count += insertHypha(h)

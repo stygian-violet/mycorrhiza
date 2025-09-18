@@ -24,7 +24,9 @@ package categories
 import (
 	"sync"
 
+	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
+	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 // ListOfCategories returns unsorted names of all categories.
@@ -37,15 +39,21 @@ func ListOfCategories() (categoryList []string) {
 	return categoryList
 }
 
-// CategoriesWithHypha returns what categories have the given hypha. The hypha name must be canonical.
-func CategoriesWithHypha(hyphaName string) (categoryList []string) {
-	mutex.RLock()
-	defer mutex.RUnlock()
+// categoriesWithHypha returns what categories have the given hypha. The hypha name must be canonical.
+func categoriesWithHypha(hyphaName string) (categoryList []string) {
 	if node, ok := hyphaToCategories[hyphaName]; ok {
 		return node.categoryList
 	} else {
 		return nil
 	}
+}
+
+// CategoriesWithHypha returns what categories have the given hypha. The hypha name must be canonical.
+func CategoriesWithHypha(hyphaName string) (categoryList []string) {
+	mutex.RLock()
+	res := categoriesWithHypha(hyphaName)
+	mutex.RUnlock()
+	return res
 }
 
 // HyphaeInCategory returns what hyphae are in the category. If the returned slice is empty, the category does not exist, and vice versa. The category name must be canonical.
@@ -61,9 +69,8 @@ func HyphaeInCategory(catName string) (hyphaList []string) {
 
 var mutex sync.RWMutex
 
-// AddHyphaToCategory adds the hypha to the category and updates the records on the disk. If the hypha is already in the category, nothing happens. Pass canonical names.
-func AddHyphaToCategory(hyphaName, catName string) {
-	mutex.Lock()
+// addHyphaeToCategory adds the hypha to the category and updates the records on the disk. If the hypha is already in the category, nothing happens. Pass canonical names.
+func addHyphaToCategory(catName string, hyphaName string) {
 	if node, ok := hyphaToCategories[hyphaName]; ok {
 		node.storeCategory(catName)
 	} else {
@@ -75,66 +82,88 @@ func AddHyphaToCategory(hyphaName, catName string) {
 	} else {
 		categoryToHyphae[catName] = &categoryNode{hyphaList: []string{hyphaName}}
 	}
-	mutex.Unlock()
-	process.Go(saveToDisk)
 }
 
-// RemoveHyphaFromCategory removes the hypha from the category and updates the records on the disk. If the hypha is not in the category, nothing happens. Pass canonical names.
-func RemoveHyphaFromCategory(hyphaName, catName string) {
+// AddHyphaeToCategory adds the hyphae to the category and updates the records on the disk. If a hypha is already in the category, nothing happens. Pass canonical names.
+func AddHyphaeToCategory(catName string, hyphaNames... string) {
 	mutex.Lock()
-	if node, ok := hyphaToCategories[hyphaName]; ok {
-		node.removeCategory(catName)
-		if len(node.categoryList) == 0 {
-			delete(hyphaToCategories, hyphaName)
-		}
-	}
-
-	if node, ok := categoryToHyphae[catName]; ok {
-		node.removeHypha(hyphaName)
-		if len(node.hyphaList) == 0 {
-			delete(categoryToHyphae, catName)
-		}
+	for _, hyphaName := range hyphaNames {
+		addHyphaToCategory(catName, hyphaName)
 	}
 	mutex.Unlock()
 	process.Go(saveToDisk)
 }
 
-// RemoveHyphaFromAllCategories removes the given hypha from all the categories.
-func RemoveHyphaFromAllCategories(hyphaName string) {
-	cats := CategoriesWithHypha(hyphaName)
+// RemoveHyphaeFromCategory removes the hyphae from the category and updates the records on the disk. If a hypha is not in the category, nothing happens. Pass canonical names.
+func RemoveHyphaeFromCategory(catName string, hyphaNames... string) {
 	mutex.Lock()
-	defer mutex.Unlock()
-	for _, cat := range cats {
+	for _, hyphaName := range hyphaNames {
 		if node, ok := hyphaToCategories[hyphaName]; ok {
-			node.removeCategory(cat)
+			node.removeCategory(catName)
 			if len(node.categoryList) == 0 {
 				delete(hyphaToCategories, hyphaName)
 			}
 		}
 
-		if node, ok := categoryToHyphae[cat]; ok {
+		if node, ok := categoryToHyphae[catName]; ok {
 			node.removeHypha(hyphaName)
 			if len(node.hyphaList) == 0 {
-				delete(categoryToHyphae, cat)
+				delete(categoryToHyphae, catName)
 			}
 		}
 	}
+	mutex.Unlock()
 	process.Go(saveToDisk)
 }
 
-// RenameHyphaInAllCategories finds all mentions of oldName and replaces them with newName. Pass canonical names. Make sure newName is not taken. If oldName is not in any category, RenameHyphaInAllCategories is a no-op.
-func RenameHyphaInAllCategories(oldName, newName string) {
+// RemoveHyphaeFromAllCategories removes the given hyphae from all the categories.
+func RemoveHyphaeFromAllCategories(hyphaNames... string) {
 	mutex.Lock()
-	defer mutex.Unlock()
-	if node, ok := hyphaToCategories[oldName]; ok {
-		hyphaToCategories[newName] = node
-		delete(hyphaToCategories, oldName) // node should still be in memory 🙏
-		for _, catName := range node.categoryList {
-			if catNode, ok := categoryToHyphae[catName]; ok {
-				catNode.removeHypha(oldName)
-				catNode.storeHypha(newName)
+	for _, hyphaName := range hyphaNames {
+		cats := categoriesWithHypha(hyphaName)
+		for _, cat := range cats {
+			if node, ok := hyphaToCategories[hyphaName]; ok {
+				node.removeCategory(cat)
+				if len(node.categoryList) == 0 {
+					delete(hyphaToCategories, hyphaName)
+				}
+			}
+
+			if node, ok := categoryToHyphae[cat]; ok {
+				node.removeHypha(hyphaName)
+				if len(node.hyphaList) == 0 {
+					delete(categoryToHyphae, cat)
+				}
 			}
 		}
 	}
+	mutex.Unlock()
+	process.Go(saveToDisk)
+}
+
+// RenameHyphaeInAllCategories finds all mentions of oldName and replaces them with newName. Pass canonical names. Make sure newName is not taken. If oldName is not in any category, RenameHyphaeInAllCategories is a no-op.
+func RenameHyphaeInAllCategories(
+	leftRedirections bool,
+	pairs... util.RenamingPair[string],
+) {
+	mutex.Lock()
+	for _, pair := range pairs {
+		oldName := pair.From()
+		newName := pair.To()
+		if node, ok := hyphaToCategories[oldName]; ok {
+			hyphaToCategories[newName] = node
+			delete(hyphaToCategories, oldName) // node should still be in memory 🙏
+			for _, catName := range node.categoryList {
+				if catNode, ok := categoryToHyphae[catName]; ok {
+					catNode.removeHypha(oldName)
+					catNode.storeHypha(newName)
+				}
+			}
+		}
+		if leftRedirections {
+			addHyphaToCategory(cfg.RedirectionCategory, oldName)
+		}
+	}
+	mutex.Unlock()
 	process.Go(saveToDisk)
 }

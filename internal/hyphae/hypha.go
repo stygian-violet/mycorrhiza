@@ -39,6 +39,8 @@ type ExistingHypha interface {
 	WithName(name string) ExistingHypha
 }
 
+type RenamingPair = util.RenamingPair[ExistingHypha]
+
 // hyphaNamePattern is a pattern which all hyphae names must match.
 var hyphaNamePattern = regexp.MustCompile(`^[^?!:#@><*|"'&%{}]+$`)
 

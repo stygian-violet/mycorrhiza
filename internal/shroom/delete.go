@@ -2,6 +2,7 @@ package shroom
 
 import (
 	"fmt"
+	"iter"
 	"log/slog"
 
 	"github.com/bouncepaw/mycorrhiza/history"
@@ -16,15 +17,10 @@ func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
 		Operation().
 		WithUser(u)
 	iop := hyphae.IndexOperation()
-	hyphae := findHyphaeToDelete(iop, h, recursive)
-	var msg string
-	if len(hyphae) > 1 {
-		msg = "Delete ‘%s’ recursively"
-	} else {
-		msg = "Delete ‘%s’"
-	}
+
+	names := []string(nil)
 	files := []string(nil)
-	for _, hypha := range hyphae {
+	for hypha := range yieldHyphaeToDelete(h, recursive, iop) {
 		text, err := hypha.Text(hop)
 		if err != nil {
 			slog.Error("Failed to read hypha text", "hypha", hypha, "err", err)
@@ -32,9 +28,18 @@ func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
 			iop.Abort()
 			return err
 		}
+		names = append(names, hypha.CanonicalName())
 		files = append(files, hypha.FilePaths()...)
 		iop.WithHyphaDeleted(hypha, text)
 	}
+
+	var msg string
+	if len(names) > 1 {
+		msg = "Delete ‘%s’ recursively"
+	} else {
+		msg = "Delete ‘%s’"
+	}
+
 	hop.
 		WithMsg(fmt.Sprintf(msg, h.CanonicalName())).
 		WithFilesRemoved(files...).
@@ -43,23 +48,25 @@ func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
 		iop.Abort()
 		return hop.Err()
 	}
-	for _, h := range hyphae {
-		categories.RemoveHyphaFromAllCategories(h.CanonicalName())
-	}
+
+	categories.RemoveHyphaeFromAllCategories(names...)
 	iop.Apply()
 	return nil
 }
 
-func findHyphaeToDelete(
-	iop *hyphae.Op,
+func yieldHyphaeToDelete(
 	h hyphae.ExistingHypha,
 	recursive bool,
-) []hyphae.ExistingHypha {
-	res := []hyphae.ExistingHypha{h}
-	if recursive {
+	iop *hyphae.Op,
+) iter.Seq[hyphae.ExistingHypha] {
+	return func(yield func(hyphae.ExistingHypha) bool) {
+		if !yield(h) || !recursive {
+			return
+		}
 		for subh := range iop.YieldSubhyphae(h) {
-			res = append(res, subh)
+			if !yield(subh) {
+				return
+			}
 		}
 	}
-	return res
 }

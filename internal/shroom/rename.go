@@ -3,20 +3,15 @@ package shroom
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/categories"
-	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 )
-
-type hyphaToRename struct {
-	old  hyphae.ExistingHypha
-	new  hyphae.ExistingHypha
-}
 
 const redirectionTemplate = `=> %[1]s | 👁️➡️ %[2]s
 <= %[1]s | full
@@ -44,10 +39,8 @@ func Rename(
 	hop := history.Operation().WithUser(u)
 	iop := hyphae.IndexOperation()
 
-	hyphaeToRename, err := findHyphaeToRename(
-		oldHypha, newName, recursive,
-		hop, iop,
-	)
+	hyphaeToRename := yieldHyphaeToRename(oldHypha, newName, recursive, iop)
+	names, files, err := renamingPairs(hyphaeToRename, hop, iop)
 	if err != nil {
 		hop.Abort()
 		iop.Abort()
@@ -55,30 +48,31 @@ func Rename(
 	}
 
 	var msg string
-	if len(hyphaeToRename) > 1 {
+	if len(names) > 1 {
 		msg = "Rename ‘%s’ to ‘%s’ recursively"
 	} else {
 		msg = "Rename ‘%s’ to ‘%s’"
 	}
-	hop.WithMsg(fmt.Sprintf(msg, oldHypha.CanonicalName(), newName))
-	hop.WithFilesRenamed(renamingPairs(hyphaeToRename))
+	hop.WithMsg(fmt.Sprintf(msg, oldHypha.CanonicalName(), newName)).
+		WithFilesRenamed(files...)
 	if hop.HasError() {
+		hop.Abort()
 		iop.Abort()
 		return hop.Abort().Err()
 	}
 
 	if leaveRedirections {
-		files := make([]string, len(hyphaeToRename))
-		for i, h := range hyphaeToRename {
-			nh, err := h.leaveRedirection(hop, iop)
+		redirections := make([]string, len(names))
+		for i, pair := range names {
+			h, err := leaveRedirection(pair, hop, iop)
 			if err != nil {
 				hop.Abort()
 				iop.Abort()
 				return err
 			}
-			files[i] = nh.TextFilePath()
+			redirections[i] = h.TextFilePath()
 		}
-		hop.WithFiles(files...)
+		hop.WithFiles(redirections...)
 	}
 
 	hop.Apply()
@@ -87,33 +81,22 @@ func Rename(
 		return hop.Err()
 	}
 
-	for _, h := range hyphaeToRename {
-		categories.RenameHyphaInAllCategories(
-			h.old.CanonicalName(),
-			h.new.CanonicalName(),
-		)
-		if leaveRedirections {
-			categories.AddHyphaToCategory(
-				h.old.CanonicalName(),
-				cfg.RedirectionCategory,
-			)
-		}
-	}
-
+	categories.RenameHyphaeInAllCategories(leaveRedirections, names...)
 	iop.Apply()
 	return nil
 }
 
-func (hr hyphaToRename) leaveRedirection(
+func leaveRedirection(
+	pair util.RenamingPair[string],
 	hop *history.Op,
 	iop *hyphae.Op,
 ) (*hyphae.TextualHypha, error) {
 	text := fmt.Sprintf(
 		redirectionTemplate,
-		hr.new.CanonicalName(),
-		util.BeautifulName(hr.new.CanonicalName()),
+		pair.To(),
+		util.BeautifulName(pair.To()),
 	)
-	h := hyphae.NewTextualHypha(hr.old.CanonicalName())
+	h := hyphae.NewTextualHypha(pair.From())
 	err := hop.WriteFile(h.TextFilePath(), []byte(text))
 	if err != nil {
 		return nil, err
@@ -122,57 +105,60 @@ func (hr hyphaToRename) leaveRedirection(
 	return h, nil
 }
 
-func findHyphaeToRename(
+func yieldHyphaeToRename(
 	superhypha hyphae.ExistingHypha,
 	newName string,
 	recursive bool,
-	hop *history.Op,
 	iop *hyphae.Op,
-) ([]hyphaToRename, error) {
-	if iop.Exists(newName) {
-		return nil, fmt.Errorf("name '%s' is already taken", newName)
-	}
-	newSuperhypha := superhypha.WithName(newName)
-	hyphaList := []hyphaToRename{{
-		old: superhypha,
-		new: newSuperhypha,
-	}}
-	text, err := superhypha.Text(hop)
-	if err != nil {
-		return nil, err
-	}
-	iop.WithHyphaRenamed(superhypha, newSuperhypha, text)
-	if recursive {
+) iter.Seq[hyphae.RenamingPair] {
+	return func(yield func(hyphae.RenamingPair) bool) {
+		newSuperhypha := superhypha.WithName(newName)
+		rp := util.NewRenamingPair(superhypha, newSuperhypha)
+		if !yield(rp) || !recursive {
+			return
+		}
 		oldName := superhypha.CanonicalName()
 		for h := range iop.YieldSubhyphae(superhypha) {
 			name := strings.Replace(h.CanonicalName(), oldName, newName, 1)
-			if iop.Exists(newName) {
-				return nil, fmt.Errorf("name '%s' is already taken", name)
+			rp = util.NewRenamingPair(h, h.WithName(name))
+			if !yield(rp) {
+				return
 			}
-			text, err := h.Text(hop)
-			if err != nil {
-				return nil, err
-			}
-			nh := h.WithName(name)
-			iop.WithHyphaRenamed(h, nh, text)
-			hyphaList = append(hyphaList, hyphaToRename{
-				old: h,
-				new: nh,
-			})
 		}
 	}
-	return hyphaList, nil
 }
 
-func renamingPairs(hyphaeToRename []hyphaToRename) map[string]string {
-	renameMap := make(map[string]string)
-	for _, h := range hyphaeToRename {
-		oldFiles := h.old.FilePaths()
-		newFiles := h.new.FilePaths()
+func renamingPairs(
+	pairs iter.Seq[hyphae.RenamingPair],
+	hop *history.Op,
+	iop *hyphae.Op,
+) (names []util.RenamingPair[string], files []util.RenamingPair[string], err error) {
+	for pair := range pairs {
+		oldName := pair.From().CanonicalName()
+		newName := pair.To().CanonicalName()
+		if iop.Exists(newName) {
+			return nil, nil, fmt.Errorf("name '%s' is already taken", newName)
+		}
+		text, err := pair.From().Text(hop)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		iop.WithHyphaRenamedPair(pair, text)
+		names = append(names, util.NewRenamingPair(oldName, newName))
+
+		oldFiles := pair.From().FilePaths()
+		newFiles := pair.To().FilePaths()
 		n := len(oldFiles)
+		if n != len(newFiles) {
+			return nil, nil, fmt.Errorf(
+				"renaming pair has different number of files: %v -> %v",
+				oldFiles, newFiles,
+			)
+		}
 		for i := 0; i < n; i++ {
-			renameMap[oldFiles[i]] = newFiles[i]
+			files = append(files, util.NewRenamingPair(oldFiles[i], newFiles[i]))
 		}
 	}
-	return renameMap
+	return
 }

@@ -20,15 +20,15 @@ import (
 )
 
 func InitHandlers(rtr *mux.Router) {
-	rtr.PathPrefix("/primitive-diff/").HandlerFunc(handlerPrimitiveDiff)
-	rtr.HandleFunc("/recent-changes/{count:[0-9]+}", handlerRecentChanges)
+	rtr.PathPrefix("/primitive-diff/").HandlerFunc(handlerPrimitiveDiff).Methods("GET")
+	rtr.HandleFunc("/recent-changes/{count:[0-9]+}", handlerRecentChanges).Methods("GET")
 	rtr.HandleFunc("/recent-changes/", func(w http.ResponseWriter, rq *http.Request) {
 		http.Redirect(w, rq, cfg.Root + "recent-changes/20", http.StatusSeeOther)
-	})
-	rtr.PathPrefix("/history/").HandlerFunc(handlerHistory)
-	rtr.HandleFunc("/recent-changes-rss", handlerRecentChangesRSS)
-	rtr.HandleFunc("/recent-changes-atom", handlerRecentChangesAtom)
-	rtr.HandleFunc("/recent-changes-json", handlerRecentChangesJSON)
+	}).Methods("GET")
+	rtr.PathPrefix("/history/").HandlerFunc(handlerHistory).Methods("GET")
+	rtr.HandleFunc("/recent-changes-rss", handlerRecentChangesRSS).Methods("GET")
+	rtr.HandleFunc("/recent-changes-atom", handlerRecentChangesAtom).Methods("GET")
+	rtr.HandleFunc("/recent-changes-json", handlerRecentChangesJSON).Methods("GET")
 
 	chainPrimitiveDiff = viewutil.CopyEnRuWith(fs, "view_primitive_diff.html", ruTranslation)
 	chainRecentChanges = viewutil.CopyEnRuWith(fs, "view_recent_changes.html", ruTranslation)

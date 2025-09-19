@@ -78,18 +78,18 @@ func Handler() http.Handler {
 	misc.InitAssetHandlers(router)
 
 	// Auth
-	router.HandleFunc("/user-list", handlerUserList)
-	router.HandleFunc("/lock", handlerLock)
+	router.HandleFunc("/user-list", handlerUserList).Methods(http.MethodGet)
+	router.HandleFunc("/lock", handlerLock).Methods(http.MethodGet)
 	// The check below saves a lot of extra checks and lines of codes in other places in this file.
 	if cfg.UseAuth {
 		if cfg.AllowRegistration {
 			router.HandleFunc("/register", handlerRegister).Methods(http.MethodPost, http.MethodGet)
 		}
 		if cfg.TelegramEnabled {
-			router.HandleFunc("/telegram-login", handlerTelegramLogin)
+			router.HandleFunc("/telegram-login", handlerTelegramLogin).Methods(http.MethodPost, http.MethodGet)
 		}
-		router.HandleFunc("/login", handlerLogin)
-		router.HandleFunc("/logout", handlerLogout)
+		router.HandleFunc("/login", handlerLogin).Methods(http.MethodPost, http.MethodGet)
+		router.HandleFunc("/logout", handlerLogout).Methods(http.MethodPost, http.MethodGet)
 	}
 
 	// Wiki routes. They may be locked or restricted.
@@ -122,9 +122,9 @@ func Handler() http.Handler {
 		adminRouter.HandleFunc("/users/{username}/edit", handlerAdminUserEdit).Methods(http.MethodGet, http.MethodPost)
 		adminRouter.HandleFunc("/users/{username}/change-password", handlerAdminUserChangePassword).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/users/{username}/delete", handlerAdminUserDelete).Methods(http.MethodGet, http.MethodPost)
-		adminRouter.HandleFunc("/users", handlerAdminUsers)
+		adminRouter.HandleFunc("/users", handlerAdminUsers).Methods("GET")
 
-		adminRouter.HandleFunc("/", handlerAdmin)
+		adminRouter.HandleFunc("/", handlerAdmin).Methods("GET")
 
 		settingsRouter := r.PathPrefix("/settings").Subrouter()
 		// TODO: check if necessary?

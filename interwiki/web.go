@@ -39,7 +39,7 @@ var (
 func InitHandlers(rtr *mux.Router) {
 	chainInterwiki = viewutil.CopyEnRuWith(fs, "view_interwiki.html", ruTranslation)
 	chainNameTaken = viewutil.CopyEnRuWith(fs, "view_name_taken.html", ruTranslation)
-	rtr.HandleFunc("/interwiki", handlerInterwiki)
+	rtr.HandleFunc("/interwiki", handlerInterwiki).Methods("GET")
 	rtr.HandleFunc("/interwiki/add-entry", handlerAddEntry).Methods(http.MethodPost)
 	rtr.HandleFunc("/interwiki/modify-entry/{target}", handlerModifyEntry).Methods(http.MethodPost)
 }

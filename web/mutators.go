@@ -22,13 +22,13 @@ import (
 )
 
 func initMutators(r *mux.Router) {
-	r.PathPrefix("/edit/").HandlerFunc(handlerEdit)
+	r.PathPrefix("/edit/").HandlerFunc(handlerEdit).Methods("GET")
 	r.PathPrefix("/rename/").HandlerFunc(handlerRename).Methods("GET", "POST")
 	r.PathPrefix("/delete/").HandlerFunc(handlerDelete).Methods("GET", "POST")
 	r.PathPrefix("/revert/").HandlerFunc(handlerRevert).Methods("GET", "POST")
 	r.PathPrefix("/remove-media/").HandlerFunc(handlerRemoveMedia).Methods("POST")
-	r.PathPrefix("/upload-binary/").HandlerFunc(handlerUploadBinary)
-	r.PathPrefix("/upload-text/").HandlerFunc(handlerUploadText)
+	r.PathPrefix("/upload-binary/").HandlerFunc(handlerUploadBinary).Methods("POST")
+	r.PathPrefix("/upload-text/").HandlerFunc(handlerUploadText).Methods("POST")
 }
 
 /// TODO: this is no longer ridiculous, but is now ugly. Gotta make it at least bearable to look at :-/

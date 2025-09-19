@@ -34,20 +34,20 @@ import (
 )
 
 func initReaders(r *mux.Router) {
-	r.PathPrefix("/page/").HandlerFunc(handlerHypha)
-	r.PathPrefix("/hypha/").HandlerFunc(handlerHypha)
-	r.PathPrefix("/text/").HandlerFunc(handlerText)
-	r.PathPrefix("/binary/").HandlerFunc(handlerBinary)
-	r.PathPrefix("/rev/").HandlerFunc(handlerRevision)
-	r.PathPrefix("/rev-text/").HandlerFunc(handlerRevisionText)
-	r.PathPrefix("/rev-binary/").HandlerFunc(handlerRevisionBinary)
-	r.PathPrefix("/media/").HandlerFunc(handlerMedia)
-	r.Path("/today").HandlerFunc(handlerToday)
-	r.Path("/edit-today").HandlerFunc(handlerEditToday)
+	r.PathPrefix("/page/").HandlerFunc(handlerHypha).Methods("GET")
+	r.PathPrefix("/hypha/").HandlerFunc(handlerHypha).Methods("GET")
+	r.PathPrefix("/text/").HandlerFunc(handlerText).Methods("GET")
+	r.PathPrefix("/binary/").HandlerFunc(handlerBinary).Methods("GET")
+	r.PathPrefix("/rev/").HandlerFunc(handlerRevision).Methods("GET")
+	r.PathPrefix("/rev-text/").HandlerFunc(handlerRevisionText).Methods("GET")
+	r.PathPrefix("/rev-binary/").HandlerFunc(handlerRevisionBinary).Methods("GET")
+	r.PathPrefix("/media/").HandlerFunc(handlerMedia).Methods("GET")
+	r.Path("/today").HandlerFunc(handlerToday).Methods("GET")
+	r.Path("/edit-today").HandlerFunc(handlerEditToday).Methods("GET")
 
 	// Backlinks
-	r.PathPrefix("/backlinks/").HandlerFunc(handlerBacklinks)
-	r.PathPrefix("/orphans").HandlerFunc(handlerOrphans)
+	r.PathPrefix("/backlinks/").HandlerFunc(handlerBacklinks).Methods("GET")
+	r.PathPrefix("/orphans").HandlerFunc(handlerOrphans).Methods("GET")
 }
 
 func handlerEditToday(w http.ResponseWriter, rq *http.Request) {

@@ -78,7 +78,6 @@ func Handler() http.Handler {
 	misc.InitAssetHandlers(router)
 
 	// Auth
-	router.HandleFunc("/user-list", handlerUserList).Methods(http.MethodGet)
 	router.HandleFunc("/lock", handlerLock).Methods(http.MethodGet)
 	// The check below saves a lot of extra checks and lines of codes in other places in this file.
 	if cfg.UseAuth {
@@ -103,6 +102,8 @@ func Handler() http.Handler {
 	hypview.Init()
 	histweb.InitHandlers(r)
 	interwiki.InitHandlers(r)
+
+	r.HandleFunc("/user-list", handlerUserList).Methods(http.MethodGet)
 
 	r.PathPrefix("/add-to-category").HandlerFunc(handlerAddToCategory).Methods("POST")
 	r.PathPrefix("/remove-from-category").HandlerFunc(handlerRemoveFromCategory).Methods("POST")

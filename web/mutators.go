@@ -286,7 +286,6 @@ func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
-	rq.ParseMultipartForm(10 << 10)
 	file, header, err := rq.FormFile("binary")
 	if err != nil {
 		viewutil.HttpErr(meta, http.StatusBadRequest, hyphaName, err.Error())

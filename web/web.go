@@ -25,6 +25,45 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func baseMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
+		// slog.Info("baseMiddleware", "path", rq.URL.Path, "method", rq.Method)
+		util.PrepareRq(rq)
+		w.Header().Add("Content-Security-Policy", cfg.CSP)
+		w.Header().Add("Referrer-Policy", cfg.Referrer)
+		next.ServeHTTP(w, rq)
+		/*if rq.MultipartForm != nil {
+			rq.MultipartForm.RemoveAll()
+		}*/
+	})
+}
+
+func postFormMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
+		// slog.Info("postFormMiddleware", "path", rq.URL.Path, "method", rq.Method)
+		if rq.Method == http.MethodPost {
+			rq.ParseMultipartForm(10 << 10)
+		}
+		next.ServeHTTP(w, rq)
+		if rq.MultipartForm != nil {
+			rq.MultipartForm.RemoveAll()
+		}
+	})
+}
+
+func wikiMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
+		// slog.Info("wikiMiddleware", "path", rq.URL.Path, "method", rq.Method)
+		user := user.FromRequest(rq)
+		switch {
+		case user.ShowLock():
+			http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
+		default:
+			next.ServeHTTP(w, rq)
+		}
+	})
+}
+
 // Handler initializes and returns the HTTP router based on the configuration.
 func Handler() http.Handler {
 	router := mux.NewRouter()
@@ -32,14 +71,7 @@ func Handler() http.Handler {
 		router = router.PathPrefix(strings.TrimSuffix(cfg.Root, "/")).Subrouter()
 	}
 
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-			util.PrepareRq(rq)
-			w.Header().Add("Content-Security-Policy", cfg.CSP)
-			w.Header().Add("Referrer-Policy", cfg.Referrer)
-			next.ServeHTTP(w, rq)
-		})
-	})
+	router.Use(baseMiddleware, postFormMiddleware)
 	router.StrictSlash(true)
 
 	// Public routes. They're always accessible regardless of the user status.
@@ -62,17 +94,7 @@ func Handler() http.Handler {
 
 	// Wiki routes. They may be locked or restricted.
 	r := router.PathPrefix("").Subrouter()
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-			user := user.FromRequest(rq)
-			switch {
-			case user.ShowLock():
-				http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
-			default:
-				next.ServeHTTP(w, rq)
-			}
-		})
-	})
+	r.Use(wikiMiddleware)
 
 	initReaders(r)
 	initMutators(r)

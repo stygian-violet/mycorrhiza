@@ -28,7 +28,7 @@ import (
 func baseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 		// slog.Info("baseMiddleware", "path", rq.URL.Path, "method", rq.Method)
-		util.PrepareRq(rq)
+		rq.URL.Path = strings.TrimSuffix(rq.URL.Path, "/")
 		w.Header().Add("Content-Security-Policy", cfg.CSP)
 		w.Header().Add("Referrer-Policy", cfg.Referrer)
 		next.ServeHTTP(w, rq)

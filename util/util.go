@@ -52,11 +52,6 @@ func (rp RenamingPair[T]) To() T {
 	return rp.to
 }
 
-// PrepareRq strips the trailing / in rq.URL.Path. In the future it might do more stuff for making all request structs uniform.
-func PrepareRq(rq *http.Request) {
-	rq.URL.Path = strings.TrimSuffix(rq.URL.Path, "/")
-}
-
 // ShorterPath is used by handlerList to display shorter path to the files. It
 // simply strips the hyphae directory name.
 func ShorterPath(path string) string {

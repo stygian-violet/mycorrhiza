@@ -181,7 +181,6 @@ func handlerLock(w http.ResponseWriter, rq *http.Request) {
 
 // handlerRegister displays the register form (GET) or registers the user (POST).
 func handlerRegister(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	if rq.Method == http.MethodGet {
 		slog.Info("Showing registration form")
 		_ = pageAuthRegister.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{

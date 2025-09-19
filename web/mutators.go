@@ -34,7 +34,6 @@ func initMutators(r *mux.Router) {
 /// TODO: this is no longer ridiculous, but is now ugly. Gotta make it at least bearable to look at :-/
 
 func handlerRemoveMedia(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		h    = hyphae.ByName(util.HyphaNameFromRq(rq, "remove-media"))
 		meta = viewutil.MetaFrom(w, rq)
@@ -58,7 +57,6 @@ func handlerRemoveMedia(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerDelete(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		h    = hyphae.ByName(util.HyphaNameFromRq(rq, "delete"))
 		meta = viewutil.MetaFrom(w, rq)
@@ -99,8 +97,6 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerRevert(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
-
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"revert/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
@@ -146,7 +142,6 @@ func handlerRevert(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerRename(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		lc   = l18n.FromRequest(rq)
 		h    = hyphae.ByName(util.HyphaNameFromRq(rq, "rename"))
@@ -191,8 +186,6 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 
 // handlerEdit shows the edit form. It doesn't edit anything actually.
 func handlerEdit(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
-
 	var (
 		lc   = l18n.FromRequest(rq)
 		meta = viewutil.MetaFrom(w, rq)
@@ -234,8 +227,6 @@ func handlerEdit(w http.ResponseWriter, rq *http.Request) {
 
 // handlerUploadText uploads a new text part for the hypha.
 func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
-
 	var (
 		meta      = viewutil.MetaFrom(w, rq)
 		hyphaName = util.HyphaNameFromRq(rq, "upload-text")
@@ -277,8 +268,6 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 
 // handlerUploadBinary uploads a new media for the hypha.
 func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
-
 	hyphaName := util.HyphaNameFromRq(rq, "upload-binary")
 	meta := viewutil.MetaFrom(w, rq)
 	if !meta.U.CanProceed("upload-binary") {

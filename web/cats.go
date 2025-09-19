@@ -15,7 +15,6 @@ import (
 )
 
 func handlerEditCategory(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	meta := viewutil.MetaFrom(w, rq)
 	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, cfg.Root + "edit-category"), "/"))
 	if catName == "" {
@@ -44,7 +43,6 @@ func handlerListCategory(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerCategory(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	catName := util.CanonicalName(strings.TrimPrefix(strings.TrimPrefix(rq.URL.Path, cfg.Root + "category"), "/"))
 	if catName == "" {
 		handlerListCategory(w, rq)
@@ -87,7 +85,6 @@ func hyphaeFromRequest(rq *http.Request) (canonicalNames []string) {
 }
 
 func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		u          = user.FromRequest(rq)
 		hyphaNames = hyphaeFromRequest(rq)
@@ -112,7 +109,6 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerAddToCategory(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		hyphaName  = util.CanonicalName(rq.PostFormValue("hypha"))
 		catName    = util.CanonicalName(rq.PostFormValue("cat"))

@@ -61,7 +61,6 @@ func handlerToday(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerMedia(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		hyphaName = util.HyphaNameFromRq(rq, "media")
 		h         = hyphae.ByName(hyphaName)
@@ -100,7 +99,6 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 //
 // /rev-text/<revHash>/<hyphaName>
 func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev-text/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
@@ -133,7 +131,6 @@ func handlerRevisionText(w http.ResponseWriter, rq *http.Request) {
 //
 // /rev-binary/<revHash>/<hyphaName>
 func handlerRevisionBinary(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root + "rev-binary/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {
@@ -201,7 +198,6 @@ func handlerRevisionBinary(w http.ResponseWriter, rq *http.Request) {
 
 // handlerRevision displays a specific revision of the hypha
 func handlerRevision(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	lc := l18n.FromRequest(rq)
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root+"rev/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
@@ -260,7 +256,6 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 
 // handlerText serves raw source text of the hypha.
 func handlerText(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	hyphaName := util.HyphaNameFromRq(rq, "text")
 	if h, ok := hyphae.ByName(hyphaName).(hyphae.ExistingHypha); ok {
 		slog.Info("Serving text part", "path", h.TextFilePath())
@@ -271,7 +266,6 @@ func handlerText(w http.ResponseWriter, rq *http.Request) {
 
 // handlerBinary serves attachment of the hypha.
 func handlerBinary(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	hyphaName := util.HyphaNameFromRq(rq, "binary")
 	switch h := hyphae.ByName(hyphaName).(type) {
 	case *hyphae.EmptyHypha, *hyphae.TextualHypha:
@@ -295,7 +289,6 @@ func handlerBinary(w http.ResponseWriter, rq *http.Request) {
 
 // handlerHypha is the main hypha action that displays the hypha and the binary upload form along with some navigation.
 func handlerHypha(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	meta := viewutil.MetaFrom(w, rq)
 	username := meta.U.Name()
 	var (

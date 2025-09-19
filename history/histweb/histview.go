@@ -36,7 +36,6 @@ func InitHandlers(rtr *mux.Router) {
 }
 
 func handlerPrimitiveDiff(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	shorterURL := strings.TrimPrefix(rq.URL.Path, cfg.Root + "primitive-diff/")
 	revHash, slug, found := strings.Cut(shorterURL, "/")
 	if !found || !util.IsRevHash(revHash) || len(slug) < 1 {

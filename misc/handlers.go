@@ -47,7 +47,6 @@ func InitHandlers(rtr *mux.Router) {
 
 // handlerList shows a list of all hyphae in the wiki in random order.
 func handlerList(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	// TODO: make this more effective, there are too many loops and vars
 	var (
 		sortedHypha = hyphae.PathographicSort(hyphae.YieldExistingHyphaNames())
@@ -66,7 +65,6 @@ func handlerList(w http.ResponseWriter, rq *http.Request) {
 
 // handlerReindex reindexes all hyphae by checking the wiki storage directory anew.
 func handlerReindex(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	if ok := user.CanProceed(rq, "reindex"); !ok {
 		var lc = l18n.FromRequest(rq)
 		viewutil.HttpErr(viewutil.MetaFrom(w, rq), http.StatusForbidden, cfg.HomeHypha, lc.Get("ui.reindex_no_rights"))
@@ -79,7 +77,6 @@ func handlerReindex(w http.ResponseWriter, rq *http.Request) {
 
 // handlerUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.
 func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	if ok := user.CanProceed(rq, "update-header-links"); !ok {
 		var lc = l18n.FromRequest(rq)
 		viewutil.HttpErr(viewutil.MetaFrom(w, rq), http.StatusForbidden, cfg.HomeHypha, lc.Get("ui.header_no_rights"))
@@ -93,7 +90,6 @@ func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
 
 // handlerRandom redirects to a random hypha.
 func handlerRandom(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	var (
 		randomHyphaName string
 		amountOfHyphae  = hyphae.Count()
@@ -165,7 +161,6 @@ func handlerRobotsTxt(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerTitleSearch(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	_ = rq.ParseForm()
 	var (
 		meta        = viewutil.MetaFrom(w, rq)
@@ -190,7 +185,6 @@ func handlerTitleSearch(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerTextSearch(w http.ResponseWriter, rq *http.Request) {
-	util.PrepareRq(rq)
 	_ = rq.ParseForm()
 	meta := viewutil.MetaFrom(w, rq)
 	if !meta.U.CanProceed("text-search") {

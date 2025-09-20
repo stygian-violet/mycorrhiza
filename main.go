@@ -81,8 +81,14 @@ func main() {
 	// Static files:
 	static.InitFS(files.StaticFiles())
 
-	if !user.HasAnyAdmins() {
-		slog.Error("Your wiki has no admin yet. Run Mycorrhiza with -create-admin <username> option to create an admin.")
+	switch {
+	case !cfg.UseAuth:
+		slog.Warn(
+			"Authorization system is disabled. Change UseAuth to true in config.ini to enable it.",
+			"ConfigPath", files.ConfigPath(),
+		)
+	case !user.HasAnyAdmins():
+		slog.Warn("Your wiki has no admin yet. Run Mycorrhiza with -create-admin <username> option to create an admin.")
 	}
 
 	server := newServer(web.Handler())

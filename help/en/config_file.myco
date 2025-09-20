@@ -64,6 +64,10 @@ FullTextUpperLimit = 100
 * `Root`: //string//. The root path of the wiki. **Default:** `/`.
 * `CSP`: //string//. The [[https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy | Content-Security-Policy]] HTTP header. **Default:** `default-src 'self' telegram.org *.telegram.org; img-src * data:; media-src *; style-src *; font-src * data:`.
 * `Referrer`: //string//. The [[https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy | Referrer-Policy]] HTTP header. **Default:** `no-referrer`.
+* `ReadHeaderTimeout`: //duration//. The amount of time allowed to read request headers. If zero, the value of `ReadTimeout` is used. If negative, or if zero and `ReadTimeout` is zero or negative, there is no timeout. **Default:** `0`.
+* `ReadTimeout`: //duration//. Maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout. **Default:** `5m`.
+* `WriteTimeout`: //duration//. Maximum duration before timing out writes of the response. A zero or negative value means there will be no timeout. **Default:** `5m`.
+* `IdleTimeout`: //duration//. Maximum amount of time to wait for the next request when keep-alives are enabled. If zero, the value of `ReadTimeout` is used. If negative, or if zero and `ReadTimeout` is zero or negative, there is no timeout. **Default:** `0`.
 
 === [Authorization]
 * `UseAuth`: //boolean//. Whether to enable authorization system. **Default:** `false`.

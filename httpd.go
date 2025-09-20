@@ -7,17 +7,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 )
 
 func newServer(handler http.Handler) *http.Server {
 	return &http.Server{
-		ReadTimeout:  300 * time.Second,
-		WriteTimeout: 300 * time.Second,
-		IdleTimeout:  300 * time.Second,
-		Handler:      handler,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		ReadTimeout:       cfg.ReadTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
+		Handler:           handler,
 	}
 }
 

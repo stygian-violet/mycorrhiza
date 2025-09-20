@@ -30,11 +30,15 @@ var (
 	HeaderLinksHypha    string
 	RedirectionCategory string
 
-	ListenAddr string
-	URL        string
-	Root       string
-	CSP        string
-	Referrer   string
+	ListenAddr        string
+	URL               string
+	Root              string
+	CSP               string
+	Referrer          string
+	ReadHeaderTimeout time.Duration
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
 
 	UseAuth               bool
 	AllowRegistration     bool
@@ -97,11 +101,15 @@ type Hyphae struct {
 
 // Network is a section of Config that has fields related to network stuff.
 type Network struct {
-	ListenAddr string
-	URL        string `comment:"Set your wiki's public URL here. It's used for OpenGraph generation and syndication feeds."`
-	Root       string `comment:"Set your wiki's root path here."`
-	CSP        string `comment:"Content-Security-Policy header."`
-	Referrer   string `comment:"Referrer-Policy header."`
+	ListenAddr        string
+	URL               string `comment:"Set your wiki's public URL here. It's used for OpenGraph generation and syndication feeds."`
+	Root              string `comment:"Set your wiki's root path here."`
+	CSP               string `comment:"Content-Security-Policy header."`
+	Referrer          string `comment:"Referrer-Policy header."`
+	ReadHeaderTimeout string `comment:"The amount of time allowed to read request headers. If zero, the value of ReadTimeout is used. If negative, or if zero and ReadTimeout is zero or negative, there is no timeout."`
+	ReadTimeout       string `comment:"Maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout."`
+	WriteTimeout      string `comment:"Maximum duration before timing out writes of the response. A zero or negative value means there will be no timeout."`
+	IdleTimeout       string `comment:"Maximum amount of time to wait for the next request when keep-alives are enabled. If zero, the value of ReadTimeout is used. If negative, or if zero and ReadTimeout is zero or negative, there is no timeout."`
 }
 
 // CustomScripts is a section with paths to JavaScript files that are loaded on
@@ -206,12 +214,16 @@ func ReadConfigFile(path string) error {
 			RedirectionCategory: "redirection",
 		},
 		Network: Network{
-			ListenAddr: "127.0.0.1:1737",
-			URL:        "",
-			Root:       "/",
-			CSP:        "default-src 'self' telegram.org *.telegram.org; "+
-			            "img-src * data:; media-src *; style-src *; font-src * data:",
-			Referrer:   "no-referrer",
+			ListenAddr:        "127.0.0.1:1737",
+			URL:               "",
+			Root:              "/",
+			CSP:               "default-src 'self' telegram.org *.telegram.org; "+
+			                   "img-src * data:; media-src *; style-src *; font-src * data:",
+			Referrer:          "no-referrer",
+			ReadHeaderTimeout: "0",
+			ReadTimeout:       "5m",
+			WriteTimeout:      "5m",
+			IdleTimeout:       "0",
 		},
 		Authorization: Authorization{
 			UseAuth:               false,
@@ -291,6 +303,18 @@ func ReadConfigFile(path string) error {
 	Root = filepath.ToSlash(cfg.Root)
 	CSP = cfg.CSP
 	Referrer = cfg.Referrer
+	if ReadHeaderTimeout, err = pd(cfg.ReadHeaderTimeout, "ReadHeaderTimeout"); err != nil {
+		return err
+	}
+	if ReadTimeout, err = pd(cfg.ReadTimeout, "ReadTimeout"); err != nil {
+		return err
+	}
+	if WriteTimeout, err = pd(cfg.WriteTimeout, "WriteTimeout"); err != nil {
+		return err
+	}
+	if IdleTimeout, err = pd(cfg.IdleTimeout, "IdleTimeout"); err != nil {
+		return err
+	}
 	UseAuth = cfg.UseAuth
 	AllowRegistration = cfg.AllowRegistration
 	RegistrationLimit = cfg.RegistrationLimit

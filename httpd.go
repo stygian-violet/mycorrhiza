@@ -63,12 +63,17 @@ func startUnixSocketServer(server *http.Server, socketPath string) error {
 }
 
 func startHTTPServer(server *http.Server) error {
-	slog.Info("Listening over HTTP", "addr", server.Addr)
-
-	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+	err := error(nil)
+	if cfg.HTTPSEnabled {
+		slog.Info("Listening over HTTPS", "addr", server.Addr)
+		err = server.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
+	} else {
+		slog.Info("Listening over HTTP", "addr", server.Addr)
+		err = server.ListenAndServe()
+	}
+	if !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("Failed to start the server", "err", err)
 		return err
 	}
-
 	return nil
 }

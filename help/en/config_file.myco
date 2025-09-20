@@ -20,6 +20,8 @@ The //duration// values are parsed with [[ https://github.com/SiverPineValley/pa
 
 The //byte size// values are parsed with [[ https://github.com/c2h5oh/datasize?tab=readme-ov-file#datasize- | datasize ]].
 
+The non-absolute //path// values are relative to the directory containing the configuration file.
+
 == Example configuration
 The auto-generated file is the best example (it has comments too).
 
@@ -76,6 +78,11 @@ FullTextUpperLimit = 100
 * `MaxFormSize`: //byte size//. Maximum size of a post form without files. If zero, the default limit is used. **Default:** `10MB`.
 * `MaxTextSize`: //byte size//. Maximum size of a hypha's text. If zero, there is no limit. **Default:** `0`.
 * `MaxMediaSize`: //byte size//. Maximum size of a media file. If zero, there is no limit. **Default:** `0`.
+
+=== [HTTPS]
+* `HTTPSEnabled`: //boolean//. Whether to enable HTTPS. If `true`, `CertFile` and `KeyFile` should be set. **Default:** `false`.
+* `CertFile`: //path//. Certificate file. If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates, and the CA's certificate. There is no default.
+* `KeyFile`: //path//. Private key file. There is no default.
 
 === [Authorization]
 * `UseAuth`: //boolean//. Whether to enable authorization system. **Default:** `false`.

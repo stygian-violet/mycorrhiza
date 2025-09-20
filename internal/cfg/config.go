@@ -6,6 +6,7 @@ package cfg
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,6 +45,10 @@ var (
 	MaxFormSize       int64
 	MaxTextSize       int64
 	MaxMediaSize      int64
+
+	HTTPSEnabled bool
+	CertFile     string
+	KeyFile      string
 
 	UseAuth               bool
 	AllowRegistration     bool
@@ -89,6 +94,7 @@ type Config struct {
 	NaviTitleIcon string `comment:"This icon is used in the breadcrumbs bar."`
 	Hyphae
 	Network
+	HTTPS
 	Authorization
 	Search
 	Grep          `comment:"Full text search with git grep."`
@@ -119,6 +125,12 @@ type Network struct {
 	MaxFormSize       string `comment:"Maximum size of a post form without files. If zero, the default limit (10MB) is used."`
 	MaxTextSize       string `comment:"Maximum size of a hypha's text. If zero, there is no limit."`
 	MaxMediaSize      string `comment:"Maximum size of a media file. If zero, there is no limit."`
+}
+
+type HTTPS struct {
+	HTTPSEnabled bool   `comment:"Whether to enable HTTPS. If true, CertFile and KeyFile should be set."`
+	CertFile     string `comment:"Certificate file. If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates, and the CA's certificate."`
+	KeyFile      string `comment:"Private key file."`
 }
 
 // CustomScripts is a section with paths to JavaScript files that are loaded on
@@ -246,6 +258,11 @@ func ReadConfigFile(path string) error {
 			MaxTextSize:       "0",
 			MaxMediaSize:      "0",
 		},
+		HTTPS: HTTPS{
+			HTTPSEnabled: false,
+			CertFile:     "",
+			KeyFile:      "",
+		},
 		Authorization: Authorization{
 			UseAuth:               false,
 			AllowRegistration:     false,
@@ -310,6 +327,8 @@ func ReadConfigFile(path string) error {
 		return err
 	}
 
+	configDir := filepath.Dir(path)
+
 	// Map the struct to the global variables
 	WikiName = cfg.WikiName
 	NaviTitleIcon = cfg.NaviTitleIcon
@@ -354,10 +373,32 @@ func ReadConfigFile(path string) error {
 	if MaxMediaSize, err = ps(cfg.MaxMediaSize, "MaxMediaSize"); err != nil {
 		return err
 	}
+	HTTPSEnabled = cfg.HTTPSEnabled
+	CertFile = cfg.CertFile
+	KeyFile = cfg.KeyFile
+	if HTTPSEnabled {
+		switch {
+		case CertFile == "":
+			return errors.New("HTTPS is enabled but CertFile is not set")
+		case !filepath.IsAbs(CertFile):
+			CertFile = filepath.Join(configDir, CertFile)
+		}
+		switch {
+		case KeyFile == "":
+			return errors.New("HTTPS is enabled but KeyFile is not set")
+		case !filepath.IsAbs(KeyFile):
+			KeyFile = filepath.Join(configDir, KeyFile)
+		}
+	}
 	UseAuth = cfg.UseAuth
 	AllowRegistration = cfg.AllowRegistration
 	RegistrationLimit = cfg.RegistrationLimit
-	Locked = cfg.Locked && cfg.UseAuth // Makes no sense to have the lock but no auth
+	Locked = cfg.Locked
+	if Locked && !UseAuth {
+		slog.Warn("Makes no sense to have the lock but no auth")
+		slog.Warn("Disabling lock")
+		Locked = false
+	}
 	UseWhiteList = cfg.UseWhiteList
 	WhiteList = cfg.WhiteList
 	SessionLimit = cfg.SessionLimit

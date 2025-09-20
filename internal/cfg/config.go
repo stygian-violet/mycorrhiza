@@ -159,10 +159,6 @@ const (
 	FullTextGrep
 )
 
-var (
-	ErrFullTextInvalid = errors.New("invalid full text search type")
-)
-
 func FullTextSearchTypeFromString(value string) (FullTextSearchType, error) {
 	value = strings.ToLower(value)
 	switch value {
@@ -171,7 +167,7 @@ func FullTextSearchTypeFromString(value string) (FullTextSearchType, error) {
 	case "grep":
 		return FullTextGrep, nil
 	default:
-		return FullTextDisabled, ErrFullTextInvalid
+		return FullTextDisabled, fmt.Errorf("invalid full text search type: %s", value)
 	}
 }
 
@@ -184,6 +180,17 @@ func (t FullTextSearchType) String() string {
 	default:
 		return "none"
 	}
+}
+
+func pd(value string, key string) (time.Duration, error) {
+	if value == "0" {
+		return time.Duration(0), nil
+	}
+	res, err := parseduration.ParseDuration(value)
+	if err != nil {
+		err = fmt.Errorf("failed to parse %s: %s: %s", key, value, err.Error())
+	}
+	return res, err
 }
 
 // ReadConfigFile reads a config on the given path and stores the
@@ -291,20 +298,16 @@ func ReadConfigFile(path string) error {
 	UseWhiteList = cfg.UseWhiteList
 	WhiteList = cfg.WhiteList
 	SessionLimit = cfg.SessionLimit
-	SessionTimeout, err = parseduration.ParseDuration(cfg.SessionTimeout)
-	if err != nil {
+	if SessionTimeout, err = pd(cfg.SessionTimeout, "SessionTimeout"); err != nil {
 		return err
 	}
-	SessionUpdateInterval, err = parseduration.ParseDuration(cfg.SessionUpdateInterval)
-	if err != nil {
+	if SessionUpdateInterval, err = pd(cfg.SessionUpdateInterval, "SessionUpdateInterval"); err != nil {
 		return err
 	}
-	SessionCookieDuration, err = parseduration.ParseDuration(cfg.SessionCookieDuration)
-	if err != nil {
+	if SessionCookieDuration, err = pd(cfg.SessionCookieDuration, "SessionCookieDuration"); err != nil {
 		return err
 	}
-	FullTextSearch, err = FullTextSearchTypeFromString(cfg.FullText)
-	if err != nil {
+	if FullTextSearch, err = FullTextSearchTypeFromString(cfg.FullText); err != nil {
 		return err
 	}
 	FullTextPermission = cfg.FullTextPermission
@@ -318,8 +321,7 @@ func ReadConfigFile(path string) error {
 	GrepIgnoreMedia = cfg.GrepIgnoreMedia
 	GrepMatchLimitPerHypha = cfg.GrepMatchLimitPerHypha
 	GrepProcessLimit = cfg.GrepProcessLimit
-	GrepTimeout, err = parseduration.ParseDuration(cfg.GrepTimeout)
-	if err != nil {
+	if GrepTimeout, err = pd(cfg.GrepTimeout, "GrepTimeout"); err != nil {
 		return err
 	}
 	CommonScripts = cfg.CommonScripts

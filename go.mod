@@ -5,6 +5,7 @@ go 1.23
 require (
 	git.sr.ht/~bouncepaw/mycomarkup/v5 v5.6.0
 	github.com/SiverPineValley/parseduration v0.0.0-20240823050328-d9b7165d7d3a
+	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/go-ini/ini v1.67.0
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/mux v1.8.1

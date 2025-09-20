@@ -114,7 +114,10 @@ func HyphaNameFromRq(rq *http.Request, actions ...string) string {
 			return CanonicalName(strings.TrimPrefix(p, prefix))
 		}
 	}
-	slog.Info("HyphaNameFromRq: this request is invalid, fall back to home hypha")
+	slog.Info(
+		"HyphaNameFromRq: this request is invalid, fall back to home hypha",
+		"path", p,
+	)
 	return cfg.HomeHypha
 }
 

@@ -25,45 +25,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func baseMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		// slog.Info("baseMiddleware", "path", rq.URL.Path, "method", rq.Method)
-		rq.URL.Path = strings.TrimSuffix(rq.URL.Path, "/")
-		w.Header().Add("Content-Security-Policy", cfg.CSP)
-		w.Header().Add("Referrer-Policy", cfg.Referrer)
-		next.ServeHTTP(w, rq)
-		/*if rq.MultipartForm != nil {
-			rq.MultipartForm.RemoveAll()
-		}*/
-	})
-}
-
-func postFormMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		// slog.Info("postFormMiddleware", "path", rq.URL.Path, "method", rq.Method)
-		if rq.Method == http.MethodPost {
-			rq.ParseMultipartForm(10 << 10)
-		}
-		next.ServeHTTP(w, rq)
-		if rq.MultipartForm != nil {
-			rq.MultipartForm.RemoveAll()
-		}
-	})
-}
-
-func wikiMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		// slog.Info("wikiMiddleware", "path", rq.URL.Path, "method", rq.Method)
-		user := user.FromRequest(rq)
-		switch {
-		case user.ShowLock():
-			http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
-		default:
-			next.ServeHTTP(w, rq)
-		}
-	})
-}
-
 // Handler initializes and returns the HTTP router based on the configuration.
 func Handler() http.Handler {
 	router := mux.NewRouter()
@@ -71,28 +32,30 @@ func Handler() http.Handler {
 		router = router.PathPrefix(strings.TrimSuffix(cfg.Root, "/")).Subrouter()
 	}
 
-	router.Use(baseMiddleware, postFormMiddleware)
+	router.Use(baseMiddleware)
 	router.StrictSlash(true)
 
 	// Public routes. They're always accessible regardless of the user status.
 	misc.InitAssetHandlers(router)
 
+	r := router.PathPrefix("").Subrouter()
+	r.Use(authMiddleware)
 	// Auth
-	router.HandleFunc("/lock", handlerLock).Methods(http.MethodGet)
+	r.HandleFunc("/lock", handlerLock).Methods(http.MethodGet)
 	// The check below saves a lot of extra checks and lines of codes in other places in this file.
 	if cfg.UseAuth {
 		if cfg.AllowRegistration {
-			router.HandleFunc("/register", handlerRegister).Methods(http.MethodPost, http.MethodGet)
+			r.HandleFunc("/register", handlerRegister).Methods(http.MethodPost, http.MethodGet)
 		}
 		if cfg.TelegramEnabled {
-			router.HandleFunc("/telegram-login", handlerTelegramLogin).Methods(http.MethodPost, http.MethodGet)
+			r.HandleFunc("/telegram-login", handlerTelegramLogin).Methods(http.MethodPost, http.MethodGet)
 		}
-		router.HandleFunc("/login", handlerLogin).Methods(http.MethodPost, http.MethodGet)
-		router.HandleFunc("/logout", handlerLogout).Methods(http.MethodPost, http.MethodGet)
+		r.HandleFunc("/login", handlerLogin).Methods(http.MethodPost, http.MethodGet)
+		r.HandleFunc("/logout", handlerLogout).Methods(http.MethodPost, http.MethodGet)
 	}
 
 	// Wiki routes. They may be locked or restricted.
-	r := router.PathPrefix("").Subrouter()
+	r = router.PathPrefix("").Subrouter()
 	r.Use(wikiMiddleware)
 
 	initReaders(r)

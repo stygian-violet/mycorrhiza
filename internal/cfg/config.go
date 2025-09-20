@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-ini/ini"
 	"github.com/SiverPineValley/parseduration"
+	"github.com/c2h5oh/datasize"
 )
 
 // These variables represent the configuration. You are not meant to modify
@@ -39,6 +40,10 @@ var (
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	IdleTimeout       time.Duration
+	MaxHeaderSize     int64
+	MaxFormSize       int64
+	MaxTextSize       int64
+	MaxMediaSize      int64
 
 	UseAuth               bool
 	AllowRegistration     bool
@@ -110,6 +115,10 @@ type Network struct {
 	ReadTimeout       string `comment:"Maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout."`
 	WriteTimeout      string `comment:"Maximum duration before timing out writes of the response. A zero or negative value means there will be no timeout."`
 	IdleTimeout       string `comment:"Maximum amount of time to wait for the next request when keep-alives are enabled. If zero, the value of ReadTimeout is used. If negative, or if zero and ReadTimeout is zero or negative, there is no timeout."`
+	MaxHeaderSize     string `comment:"Maximum size of the request headers, including the request line. If zero, the default limit (1MB) is used."`
+	MaxFormSize       string `comment:"Maximum size of a post form without files. If zero, the default limit (10MB) is used."`
+	MaxTextSize       string `comment:"Maximum size of a hypha's text. If zero, there is no limit."`
+	MaxMediaSize      string `comment:"Maximum size of a media file. If zero, there is no limit."`
 }
 
 // CustomScripts is a section with paths to JavaScript files that are loaded on
@@ -201,6 +210,14 @@ func pd(value string, key string) (time.Duration, error) {
 	return res, err
 }
 
+func ps(value string, key string) (int64, error) {
+	res, err := datasize.ParseString(value)
+	if err != nil {
+		err = fmt.Errorf("failed to parse %s: %s: %s", key, value, err.Error())
+	}
+	return int64(res), err
+}
+
 // ReadConfigFile reads a config on the given path and stores the
 // configuration. Call it sometime during the initialization.
 func ReadConfigFile(path string) error {
@@ -224,6 +241,10 @@ func ReadConfigFile(path string) error {
 			ReadTimeout:       "5m",
 			WriteTimeout:      "5m",
 			IdleTimeout:       "0",
+			MaxHeaderSize:     "1MB",
+			MaxFormSize:       "10MB",
+			MaxTextSize:       "0",
+			MaxMediaSize:      "0",
 		},
 		Authorization: Authorization{
 			UseAuth:               false,
@@ -313,6 +334,24 @@ func ReadConfigFile(path string) error {
 		return err
 	}
 	if IdleTimeout, err = pd(cfg.IdleTimeout, "IdleTimeout"); err != nil {
+		return err
+	}
+	if MaxHeaderSize, err = ps(cfg.MaxHeaderSize, "MaxHeaderSize"); err != nil {
+		return err
+	}
+	if MaxHeaderSize <= 0 {
+		MaxHeaderSize = 1 << 20
+	}
+	if MaxFormSize, err = ps(cfg.MaxFormSize, "MaxFormSize"); err != nil {
+		return err
+	}
+	if MaxFormSize <= 0 {
+		MaxFormSize = 10 << 20
+	}
+	if MaxTextSize, err = ps(cfg.MaxTextSize, "MaxTextSize"); err != nil {
+		return err
+	}
+	if MaxMediaSize, err = ps(cfg.MaxMediaSize, "MaxMediaSize"); err != nil {
 		return err
 	}
 	UseAuth = cfg.UseAuth

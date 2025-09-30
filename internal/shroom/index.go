@@ -7,8 +7,8 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 )
 
-func Reindex() {
+func Reindex() error {
 	hyphaeDir := files.HyphaeDir()
 	slog.Info("Reindexing hyphae", "hyphaeDir", hyphaeDir)
-	hyphae.Index(hyphaeDir)
+	return hyphae.Index(hyphaeDir)
 }

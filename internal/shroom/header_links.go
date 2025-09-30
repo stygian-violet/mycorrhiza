@@ -22,7 +22,7 @@ func SetHeaderLinks() error {
 	case userLinks == "":
 		links = viewutil.DefaultHeaderLinks()
 	default:
-		links = hyphae.ExtractHeaderLinksFromContent(
+		links = hyphae.ExtractHeaderLinksFromString(
 			cfg.HeaderLinksHypha, userLinks,
 		)
 	}

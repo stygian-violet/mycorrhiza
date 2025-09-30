@@ -57,7 +57,9 @@ func main() {
 	// Init the subsystems:
 	// TODO: keep all crashes in main rather than somewhere there
 	viewutil.Init()
-	hyphae.Index(files.HyphaeDir())
+	if err := hyphae.Index(files.HyphaeDir()); err != nil {
+		exit()
+	}
 	if err := user.InitUserDatabase(); err != nil {
 		exit()
 	}

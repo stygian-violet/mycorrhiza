@@ -80,8 +80,8 @@ func (op backlinkIndexRenaming) apply() {
 func updateBacklinksAfterEdit(
 	h Hypha, oldText string, newText string,
 ) backlinkIndexOperation {
-	oldLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), oldText)
-	newLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), newText)
+	oldLinks := ExtractHyphaLinksFromString(h.CanonicalName(), oldText)
+	newLinks := ExtractHyphaLinksFromString(h.CanonicalName(), newText)
 	return backlinkIndexEdit{h.CanonicalName(), oldLinks, newLinks}
 }
 
@@ -89,7 +89,7 @@ func updateBacklinksAfterEdit(
 func updateBacklinksAfterDelete(
 	h Hypha, oldText string,
 ) backlinkIndexOperation {
-	oldLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), oldText)
+	oldLinks := ExtractHyphaLinksFromString(h.CanonicalName(), oldText)
 	return backlinkIndexDeletion{h.CanonicalName(), oldLinks}
 }
 
@@ -97,6 +97,6 @@ func updateBacklinksAfterDelete(
 func updateBacklinksAfterRename(
 	h Hypha, oldName string, text string,
 ) backlinkIndexOperation {
-	actualLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), text)
+	actualLinks := ExtractHyphaLinksFromString(h.CanonicalName(), text)
 	return backlinkIndexRenaming{oldName, h.CanonicalName(), actualLinks}
 }

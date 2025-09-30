@@ -64,8 +64,12 @@ func handlerList(w http.ResponseWriter, rq *http.Request) {
 
 // handlerReindex reindexes all hyphae by checking the wiki storage directory anew.
 func handlerReindex(w http.ResponseWriter, rq *http.Request) {
-	shroom.Reindex()
-	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
+	err := shroom.Reindex()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
+	}
 }
 
 // handlerUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.

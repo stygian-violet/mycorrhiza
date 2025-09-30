@@ -31,9 +31,10 @@ func ExtractionOptions(hyphaName string) options.Options {
 	}.FillTheRest()
 }
 
-// ExtractHyphaLinksFromContent extracts local hypha links from the provided text.
-func ExtractHyphaLinksFromContent(hyphaName string, contents string) []string {
-	ctx, _ := mycocontext.ContextFromStringInput(contents, ExtractionOptions(hyphaName))
+func extractHyphaLinksFromContext(
+	hyphaName string,
+	ctx mycocontext.Context,
+) []string {
 	linkVisitor, getLinks := tools.LinkVisitor(ctx)
 	// Ignore the result of BlockTree because we call it for linkVisitor.
 	_ = mycomarkup.BlockTree(ctx, linkVisitor)
@@ -48,8 +49,35 @@ func ExtractHyphaLinksFromContent(hyphaName string, contents string) []string {
 	return result
 }
 
+// ExtractHyphaLinksFromContent extracts local hypha links from the provided text.
+func ExtractHyphaLinksFromBytes(
+	hyphaName string,
+	contents []byte,
+) []string {
+	ctx, _ := mycocontext.ContextFromBytes(
+		contents,
+		ExtractionOptions(hyphaName),
+	)
+	return extractHyphaLinksFromContext(hyphaName, ctx)
+}
+
+// ExtractHyphaLinksFromStringContent extracts local hypha links from the provided text.
+func ExtractHyphaLinksFromString(
+	hyphaName string,
+	contents string,
+) []string {
+	ctx, _ := mycocontext.ContextFromStringInput(
+		contents,
+		ExtractionOptions(hyphaName),
+	)
+	return extractHyphaLinksFromContext(hyphaName, ctx)
+}
+
 // ExtractHeaderLinksFromContent extracts all rocketlinks from the given text and returns them as header links.
-func ExtractHeaderLinksFromContent(hyphaName string, text string) []viewutil.HeaderLink {
+func ExtractHeaderLinksFromString(
+	hyphaName string,
+	text string,
+) []viewutil.HeaderLink {
 	headerLinks := []viewutil.HeaderLink{}
 	ctx, _ := mycocontext.ContextFromStringInput(text, ExtractionOptions(hyphaName))
 	// We call for side-effects

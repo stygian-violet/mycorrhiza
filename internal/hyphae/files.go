@@ -1,6 +1,8 @@
 package hyphae
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -11,23 +13,25 @@ import (
 )
 
 type foundFile struct {
-	hypha string
-	path  string
-	text  bool
+	hypha  string
+	path   string
+	text   []byte
+	isText bool
 }
 
 // Index finds all hypha files in the full `path` and saves them to the hypha storage.
-func Index(path string) {
-	hop := history.ReadOperation()
-
+func Index(path string) error {
 	newByNames := make(map[string]ExistingHypha)
 	newBacklinks := make(map[string]linkSet)
 	newCount := 0
 	ch := make(chan foundFile, 8)
+	err := error(nil)
 
 	process.Go(func() {
-		indexHelper(path, 0, ch)
+		hop := history.ReadOperation()
+		err = indexHelper(hop, process.Context(), ch, path, 0)
 		close(ch)
+		hop.Close()
 	})
 
 	for file := range ch {
@@ -39,13 +43,13 @@ func Index(path string) {
 		} else {
 			switch h := storedHypha.(type) {
 			case *TextualHypha:
-				if file.text {
+				if file.isText {
 					slog.Warn("File collision", "hypha", file.hypha,
 						"usingFile", h.TextFilePath(), "insteadOf", file.path)
 					continue
 				}
 			case *MediaHypha:
-				if !file.text {
+				if !file.isText {
 					slog.Warn("File collision", "hypha", file.hypha,
 						"usingFile", h.MediaFilePath(), "insteadOf", file.path)
 					continue
@@ -53,16 +57,18 @@ func Index(path string) {
 			}
 		}
 		var updatedHypha ExistingHypha
-		if file.text {
+		if file.isText {
 			updatedHypha = storedHypha.WithTextPath(file.path)
-			err := indexBacklinks(hop, updatedHypha, newBacklinks)
-			if err != nil {
-				slog.Error("Failed to index backlinks", "hypha", storedHypha)
-			}
+			indexBacklinks(updatedHypha, file.text, newBacklinks)
 		} else {
 			updatedHypha = storedHypha.WithMediaPath(file.path)
 		}
 		newByNames[file.hypha] = updatedHypha
+	}
+
+	if err != nil {
+		slog.Error("Failed to index hyphae", "err", err, "path", path)
+		return err
 	}
 
 	indexMutex.Lock()
@@ -71,46 +77,53 @@ func Index(path string) {
 	setCount(newCount)
 	indexMutex.Unlock()
 
-	hop.Close()
-
 	slog.Info("Indexed hyphae", "n", newCount)
+	return nil
 }
 
 func indexBacklinks(
-	hop *history.ReadOp,
 	h ExistingHypha,
+	text []byte,
 	backlinks map[string]linkSet,
-) error {
-	text, err := h.Text(hop)
-	if err != nil {
-		return err
-	}
-	foundLinks := ExtractHyphaLinksFromContent(h.CanonicalName(), text)
+) {
+	foundLinks := ExtractHyphaLinksFromBytes(h.CanonicalName(), text)
 	for _, link := range foundLinks {
 		if _, exists := backlinks[link]; !exists {
 			backlinks[link] = make(linkSet)
 		}
 		backlinks[link][h.CanonicalName()] = struct{}{}
 	}
-	return nil
 }
 
 // indexHelper finds all hypha files in the full `path` and sends them to the
 // channel. Handling of duplicate entries and media and counting them is
 // up to the caller.
-func indexHelper(path string, nestLevel uint, ch chan foundFile) {
+func indexHelper(
+	hop *history.ReadOp,
+	ctx context.Context,
+	ch chan foundFile,
+	path string,
+	nestLevel uint,
+) error {
 	nodes, err := os.ReadDir(path)
 	if err != nil {
-		slog.Error("Failed to read directory", "path", path, "err", err)
-		process.Shutdown()
-		return
+		return fmt.Errorf(
+			"failed to index directory '%s': %s",
+			path, err.Error(),
+		)
 	}
 
 	for _, node := range nodes {
 		// If this hypha looks like it can be a hypha path, go deeper. Do not
 		// touch the .git folders for it has an administrative importance!
 		if node.IsDir() && IsValidName(node.Name()) && node.Name() != ".git" {
-			indexHelper(filepath.Join(path, node.Name()), nestLevel+1, ch)
+			err = indexHelper(
+				hop, ctx, ch,
+				filepath.Join(path, node.Name()), nestLevel + 1,
+			)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -119,16 +132,28 @@ func indexHelper(path string, nestLevel uint, ch chan foundFile) {
 			hyphaName, isText, skip = mimetype.DataFromFilename(hyphaPartPath)
 		)
 		if !skip {
+			text := []byte(nil)
+			if isText {
+				text, err = hop.ReadFile(hyphaPartPath)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to index hypha '%s' (%s): %s",
+						hyphaName, hyphaPartPath, err.Error(),
+					)
+				}
+			}
 			file := foundFile {
-				hypha: hyphaName,
-				path: hyphaPartPath,
-				text: isText,
+				hypha:  hyphaName,
+				path:   hyphaPartPath,
+				text:   text,
+				isText: isText,
 			}
 			select {
-			case <-process.Done():
-				return
+			case <-ctx.Done():
+				return nil
 			case ch <- file:
 			}
 		}
 	}
+	return nil
 }

@@ -43,7 +43,7 @@ func (op *Op) WithHyphaCreated(h ExistingHypha, text string) *Op {
 		)
 	}
 	if h.CanonicalName() == cfg.HeaderLinksHypha {
-		op.headerLinks = ExtractHeaderLinksFromContent(h.CanonicalName(), text)
+		op.headerLinks = ExtractHeaderLinksFromString(h.CanonicalName(), text)
 	}
 	return op
 }
@@ -81,7 +81,7 @@ func (op *Op) WithHyphaRenamedPair(
 	)
 	switch {
 	case newName == cfg.HeaderLinksHypha:
-		op.headerLinks = ExtractHeaderLinksFromContent(newName, text)
+		op.headerLinks = ExtractHeaderLinksFromString(newName, text)
 	case oldName == cfg.HeaderLinksHypha:
 		op.headerLinks = viewutil.DefaultHeaderLinks()
 	}
@@ -114,7 +114,7 @@ func (op *Op) WithHyphaTextChanged(
 	}
 	op.insert = append(op.insert, new)
 	if new.CanonicalName() == cfg.HeaderLinksHypha {
-		op.headerLinks = ExtractHeaderLinksFromContent(
+		op.headerLinks = ExtractHeaderLinksFromString(
 			new.CanonicalName(), newText,
 		)
 	}

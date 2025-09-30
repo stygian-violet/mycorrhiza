@@ -30,6 +30,10 @@ func InitUserDatabase() error {
 	if !cfg.UseAuth {
 		return nil
 	}
+	if err := initGroups(); err != nil {
+		slog.Error("Failed to initialize groups", "err", err)
+		return err
+	}
 	if err := initPermissions(); err != nil {
 		slog.Error("Failed to initialize permissions", "err", err)
 		return err
@@ -83,9 +87,7 @@ L:
 		}
 		if write {
 			err := writeTokens()
-			if err == nil {
-				save = false
-			}
+			save = (err != nil)
 		}
 	}
 	slog.Info("Stopping session updater")
@@ -130,15 +132,6 @@ func rememberUsers(userList []*User) {
 	newUsers := make(map[string]*User, len(userList))
 	for _, user := range userList {
 		name := user.Name()
-		if !IsValidGroup(user.Group()) {
-			slog.Warn("Invalid user group", "user", user)
-			u, err := user.WithGroup(EmptyUser.Group())
-			if err != nil {
-				slog.Error("Failed to change group", "user", user, "err", err)
-			} else {
-				user = u
-			}
-		}
 		if IsValidUsername(name) {
 			user2, exists := newUsers[name]
 			if exists {

@@ -5,7 +5,6 @@ import (
 	"iter"
 	"log/slog"
 	"slices"
-	"sort"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -31,10 +30,10 @@ func YieldUsers() iter.Seq[*User] {
 }
 
 // ListUsersWithGroup returns a slice with users of desired group.
-func ListUsersWithGroup(group string) []string {
+func ListUsersWithPermission(permission int) []string {
 	var filtered []string
 	for u := range YieldUsers() {
-		if u.Group() == group {
+		if u.Permission() >= permission {
 			filtered = append(filtered, u.Name())
 		}
 	}
@@ -50,8 +49,9 @@ func Count() (i uint64) {
 }
 
 func HasAnyAdmins() bool {
+	p := AdminGroup().Permission()
 	for u := range YieldUsers() {
-		admin := u.Group() == "admin"
+		admin := u.Permission() >= p
 		if admin {
 			return true
 		}
@@ -71,17 +71,17 @@ func ByToken(token string) *User {
 	tokensMutex.RUnlock()
 	switch {
 	case !ok:
-		return EmptyUser
+		return emptyUser
 	case session.Expired():
 		slog.Info("Session expired", "data", session)
 		terminateSession(token)
-		return EmptyUser
+		return emptyUser
 	default:
 		user := ByName(session.Username())
 		if user.IsEmpty() {
 			slog.Info("Session user does not exist", "data", session)
 			terminateSession(token)
-			return EmptyUser
+			return emptyUser
 		} else {
 			session.Touch()
 		}
@@ -97,7 +97,7 @@ func ByName(username string) *User {
 	if ok {
 		return user
 	}
-	return EmptyUser
+	return emptyUser
 }
 
 func AddUser(user *User) error {
@@ -219,25 +219,4 @@ func terminateSession(token string) {
 	slog.Info("Terminating session", "data", session)
 	session.Clear()
 	sendSessionEvent(SessionChanged)
-}
-
-func UsersInGroups() (admins []string, moderators []string, editors []string, readers []string) {
-	for u := range YieldUsers() {
-		switch u.Group() {
-		// What if we place the users into sorted slices?
-		case "admin":
-			admins = append(admins, u.Name())
-		case "moderator":
-			moderators = append(moderators, u.Name())
-		case "editor", "trusted":
-			editors = append(editors, u.Name())
-		case "reader":
-			readers = append(readers, u.Name())
-		}
-	}
-	sort.Strings(admins)
-	sort.Strings(moderators)
-	sort.Strings(editors)
-	sort.Strings(readers)
-	return
 }

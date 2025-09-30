@@ -24,7 +24,7 @@
 			<td class="table-cell--fill">
 				<a href="{{ $.Meta.Root }}hypha/{{$userHypha}}/{{.Name}}">{{.Name}}</a>
 			</td>
-			<td>{{.Group}}</td>
+			<td>{{.GroupName}}</td>
 			<td>
 				{{if .RegisteredAt.IsZero}}
 					{{block "unknown registration time" .}}Unknown{{end}}

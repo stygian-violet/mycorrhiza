@@ -1,7 +1,6 @@
 package web
 
 import (
-	"io"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -91,11 +90,6 @@ func handlerRemoveFromCategory(w http.ResponseWriter, rq *http.Request) {
 		catName    = util.CanonicalName(rq.PostFormValue("cat"))
 		redirectTo = rq.PostFormValue("redirect-to")
 	)
-	if !u.CanProceed("remove-from-category") {
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = io.WriteString(w, "403 Forbidden")
-		return
-	}
 	if len(hyphaNames) == 0 || catName == "" {
 		slog.Info("No data for removal of hyphae from category passed",
 			"user", u, "catName", catName)
@@ -115,11 +109,6 @@ func handlerAddToCategory(w http.ResponseWriter, rq *http.Request) {
 		redirectTo = rq.PostFormValue("redirect-to")
 		u          = user.FromRequest(rq)
 	)
-	if !u.CanProceed("add-to-category") {
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = io.WriteString(w, "403 Forbidden")
-		return
-	}
 	if hyphaName == "" || catName == "" {
 		http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 		return

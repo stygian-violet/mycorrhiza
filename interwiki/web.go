@@ -125,7 +125,7 @@ type interwikiData struct {
 }
 
 func viewInterwiki(meta viewutil.Meta) {
-	canEdit := meta.U.Group() == "admin"
+	canEdit := meta.U.CanProceed("interwiki/modify-entry")
 	viewutil.ExecutePage(meta, chainInterwiki, interwikiData{
 		BaseData: &viewutil.BaseData{},
 		Entries:  listOfEntries,

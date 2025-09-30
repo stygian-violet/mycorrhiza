@@ -1,30 +1,18 @@
 {{define "title"}}List of users{{end}}
 {{define "body"}}
-	<main class="main-width user-list">
-		<h1>{{template "title"}}</h1>
-		<section>{{$u := .UserHypha}}
-			<h2>{{block "administrators" .}}Administrators{{end}}</h2>
-			<ol>
-				{{range .Admins}}<li><a href="{{ $.Meta.Root }}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
-			</ol>
-		</section>
-		<section>
-			<h2>{{block "moderators" .}}Moderators{{end}}</h2>
-			<ol>
-	            {{range .Moderators}}<li><a href="{{ $.Meta.Root }}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
-			</ol>
-		</section>
-		<section>
-			<h2>{{block "editors" .}}Editors{{end}}</h2>
-			<ol>
-	            {{range .Editors}}<li><a href="{{ $.Meta.Root }}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
-			</ol>
-		</section>
-		<section>
-			<h2>{{block "readers" .}}Readers{{end}}</h2>
-			<ol>
-	            {{range .Readers}}<li><a href="{{ $.Meta.Root }}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
-			</ol>
-		</section>
-	</main>
+<main class="main-width user-list">
+	<h1>{{template "title"}}</h1>
+	{{$u := .UserHypha}}
+	{{$root := .Meta.Root}}
+	{{range .Groups}}
+	{{if len .Users}}
+	<section>
+		<h2>{{block "group" .}}Group{{end}} "{{.Group}}"</h2>
+		<ol>
+			{{range .Users}}<li><a href="{{$root}}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
+		</ol>
+	</section>
 	{{end}}
+	{{end}}
+</main>
+{{end}}

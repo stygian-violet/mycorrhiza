@@ -51,7 +51,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 {{define "auth"}}
 <ul class="top-bar__auth auth-links">
 	<li class="auth-links__box auth-links__user-box">
-		{{if .Meta.U.Group | eq "anon" }}
+		{{if .Meta.U.IsEmpty }}
 			<a href="{{ .Meta.Root }}login" class="auth-links__link auth-links__login-link">
 				{{block "login" .}}Login{{end}}
 			</a>
@@ -68,7 +68,7 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 	}
 	if cfg.AllowRegistration {
 		must(en.Parse(`{{define "registration"}}
-{{if .Meta.U.Group | eq "anon"}}
+{{if .Meta.U.IsEmpty}}
 	 <li class="auth-links__box auth-links__register-box">
 		 <a href="{{ .Meta.Root }}register" class="auth-links__link auth-links__register-link">
 			 {{block "register" .}}Register{{end}}

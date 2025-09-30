@@ -38,10 +38,6 @@ func handlerRemoveMedia(w http.ResponseWriter, rq *http.Request) {
 		h    = hyphae.ByName(util.HyphaNameFromRq(rq, "remove-media"))
 		meta = viewutil.MetaFrom(w, rq)
 	)
-	if !meta.U.CanProceed("remove-media") {
-		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Permission denied")
-		return
-	}
 	switch h := h.(type) {
 	case *hyphae.EmptyHypha, *hyphae.TextualHypha:
 		viewutil.HttpErr(meta, http.StatusBadRequest, h.CanonicalName(), "No media to remove")
@@ -61,13 +57,6 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 		h    = hyphae.ByName(util.HyphaNameFromRq(rq, "delete"))
 		meta = viewutil.MetaFrom(w, rq)
 	)
-
-	if !meta.U.CanProceed("delete") {
-		slog.Info("No permission to delete hypha",
-			"user", meta.U, "hypha", h.CanonicalName())
-		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Permission denied")
-		return
-	}
 
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
@@ -110,18 +99,6 @@ func handlerRevert(w http.ResponseWriter, rq *http.Request) {
 		meta      = viewutil.MetaFrom(w, rq)
 	)
 
-	if !meta.U.CanProceed("revert") {
-		slog.Info(
-			"No permission to revert hypha",
-			"user", meta.U, "hyphaName", hyphaName,
-		)
-		viewutil.HttpErr(
-			meta, http.StatusForbidden,
-			hyphaName, "Permission denied",
-		)
-		return
-	}
-
 	if rq.Method == "GET" {
 		_ = pageHyphaRevert.RenderTo(
 			meta,
@@ -153,13 +130,6 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 		slog.Info("Trying to rename empty hypha",
 			"user", meta.U, "hypha", h.CanonicalName())
 		viewutil.HttpErr(meta, http.StatusBadRequest, h.CanonicalName(), "Cannot rename an empty hypha") // TODO: localize
-		return
-	}
-
-	if !meta.U.CanProceed("rename") {
-		slog.Info("No permission to rename hypha",
-			"user", meta.U, "hypha", h.CanonicalName())
-		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), "Permission denied")
 		return
 	}
 
@@ -198,11 +168,6 @@ func handlerEdit(w http.ResponseWriter, rq *http.Request) {
 		err     error
 	)
 
-	if !meta.U.CanProceed("upload-text") {
-		viewutil.HttpErr(meta, http.StatusForbidden, hyphaName, "Permission denied")
-		return
-	}
-
 	switch h.(type) {
 	case *hyphae.EmptyHypha:
 		isNew = true
@@ -238,11 +203,6 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 		message  = rq.PostFormValue("message")
 	)
 
-	if !meta.U.CanProceed("upload-text") {
-		viewutil.HttpErr(meta, http.StatusForbidden, hyphaName, "Permission denied")
-		return
-	}
-
 	if action == "preview" {
 		ctx, _ := mycocontext.ContextFromStringInput(textData, mycoopts.MarkupOptions(hyphaName))
 		preview := template.HTML(mycomarkup.BlocksToHTML(ctx, mycomarkup.BlockTree(ctx)))
@@ -270,10 +230,6 @@ func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
 func handlerUploadBinary(w http.ResponseWriter, rq *http.Request) {
 	hyphaName := util.HyphaNameFromRq(rq, "upload-binary")
 	meta := viewutil.MetaFrom(w, rq)
-	if !meta.U.CanProceed("upload-binary") {
-		viewutil.HttpErr(meta, http.StatusForbidden, hyphaName, "Permission denied")
-		return
-	}
 
 	file, header, err := rq.FormFile("binary")
 	if err != nil {

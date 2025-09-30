@@ -74,12 +74,14 @@ func viewList(meta viewutil.Meta, users []*user.User) {
 type newUserData struct {
 	*viewutil.BaseData
 	Form util.FormData
+	Groups []user.Group
 }
 
 func viewNewUser(meta viewutil.Meta, form util.FormData) {
 	viewutil.ExecutePage(meta, newUserChain, newUserData{
 		BaseData: &viewutil.BaseData{},
 		Form:     form,
+		Groups:   user.Groups(),
 	})
 }
 
@@ -87,6 +89,7 @@ type editDeleteUserData struct {
 	*viewutil.BaseData
 	Form util.FormData
 	U    *user.User
+	Groups []user.Group
 }
 
 func viewEditUser(meta viewutil.Meta, form util.FormData, u *user.User) {
@@ -94,6 +97,7 @@ func viewEditUser(meta viewutil.Meta, form util.FormData, u *user.User) {
 		BaseData: &viewutil.BaseData{},
 		Form:     form,
 		U:        u,
+		Groups:   user.Groups(),
 	})
 }
 
@@ -102,6 +106,7 @@ func viewDeleteUser(meta viewutil.Meta, form util.FormData, u *user.User) {
 		BaseData: &viewutil.BaseData{},
 		Form:     form,
 		U:        u,
+		Groups:   user.Groups(),
 	})
 }
 
@@ -114,10 +119,8 @@ func handlerAdmin(w http.ResponseWriter, rq *http.Request) {
 
 // handlerAdminShutdown kills the wiki.
 func handlerAdminShutdown(w http.ResponseWriter, rq *http.Request) {
-	if user.CanProceed(rq, "admin/shutdown") {
-		slog.Info("An admin commanded the wiki to shutdown")
-		process.Shutdown()
-	}
+	slog.Info("An admin commanded the wiki to shutdown")
+	process.Shutdown()
 }
 
 // handlerAdminReindexUsers reinitialises the user system.
@@ -151,7 +154,7 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 
 	if rq.Method == http.MethodPost {
 		newGroup := f.Get("group")
-		nu, err := u.WithGroup(newGroup)
+		nu, err := u.WithGroupName(newGroup)
 		if err != nil {
 			f = f.WithError(err)
 		} else if err = user.ReplaceUser(u, nu); err != nil {
@@ -162,7 +165,7 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 		}
 	}
 
-	f.Put("group", u.Group())
+	f.Put("group", u.Group().Name())
 	if f.HasError() {
 		w.WriteHeader(http.StatusBadRequest)
 	}

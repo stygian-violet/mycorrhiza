@@ -26,8 +26,9 @@ import (
 )
 
 // Handler initializes and returns the HTTP router based on the configuration.
-func Handler() http.Handler {
+func Handler() *mux.Router {
 	router := mux.NewRouter()
+	ret := router
 	if cfg.Root != "/" {
 		router = router.PathPrefix(strings.TrimSuffix(cfg.Root, "/")).Subrouter()
 	}
@@ -77,7 +78,6 @@ func Handler() http.Handler {
 	// Admin routes
 	if cfg.UseAuth {
 		adminRouter := r.PathPrefix("/admin").Subrouter()
-		adminRouter.Use(groupMiddleware("admin"))
 
 		adminRouter.HandleFunc("/shutdown", handlerAdminShutdown).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/reindex-users", handlerAdminReindexUsers).Methods(http.MethodPost)
@@ -92,49 +92,31 @@ func Handler() http.Handler {
 
 		settingsRouter := r.PathPrefix("/settings").Subrouter()
 		// TODO: check if necessary?
-		//settingsRouter.Use(groupMiddleware("settings"))
 		settingsRouter.HandleFunc("/change-password", handlerUserChangePassword).Methods(http.MethodGet, http.MethodPost)
 	}
 
 	// Index page
 	r.HandleFunc("/", func(w http.ResponseWriter, rq *http.Request) {
-		// Let's pray it never fails
-		addr, _ := url.Parse(cfg.Root + "hypha/" + cfg.HomeHypha)
+		addr, err := url.Parse(cfg.Root + "hypha/" + cfg.HomeHypha)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		rq.URL = addr
 		handlerHypha(w, rq)
 	})
 
 	initPages()
 
-	return router
-}
-
-func groupMiddleware(group string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-			if cfg.UseAuth && user.CanProceed(rq, group) {
-				next.ServeHTTP(w, rq)
-				return
-			}
-
-			// TODO: handle this better. Merge this code with all other
-			// authorization code in this project.
-
-			w.WriteHeader(http.StatusForbidden)
-			io.WriteString(w, "403 forbidden")
-		})
-	}
+	return ret
 }
 
 // Auth
 func handlerUserList(w http.ResponseWriter, rq *http.Request) {
-	admins, moderators, editors, readers := user.UsersInGroups()
+	groups := user.UsersInGroups()
 	_ = pageUserList.RenderTo(viewutil.MetaFrom(w, rq),
 		map[string]any{
-			"Admins":     admins,
-			"Moderators": moderators,
-			"Editors":    editors,
-			"Readers":    readers,
+			"Groups": groups,
 		})
 }
 

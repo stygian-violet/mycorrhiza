@@ -36,7 +36,7 @@
         <button class="btn edit-toolbar__btn edit-toolbar__time-local">{{block "current time local" .}}Current local time{{end}}</button>
         <button class="btn edit-toolbar__btn edit-toolbar__date-utc">{{block "current date utc" .}}Current date UTC{{end}}</button>
         <button class="btn edit-toolbar__btn edit-toolbar__time-utc">{{block "current time utc" .}}Current time UTC{{end}}</button>
-        {{if .Meta.U.Group | ne "anon"}}
+        {{if not .Meta.U.IsEmpty}}
         <button class="btn edit-toolbar__btn edit-toolbar__user-link">{{block "selflink" .}}Link yourself{{end}}</button>
         {{end}}
     </section>

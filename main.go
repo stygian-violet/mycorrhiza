@@ -91,7 +91,8 @@ func main() {
 		slog.Warn("Your wiki has no admin yet. Run Mycorrhiza with -create-admin <username> option to create an admin.")
 	}
 
-	server := newServer(web.Handler())
+	router := web.Handler()
+	server := newServer(router)
 	process.Go(func() {
 		err := serveHTTP(server)
 		if err != nil {

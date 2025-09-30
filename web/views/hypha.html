@@ -3,7 +3,7 @@
 {{define "body"}}
     <main class="main-width">
         <section id="hypha">
-            {{if .Meta.U.CanProceed "edit"}}
+            {{if .GivenPermissionToModify}}
                 <div class="btn btn_navititle">
                     <a class="btn__link_navititle" href="{{ .Meta.Root }}edit/{{.HyphaName}}">
                         {{block "edit text" .}}Edit text{{end}}</a></div>
@@ -13,7 +13,7 @@
                 <div class="btn btn_navititle">
                     <a class="btn__link_navititle" href="{{ .Meta.Root }}logout">
                         {{block "log out" .}}Log out{{end}}</a></div>
-                {{if eq .Meta.U.Group "admin"}}
+                {{if .ShowAdminPanel}}
                     <div class="btn btn_navititle">
                         <a class="btn__link_navititle" href="{{ .Meta.Root }}admin">
                             {{block "admin panel" .}}Admin panel{{end}}</a></div>
@@ -133,7 +133,7 @@
 {{define "empty hypha card"}}
     <section class="non-existent-hypha">
         <h2 class="non-existent-hypha__title">{{block "empty heading" .}}This hypha does not exist{{end}}</h2>
-        {{if and .UseAuth (eq .Meta.U.Group "anon")}}
+        {{if and .UseAuth .Meta.U.IsEmpty}}
             <p>{{block "empty no rights" .}}You are not authorized to create new hyphae. Here is what you can do:{{end}}</p>
             <ul>
                 <li><a href="{{ .Meta.Root }}login">{{block "empty log in" .}}Log in to your account, if you have one{{end}}</a></li>

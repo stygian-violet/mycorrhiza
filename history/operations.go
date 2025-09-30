@@ -217,10 +217,8 @@ func (hop *Op) WithMsg(userMsg string) *Op {
 
 // WithUser sets a user for the commit.
 func (hop *Op) WithUser(u *user.User) *Op {
-	if u.Group() != "anon" {
-		hop.name = u.Name()
-		hop.email = hop.name + "@mycorrhiza"
-	}
+	hop.name = u.Name()
+	hop.email = hop.name + "@mycorrhiza"
 	return hop
 }
 

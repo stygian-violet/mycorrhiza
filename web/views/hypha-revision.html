@@ -3,7 +3,7 @@
 {{define "body"}}
 <main class="main-width">
 	<section>
-		{{if .Meta.U.CanProceed "revert"}}
+		{{if .CanRevert}}
 		<div class="btn btn_navititle">
 			<a class="btn__link_navititle" href="{{ .Meta.Root }}revert/{{.RevHash}}/{{.HyphaName}}">
 				{{block "revert" .}}Revert{{end}}

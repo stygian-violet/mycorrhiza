@@ -72,15 +72,17 @@ var (
 
 	FullTextSearch       FullTextSearchType
 	FullTextSearchPage   bool
-	FullTextPermission   string
 	FullTextLineLength   int
 	FullTextLowerLimit   int
 	FullTextUpperLimit   int
 
-	GrepIgnoreMedia bool
+	GrepIgnoreMedia        bool
 	GrepMatchLimitPerHypha uint
-	GrepProcessLimit uint
-	GrepTimeout time.Duration
+	GrepProcessLimit       uint
+	GrepTimeout            time.Duration
+
+	CustomGroups      map[string]int
+	CustomPermissions map[string]string
 )
 
 // WikiDir is a full path to the wiki storage directory, which also must be a
@@ -168,7 +170,6 @@ type Telegram struct {
 
 type Search struct {
 	FullText             string `comment:"Full text search type. Options: none, grep"`
-	FullTextPermission   string `comment:"Minimum permission level required for full text search. Options: anon, reader, editor, trusted, moderator, admin."`
 	FullTextLineLength   int   `comment:"Maximum length of a single line of a full text search result. If the number is zero, only hypha links are shown. If the number is negative, there is no limit."`
 	FullTextLowerLimit   int    `comment:"Maximum number of full text search results shown in the /title-search/ page. If the number is zero, full text search is disabled for the page. If the number is negative, there is no limit."`
 	FullTextUpperLimit   int    `comment:"Maximum number of search results shown in the /text-search/ page. If the number is zero, the page does not exist. If the number is negative, there is no limit."`
@@ -186,6 +187,7 @@ type FullTextSearchType int
 const (
 	FullTextDisabled FullTextSearchType = iota
 	FullTextGrep
+	// TODO: FullTextIndex ?
 )
 
 func FullTextSearchTypeFromString(value string) (FullTextSearchType, error) {
@@ -228,6 +230,22 @@ func ps(value string, key string) (int64, error) {
 		err = fmt.Errorf("failed to parse %s: %s: %s", key, value, err.Error())
 	}
 	return int64(res), err
+}
+
+func intKeysHash(s *ini.Section) (map[string]int, error) {
+	res := make(map[string]int)
+	keys := s.Keys()
+	for _, k := range keys {
+		v, err := k.Int()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get key %s of section %s: %s",
+				k.Name(), s.Name(), err.Error(),
+			)
+		}
+		res[k.Name()] = v
+	}
+	return res, nil
 }
 
 // ReadConfigFile reads a config on the given path and stores the
@@ -277,7 +295,6 @@ func ReadConfigFile(path string) error {
 		},
 		Search: Search{
 			FullText:             "grep",
-			FullTextPermission:   "anon",
 			FullTextLineLength:   256,
 			FullTextLowerLimit:   0,
 			FullTextUpperLimit:   256,
@@ -414,7 +431,6 @@ func ReadConfigFile(path string) error {
 	if FullTextSearch, err = FullTextSearchTypeFromString(cfg.FullText); err != nil {
 		return err
 	}
-	FullTextPermission = cfg.FullTextPermission
 	FullTextLineLength = cfg.FullTextLineLength
 	if FullTextLineLength == 0 {
 		cfg.GrepMatchLimitPerHypha = 1
@@ -434,6 +450,19 @@ func ReadConfigFile(path string) error {
 	TelegramBotToken = cfg.TelegramBotToken
 	TelegramBotName = cfg.TelegramBotName
 	TelegramEnabled = (TelegramBotToken != "") && (TelegramBotName != "")
+
+	s, err := f.GetSection("Groups")
+	if err == nil {
+		CustomGroups, err = intKeysHash(s)
+		if err != nil {
+			return err
+		}
+	}
+
+	s, err = f.GetSection("Permissions")
+	if err == nil {
+		CustomPermissions = s.KeysHash()
+	}
 
 	if !strings.HasSuffix(Root, "/") {
 		Root = Root + "/"

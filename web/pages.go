@@ -36,11 +36,8 @@ func initPages() {
 		"description":       `Ниже перечислены гифы, на которых есть ссылка на эту гифу, трансклюзия этой гифы или эта гифа вставлена как изображение.`,
 	}, "views/backlinks.html")
 	pageUserList = newtmpl.NewPage(fs, map[string]string{
-		"title":          "Список пользователей",
-		"administrators": "Администраторы",
-		"moderators":     "Модераторы",
-		"editors":        "Редакторы",
-		"readers":        "Читатели",
+		"title": "Список пользователей",
+		"group": "Группа",
 	}, "views/user-list.html")
 	pageChangePassword = newtmpl.NewPage(fs, map[string]string{
 		"change password":           "Сменить пароль",

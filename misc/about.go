@@ -101,7 +101,7 @@ func AboutHTML(lc *l18n.Localizer) string {
 	}
 	data := aboutData
 	data.Version = version.Short
-	data.Admins = user.ListUsersWithGroup("admin")
+	data.Admins = user.ListUsersWithPermission(user.AdminGroup().Permission())
 	data.UserCount = user.Count()
 	data.RegistrationLimit = cfg.RegistrationLimit
 	data.Cfg = map[string]interface{}{

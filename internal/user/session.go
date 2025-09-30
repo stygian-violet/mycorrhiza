@@ -85,7 +85,7 @@ func (session *Session) SetUsername(username string) {
 
 func (session *Session) Clear() {
 	session.mutex.Lock()
-	session.username = EmptyUser.Name()
+	session.username = emptyUser.Name()
 	session.mutex.Unlock()
 }
 

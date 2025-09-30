@@ -21,7 +21,6 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
 	"github.com/bouncepaw/mycorrhiza/internal/tree"
-	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/l18n"
 	"github.com/bouncepaw/mycorrhiza/mycoopts"
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -64,8 +63,11 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 	var (
 		hyphaName = util.HyphaNameFromRq(rq, "media")
 		h         = hyphae.ByName(hyphaName)
-		u         = user.FromRequest(rq)
+		meta      = viewutil.MetaFrom(w, rq)
 		isMedia   = false
+
+		upload    = path.Join("upload-binary", h.CanonicalName())
+		remove    = path.Join("remove-media", h.CanonicalName())
 
 		mime     string
 		fileSize int64
@@ -85,9 +87,10 @@ func handlerMedia(w http.ResponseWriter, rq *http.Request) {
 		fileSize = fileinfo.Size()
 		fileName = path.Base(h.MediaFilePath())
 	}
-	_ = pageMedia.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
+	_ = pageMedia.RenderTo(meta, map[string]any{
+		"CanUpload":    meta.U.CanProceed(upload),
+		"CanRemove":    isMedia && meta.U.CanProceed(remove),
 		"HyphaName":    h.CanonicalName(),
-		"U":            u,
 		"IsMediaHypha": isMedia,
 		"MimeType":     mime,
 		"FileSize":     fileSize,
@@ -251,6 +254,7 @@ func handlerRevision(w http.ResponseWriter, rq *http.Request) {
 		"RevHash":     revHash,
 		"NaviTitle":   hypview.NaviTitle(meta, h.CanonicalName()),
 		"HyphaName":   h.CanonicalName(),
+		"CanRevert":   meta.U.CanProceed(path.Join("revert", h.CanonicalName())),
 	})
 }
 
@@ -309,9 +313,10 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 			"PrevHyphaName":           prevHyphaName,
 			"NextHyphaName":           nextHyphaName,
 			"IsMyProfile":             isMyProfile,
+			"ShowAdminPanel":          isMyProfile && meta.U.CanProceed("admin"),
 			"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
 			"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
-			"GivenPermissionToModify": user.CanProceed(rq, "edit"),
+			"GivenPermissionToModify": meta.U.CanProceed(path.Join("edit", h.CanonicalName())),
 			"Categories":              cats,
 			"CategoryNameOptions":     categories.ListOfCategories(),
 			"IsMediaHypha":            false,

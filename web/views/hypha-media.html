@@ -23,7 +23,7 @@
                 </fieldset>
             {{end}}
 
-            {{if .U.CanProceed "upload-binary" }}
+            {{if .CanUpload }}
             <form action="{{ .Meta.Root }}upload-binary/{{.HyphaName}}"
                   method="post" enctype="multipart/form-data"
                   class="upload-binary modal amnt-menu-block">
@@ -41,7 +41,7 @@
             </form>
             {{end}}
 
-            {{if .IsMediaHypha | and (.U.CanProceed "remove-media")}}
+            {{if .CanRemove}}
             <form action="{{ .Meta.Root }}remove-media/{{.HyphaName}}" class="modal amnt-menu-block" method="POST">
                 <fieldset class="modal__fieldset">
                     <legend class="modal__title modal__title_small">

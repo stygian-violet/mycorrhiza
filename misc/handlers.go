@@ -15,7 +15,6 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/search"
 	"github.com/bouncepaw/mycorrhiza/internal/shroom"
-	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/l18n"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/static"
@@ -65,24 +64,12 @@ func handlerList(w http.ResponseWriter, rq *http.Request) {
 
 // handlerReindex reindexes all hyphae by checking the wiki storage directory anew.
 func handlerReindex(w http.ResponseWriter, rq *http.Request) {
-	if ok := user.CanProceed(rq, "reindex"); !ok {
-		var lc = l18n.FromRequest(rq)
-		viewutil.HttpErr(viewutil.MetaFrom(w, rq), http.StatusForbidden, cfg.HomeHypha, lc.Get("ui.reindex_no_rights"))
-		slog.Info("No rights to reindex")
-		return
-	}
 	shroom.Reindex()
 	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 
 // handlerUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.
 func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
-	if ok := user.CanProceed(rq, "update-header-links"); !ok {
-		var lc = l18n.FromRequest(rq)
-		viewutil.HttpErr(viewutil.MetaFrom(w, rq), http.StatusForbidden, cfg.HomeHypha, lc.Get("ui.header_no_rights"))
-		slog.Info("No rights to update header links")
-		return
-	}
 	slog.Info("Updated header links")
 	shroom.SetHeaderLinks()
 	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
@@ -185,19 +172,14 @@ func handlerTitleSearch(w http.ResponseWriter, rq *http.Request) {
 }
 
 func handlerTextSearch(w http.ResponseWriter, rq *http.Request) {
-	_ = rq.ParseForm()
-	meta := viewutil.MetaFrom(w, rq)
-	if !meta.U.CanProceed("text-search") {
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = io.WriteString(w, "403 Forbidden")
-		return
-	}
 	if cfg.FullTextSearch == cfg.FullTextDisabled || cfg.FullTextUpperLimit == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = io.WriteString(w, "404 Not found")
 		return
 	}
+	_ = rq.ParseForm()
 	var (
+		meta = viewutil.MetaFrom(w, rq)
 		query = normalizeQuery(rq.FormValue("q"))
 		results *search.SearchResults = nil
 		err error = nil

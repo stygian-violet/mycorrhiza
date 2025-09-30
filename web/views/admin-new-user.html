@@ -24,12 +24,10 @@
 			<div class="form-field">
 				<label for="group">{{block "group" .}}Group{{end}}:</label>
 				<select id="group" name="group">
-					<option {{if .Form.Get "group" | eq "anon" }}selected{{end}}>anon</option>
-					<option {{if .Form.Get "group" | eq "reader" }}selected{{end}}>reader</option>
-					<option {{if .Form.Get "group" | eq "editor" }}selected{{end}}>editor</option>
-					<option {{if .Form.Get "group" | eq "trusted" }}selected{{end}}>trusted</option>
-					<option {{if .Form.Get "group" | eq "moderator" }}selected{{end}}>moderator</option>
-					<option {{if .Form.Get "group" | eq "admin" }}selected{{end}}>admin</option>
+					{{$g := .Form.Get "group"}}
+					{{range .Groups}}
+					<option {{if $g | eq .Name }}selected{{end}}>{{.Name}}</option>
+					{{end}}
 				</select>
 			</div>
 

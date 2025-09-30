@@ -3,6 +3,7 @@ package web
 import (
 	// "log/slog"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -40,7 +41,11 @@ func parseForm(rq *http.Request) error {
 func baseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 		// slog.Info("baseMiddleware", "path", rq.URL.Path, "method", rq.Method)
-		rq.URL.Path = strings.TrimSuffix(rq.URL.Path, "/")
+		p := path.Clean(rq.URL.Path)
+		if p == "/" || p == "." {
+			p = ""
+		}
+		rq.URL.Path = p
 		w.Header().Add("Content-Security-Policy", cfg.CSP)
 		w.Header().Add("Referrer-Policy", cfg.Referrer)
 		next.ServeHTTP(w, rq)
@@ -68,6 +73,22 @@ func wikiMiddleware(next http.Handler) http.Handler {
 		// slog.Info("wikiMiddleware", "path", rq.URL.Path, "method", rq.Method, "user", user)
 		if user.ShowLock() {
 			http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
+			return
+		}
+		route := rq.URL.Path
+		if strings.HasPrefix(route, cfg.Root) {
+			route = rq.URL.Path[len(cfg.Root):]
+		} else if strings.HasPrefix(cfg.Root, route) {
+			route = ""
+		} else {
+			http.Error(w, "400 Bad Request", http.StatusBadRequest)
+			return
+		}
+		if route == "" {
+			route = "hypha/" + cfg.HomeHypha
+		}
+		if !user.CanProceed(route) {
+			http.Error(w, "Permission denied", http.StatusForbidden)
 			return
 		}
 		maxSize := maxBodySize(rq)

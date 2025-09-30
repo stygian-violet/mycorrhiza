@@ -85,7 +85,7 @@ func createAdminCommand(name string) error {
 		slog.Error("Failed to prompt password", "err", err)
 		return err
 	}
-	if err := user.Register(name, password, "admin", "local", true); err != nil {
+	if err := user.Register(name, password, user.AdminGroup().Name(), "local", true); err != nil {
 		slog.Error("Failed to register admin", "err", err)
 		return err
 	}

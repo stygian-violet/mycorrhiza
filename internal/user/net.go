@@ -17,16 +17,11 @@ import (
 
 var ErrLogin error = errors.New("wrong username or password")
 
-// CanProceed returns `true` if the user in `rq` has enough rights to access `route`.
-func CanProceed(rq *http.Request, route string) bool {
-	return FromRequest(rq).CanProceed(route)
-}
-
 // FromRequest returns user from `rq`. If there is no user, an anon user is returned instead.
 func FromRequest(rq *http.Request) *User {
 	cookie, err := rq.Cookie("mycorrhiza_token")
 	if err != nil {
-		return EmptyUser
+		return emptyUser
 	}
 	return ByToken(cookie.Value)
 }

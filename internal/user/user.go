@@ -22,7 +22,7 @@ const (
 // User contains information about a given user required for identification.
 type User struct {
 	name         string
-	group        string
+	group        Group
 	passwordHash []byte
 	registeredAt time.Time
 	source       UserSource
@@ -43,20 +43,28 @@ type userJson struct {
 
 var (
 	// EmptyUser is an anonymous user.
-	EmptyUser = &User{
+	emptyUser = &User{
 		name:         "anon",
-		group:        "anon",
+		group:        EmptyGroup(),
 		passwordHash: nil,
 		source:       UserSourceLocal,
 	}
 	// WikimindUser constructs the wikimind user, which is to be used for automated wiki edits and has admin privileges.
-	WikimindUser = &User{
+	wikimindUser = &User{
 		name:         "wikimind",
-		group:        "admin",
+		group:        AdminGroup(),
 		passwordHash: nil,
 		source:       UserSourceLocal,
 	}
 )
+
+func EmptyUser() *User {
+	return emptyUser
+}
+
+func WikimindUser() *User {
+	return wikimindUser
+}
 
 // ValidSource checks whether provided user source name exists.
 func ValidSource(source string) bool {
@@ -88,7 +96,7 @@ func (user *User) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(userJson{
 		Name:         user.name,
-		Group:        user.group,
+		Group:        user.group.Name(),
 		PasswordHash: string(user.passwordHash),
 		RegisteredAt: user.registeredAt,
 		Source:       src,
@@ -97,7 +105,7 @@ func (user *User) MarshalJSON() ([]byte, error) {
 
 func (user *User) UnmarshalJSON(b []byte) error {
 	var data userJson
-	err := json.Unmarshal(b, &data);
+	err := json.Unmarshal(b, &data)
 	if err != nil {
 		return err
 	}
@@ -106,7 +114,10 @@ func (user *User) UnmarshalJSON(b []byte) error {
 		source = UserSourceTelegram
 	}
 	user.name = util.CanonicalName(data.Name)
-	user.group = data.Group
+	user.group, err = GroupByName(data.Group)
+	if err != nil {
+		return err
+	}
 	user.passwordHash = []byte(data.PasswordHash)
 	user.registeredAt = data.RegisteredAt
 	user.source = source
@@ -121,11 +132,15 @@ func NewUser(
 	if err != nil {
 		return nil, err
 	}
-	return newUserPassword(name, group, password, time.Now(), src)
+	grp, err := GroupByName(group)
+	if err != nil {
+		return nil, err
+	}
+	return newUserPassword(name, grp, password, time.Now(), src)
 }
 
 func newUserPassword(
-	name string, group string, password string,
+	name string, group Group, password string,
 	registeredAt time.Time, source UserSource,
 ) (*User, error) {
 	hash := []byte(nil)
@@ -143,14 +158,11 @@ func newUserPassword(
 }
 
 func newUser(
-	name string, group string, passwordHash []byte,
+	name string, group Group, passwordHash []byte,
 	registeredAt time.Time, source UserSource,
 ) (*User, error) {
-	switch {
-	case !IsValidUsername(name):
+	if !IsValidUsername(name) {
 		return nil, fmt.Errorf("invalid username ‘%s’", name)
-	case !IsValidGroup(group):
-		return nil, fmt.Errorf("invalid group '%s'", group)
 	}
 	return &User{
 		name:         util.CanonicalName(name),
@@ -165,8 +177,16 @@ func (user *User) Name() string {
 	return user.name
 }
 
-func (user *User) Group() string {
+func (user *User) Group() Group {
 	return user.group
+}
+
+func (user *User) GroupName() string {
+	return user.group.Name()
+}
+
+func (user *User) Permission() int {
+	return user.group.Permission()
 }
 
 func (user *User) RegisteredAt() time.Time {
@@ -186,8 +206,8 @@ func (user *User) CanProceed(route string) bool {
 	if !cfg.UseAuth {
 		return true
 	}
-	permission := groupPermission[user.group]
-	required, specified := routePermission[route]
+	permission := user.group.Permission()
+	required, specified := getRoutePermission(route)
 	if !specified {
 		return false
 	}
@@ -203,12 +223,12 @@ func (user *User) IsCorrectPassword(password string) bool {
 }
 
 func (user *User) IsEmpty() bool {
-	return user == EmptyUser
+	return user == emptyUser
 }
 
 // ShowLock returns true if the user is anon and the wiki has been configured to use the lock.
 func (user *User) ShowLock() bool {
-	return cfg.Locked && user.group == EmptyUser.group
+	return cfg.Locked && user.group == emptyUser.group
 }
 
 func (user *User) WithPassword(password string) (*User, error) {
@@ -221,11 +241,19 @@ func (user *User) WithPassword(password string) (*User, error) {
 	)
 }
 
-func (user *User) WithGroup(group string) (*User, error) {
+func (user *User) WithGroup(group Group) (*User, error) {
 	return newUser(
 		user.name, group, user.passwordHash,
 		user.registeredAt, user.source,
 	)
+}
+
+func (user *User) WithGroupName(group string) (*User, error) {
+	grp, err := GroupByName(group)
+	if err != nil {
+		return nil, err
+	}
+	return user.WithGroup(grp)
 }
 
 func (user *User) WithName(name string) (*User, error) {
@@ -240,8 +268,8 @@ func IsValidUsername(username string) bool {
 	if strings.ContainsAny(username, "?!:#@><*|\"'&%{}/") {
 		return false
 	}
-	return username != EmptyUser.name &&
-		username != WikimindUser.name &&
+	return username != emptyUser.name &&
+		username != wikimindUser.name &&
 		usernameIsWhiteListed(username)
 }
 

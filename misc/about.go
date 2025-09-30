@@ -41,7 +41,7 @@ const aboutTemplateString = `
 			<dd>{{ .Version }}</dd>
 		{{ if .Cfg.UseAuth }}
 			<dt>{{ get .L.HomeHypha }}</dt>
-			<dd><a href="{{ .Cfg.Root }}">{{ .Cfg.HomeHypha }}</a></dd>
+			<dd><a href="{{ .Cfg.Root }}hypha/{{ .Cfg.HomeHypha }}">{{ .Cfg.HomeHypha }}</a></dd>
 
 			<dt>{{get .L.Auth}}</dt>
 			<dd>{{ get .L.AuthOn }}</dd>
@@ -107,6 +107,7 @@ func AboutHTML(lc *l18n.Localizer) string {
 	data.Cfg = map[string]interface{}{
 		"UseAuth":           cfg.UseAuth,
 		"WikiName":          cfg.WikiName,
+		"Root":              cfg.Root,
 		"HomeHypha":         cfg.HomeHypha,
 		"TelegramEnabled":   cfg.TelegramEnabled,
 		"RegistrationLimit": cfg.RegistrationLimit,

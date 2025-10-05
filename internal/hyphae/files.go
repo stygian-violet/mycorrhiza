@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
@@ -71,7 +72,16 @@ func Index(path string) error {
 		return err
 	}
 
+	newHyphae := make([]ExistingHypha, newCount)
+	i := 0
+	for _, h := range newByNames {
+		newHyphae[i] = h
+		i++
+	}
+	slices.SortFunc(newHyphae, Compare)
+
 	indexMutex.Lock()
+	hyphae = newHyphae
 	byNames = newByNames
 	backlinksByName = newBacklinks
 	setCount(newCount)

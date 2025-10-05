@@ -1,6 +1,8 @@
 package hyphae
 
 import (
+	"math/rand"
+	"slices"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -9,9 +11,24 @@ import (
 var (
 	indexMutex sync.RWMutex
 
+	// TODO: use a different data structure?
+	hyphae = []ExistingHypha(nil)
 	byNames = make(map[string]ExistingHypha)
 	backlinksByName = make(map[string]linkSet)
 )
+
+func modifyHyphae(remove []ExistingHypha, insert []ExistingHypha) int {
+	for _, h := range remove {
+		delete(byNames, h.CanonicalName())
+	}
+	for _, h := range insert {
+		byNames[h.CanonicalName()] = h
+	}
+	count := len(hyphae)
+	hyphae = util.ModifySorted(hyphae, Compare, remove, insert)
+	count = len(hyphae) - count
+	return count
+}
 
 // ByName returns a hypha by name. It returns an *EmptyHypha if there is no such hypha. This function is the only source of empty hyphae.
 func ByName(hyphaName string) (h Hypha) {
@@ -26,22 +43,26 @@ func ByName(hyphaName string) (h Hypha) {
 	}
 }
 
-func insertHypha(h ExistingHypha) int {
-	_, exists := byNames[h.CanonicalName()]
-	byNames[h.CanonicalName()] = h
-	if !exists {
-		return 1
+func Random() ExistingHypha {
+	indexMutex.RLock()
+	defer indexMutex.RUnlock()
+	n := len(hyphae)
+	if n == 0 {
+		return nil
 	}
-	return 0
+	return hyphae[rand.Intn(n)]
 }
 
-func deleteHypha(h ExistingHypha) int {
-	_, exists := byNames[h.CanonicalName()]
-	if exists {
-		delete(byNames, h.CanonicalName())
-		return -1
+// AreFreeNames checks if all given `hyphaNames` are not taken. If they are not taken, `ok` is true. If not, `firstFailure` is the name of the first met hypha that is not free.
+func AreFreeNames(hyphaNames ...string) (firstFailure string, ok bool) {
+	indexMutex.RLock()
+	defer indexMutex.RUnlock()
+	for _, hn := range hyphaNames {
+		if _, exists := byNames[hn]; exists {
+			return hn, false
+		}
 	}
-	return 0
+	return "", true
 }
 
 // BacklinksCount returns the amount of backlinks to the hypha. Pass canonical names.
@@ -55,23 +76,33 @@ func BacklinksCount(hyphaName string) int {
 }
 
 func BacklinksFor(hyphaName string) []string {
-	var backlinks []string
-	for b := range YieldHyphaBacklinks(hyphaName) {
-		backlinks = append(backlinks, b)
+	res := []string(nil)
+	hyphaName = util.CanonicalName(hyphaName)
+	indexMutex.RLock()
+	backlinks, exists := backlinksByName[hyphaName]
+	if exists {
+		res = make([]string, len(backlinks))
+		i := 0
+		for link := range backlinks {
+			res[i] = link
+			i++
+		}
 	}
-	return backlinks
+	indexMutex.RUnlock()
+	slices.SortFunc(res, util.PathographicCompare)
+	return res
 }
 
 func Orphans() []string {
-	var res []string
-	names := YieldExistingHyphaNames()
-	names = util.Filter(func (name string) bool {
+	res := []string(nil)
+	indexMutex.RLock()
+	for _, h := range hyphae {
+		name := h.CanonicalName()
 		links, exists := backlinksByName[name]
-		return !exists || len(links) == 0
-	}, names)
-	names = PathographicSort(names)
-	for name := range names {
-		res = append(res, name)
+		if !exists || len(links) == 0 {
+			res = append(res, name)
+		}
 	}
+	indexMutex.RUnlock()
 	return res
 }

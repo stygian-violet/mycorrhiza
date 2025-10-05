@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -60,6 +61,73 @@ func ShorterPath(path string) string {
 		return path[min(len(dir) + 1, len(path)):]
 	}
 	return path
+}
+
+// PathographicCompare compares paths preserving the path tree structure
+func PathographicCompare(x string, y string) int {
+	const (
+		slash      int = '/'
+		slashValue int = -1
+	)
+	// Classic lexicographical comparison with a twist
+	n := min(len(x), len(y))
+	for i := 0; i < n; i++ {
+		// The twist: subhyphae-awareness is about pushing slash upwards
+		c := int(x[i])
+		if c == slash {
+			c = slashValue
+		}
+		d := int(y[i])
+		if d == slash {
+			d = slashValue
+		}
+		diff := c - d
+		if diff != 0 {
+			return diff
+		}
+	}
+	return len(x) - len(y)
+}
+
+func DeleteSorted[S ~[]E, E any](
+	slice S,
+	compare func(E, E) int,
+	remove S,
+) S {
+	for _, el := range remove {
+		i, found := slices.BinarySearchFunc(slice, el, compare)
+		if found {
+			slice = slices.Delete(slice, i, i + 1)
+		}
+	}
+	return slice
+}
+
+func InsertSorted[S ~[]E, E any](
+	slice S,
+	compare func(E, E) int,
+	insert S,
+) S {
+	for _, el := range insert {
+		i, found := slices.BinarySearchFunc(slice, el, compare)
+		if found {
+			slice[i] = el
+		} else {
+			slice = slices.Insert(slice, i, el)
+		}
+	}
+	return slice
+}
+
+func ModifySorted[S ~[]E, E any](
+	slice S,
+	compare func(E, E) int,
+	remove S,
+	insert S,
+) S {
+	slice = DeleteSorted(slice, compare, remove)
+	slice = InsertSorted(slice, compare, insert)
+	return slice
 }
 
 // HTTP404Page writes a 404 error in the status, needed when no content is found on the page.

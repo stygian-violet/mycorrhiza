@@ -8,12 +8,15 @@ import (
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
+type opPart struct {
+	hyphae    []ExistingHypha
+	backlinks []backlinkIndexOperation
+}
+
 type Op struct {
 	done        bool
-	remove      []ExistingHypha
-	insert      []ExistingHypha
-	rename      []RenamingPair
-	backlink    []backlinkIndexOperation
+	remove      opPart
+	insert      opPart
 	headerLinks []viewutil.HeaderLink
 }
 
@@ -35,10 +38,10 @@ func (op *Op) WithHyphaCreated(h ExistingHypha, text string) *Op {
 	if op.done {
 		return op
 	}
-	op.insert = append(op.insert, h)
+	op.insert.hyphae = append(op.insert.hyphae, h)
 	if text != "" {
-		op.backlink = append(
-			op.backlink,
+		op.insert.backlinks = append(
+			op.insert.backlinks,
 			updateBacklinksAfterEdit(h, "", text),
 		)
 	}
@@ -52,14 +55,14 @@ func (op *Op) WithHyphaDeleted(h ExistingHypha, text string) *Op {
 	if op.done {
 		return op
 	}
-	op.remove = append(op.remove, h)
+	op.remove.hyphae = append(op.remove.hyphae, h)
 	if text != "" {
-		op.backlink = append(
-			op.backlink,
+		op.remove.backlinks = append(
+			op.remove.backlinks,
 			updateBacklinksAfterDelete(h, text),
 		)
 	}
-	if h.CanonicalName() == cfg.HeaderLinksHypha {
+	if h.CanonicalName() == cfg.HeaderLinksHypha && op.headerLinks == nil {
 		op.headerLinks = viewutil.DefaultHeaderLinks()
 	}
 	return op
@@ -74,15 +77,16 @@ func (op *Op) WithHyphaRenamedPair(
 	}
 	oldName := pair.From().CanonicalName()
 	newName := pair.To().CanonicalName()
-	op.rename = append(op.rename, pair)
-	op.backlink = append(
-		op.backlink,
+	op.remove.hyphae = append(op.remove.hyphae, pair.From())
+	op.insert.hyphae = append(op.insert.hyphae, pair.To())
+	op.insert.backlinks = append(
+		op.insert.backlinks,
 		updateBacklinksAfterRename(pair.To(), oldName, text),
 	)
 	switch {
 	case newName == cfg.HeaderLinksHypha:
 		op.headerLinks = ExtractHeaderLinksFromString(newName, text)
-	case oldName == cfg.HeaderLinksHypha:
+	case oldName == cfg.HeaderLinksHypha && op.headerLinks == nil:
 		op.headerLinks = viewutil.DefaultHeaderLinks()
 	}
 	return op
@@ -104,15 +108,15 @@ func (op *Op) WithHyphaTextChanged(
 		return op
 	}
 	if oldText != newText {
-		op.backlink = append(
-			op.backlink,
+		op.insert.backlinks = append(
+			op.insert.backlinks,
 			updateBacklinksAfterEdit(old, oldText, newText),
 		)
 	}
 	if old.CanonicalName() != new.CanonicalName() {
 		return op.WithHyphaRenamed(old, new, newText)
 	}
-	op.insert = append(op.insert, new)
+	op.insert.hyphae = append(op.insert.hyphae, new)
 	if new.CanonicalName() == cfg.HeaderLinksHypha {
 		op.headerLinks = ExtractHeaderLinksFromString(
 			new.CanonicalName(), newText,
@@ -125,7 +129,7 @@ func (op *Op) WithHyphaMediaChanged(old ExistingHypha, new ExistingHypha) *Op {
 	if op.done {
 		return op
 	}
-	op.insert = append(op.insert, new)
+	op.insert.hyphae = append(op.insert.hyphae, new)
 	return op
 }
 
@@ -133,18 +137,11 @@ func (op *Op) Apply() *Op {
 	if op.done {
 		return op
 	}
-	count := 0
-	for _, h := range op.remove {
-		count += deleteHypha(h)
+	count := modifyHyphae(op.remove.hyphae, op.insert.hyphae)
+	for _, b := range op.remove.backlinks {
+		b.apply()
 	}
-	for _, hs := range op.rename {
-		count += deleteHypha(hs.From())
-		count += insertHypha(hs.To())
-	}
-	for _, h := range op.insert {
-		count += insertHypha(h)
-	}
-	for _, b := range op.backlink {
+	for _, b := range op.insert.backlinks {
 		b.apply()
 	}
 	if op.headerLinks != nil {

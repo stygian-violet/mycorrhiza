@@ -58,6 +58,14 @@ func TextFilePath(hyphaName string) string {
 	return FilePath(hyphaName) + ".myco"
 }
 
+func Compare(h ExistingHypha, g ExistingHypha) int {
+	return util.PathographicCompare(h.CanonicalName(), g.CanonicalName())
+}
+
+func CompareName(h ExistingHypha, name string) int {
+	return util.PathographicCompare(h.CanonicalName(), name)
+}
+
 // IsValidName checks for invalid characters and path traversals.
 func IsValidName(hyphaName string) bool {
 	if !hyphaNamePattern.MatchString(hyphaName) {

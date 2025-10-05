@@ -4,7 +4,6 @@ package misc
 import (
 	"io"
 	"log/slog"
-	"math/rand"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -44,20 +43,15 @@ func InitHandlers(rtr *mux.Router) {
 	initViews()
 }
 
-// handlerList shows a list of all hyphae in the wiki in random order.
+// handlerList shows a list of all hyphae in the wiki.
 func handlerList(w http.ResponseWriter, rq *http.Request) {
-	// TODO: make this more effective, there are too many loops and vars
-	var (
-		sortedHypha = hyphae.PathographicSort(hyphae.YieldExistingHyphaNames())
-		entries     []listDatum
-	)
-	for hyphaName := range sortedHypha {
-		switch h := hyphae.ByName(hyphaName).(type) {
-		case *hyphae.TextualHypha:
-			entries = append(entries, listDatum{hyphaName, ""})
-		case *hyphae.MediaHypha:
-			entries = append(entries, listDatum{hyphaName, filepath.Ext(h.MediaFilePath())[1:]})
+	var entries []listDatum
+	for hypha := range hyphae.YieldExistingHyphae() {
+		entry := listDatum{hypha.CanonicalName(), ""}
+		if h, ok := hypha.(*hyphae.MediaHypha); ok {
+			entry.Ext = filepath.Ext(h.MediaFilePath())[1:]
 		}
+		entries = append(entries, entry)
 	}
 	viewList(viewutil.MetaFrom(w, rq), entries)
 }
@@ -81,24 +75,13 @@ func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
 
 // handlerRandom redirects to a random hypha.
 func handlerRandom(w http.ResponseWriter, rq *http.Request) {
-	var (
-		randomHyphaName string
-		amountOfHyphae  = hyphae.Count()
-	)
-	if amountOfHyphae == 0 {
+	h := hyphae.Random()
+	if h == nil {
 		var lc = l18n.FromRequest(rq)
 		viewutil.HttpErr(viewutil.MetaFrom(w, rq), http.StatusNotFound, cfg.HomeHypha, lc.Get("ui.random_no_hyphae_tip"))
 		return
 	}
-	i := rand.Intn(amountOfHyphae)
-	for h := range hyphae.YieldExistingHyphae() {
-		if i == 0 {
-			randomHyphaName = h.CanonicalName()
-			break
-		}
-		i--
-	}
-	http.Redirect(w, rq, cfg.Root+"hypha/"+randomHyphaName, http.StatusSeeOther)
+	http.Redirect(w, rq, cfg.Root+"hypha/"+h.CanonicalName(), http.StatusSeeOther)
 }
 
 // handlerAbout shows a summary of wiki's software.
@@ -162,7 +145,7 @@ func handlerTitleSearch(w http.ResponseWriter, rq *http.Request) {
 		textResults *search.SearchResults = nil
 	)
 	if query != "" {
-		for hyphaName := range shroom.YieldHyphaNamesContainingString(query) {
+		for hyphaName := range hyphae.YieldHyphaNamesContainingString(query) {
 			results = append(results, hyphaName)
 		}
 		if (cfg.FullTextSearch != cfg.FullTextDisabled &&

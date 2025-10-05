@@ -55,7 +55,10 @@ func genericLineMigrator(
 
 	slog.Info(commitMessage)
 
-	for hypha := range hyphae.FilterHyphaeWithText(hyphae.YieldExistingHyphae()) {
+	for hypha := range hyphae.YieldExistingHyphae() {
+		if !hypha.HasTextFile() {
+			continue
+		}
 		/// Open file, read from file, modify file. If anything goes wrong, scream and shout.
 
 		file, err := os.OpenFile(hypha.TextFilePath(), os.O_RDWR, 0660)

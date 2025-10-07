@@ -168,6 +168,8 @@ caption { caption-side: top; font-size: small; }
 .subhyphae__list, .subhyphae__list ul { display: flex; padding: 0; margin: 0; flex-wrap: wrap; }
 .subhyphae__list ul { font-size: 90%; }
 .subhyphae__entry { list-style-type: none; border: 1px solid #999; padding: 0; margin: .125rem; border-radius: .25rem; }
+.subhyphae__truncated { list-style-type: none; border: 0px; padding: 0; margin: 0.25rem; align-self: center; }
+.subhyphae__truncated:first-child { margin-top: -0.25rem; width: 100%; text-align: center; }
 .subhyphae__link { display: block; padding: .25rem; text-decoration: none; }
 .subhyphae__link:hover { background: #eee; }
 

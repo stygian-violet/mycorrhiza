@@ -4,6 +4,7 @@ package hyphae
 
 import (
 	"iter"
+	"path"
 	"slices"
 	"strings"
 )
@@ -61,12 +62,34 @@ func YieldSubhyphae(h Hypha) iter.Seq[ExistingHypha] {
 	return yieldSubhyphae(h, true)
 }
 
-// Subhyphae returns slice of subhyphae.
-func Subhyphae(h Hypha) []ExistingHypha {
-	var hyphae []ExistingHypha
-	for subh := range YieldSubhyphae(h) {
-		hyphae = append(hyphae, subh)
+func YieldSubhyphaeWithSiblings(
+	h Hypha,
+	prev *string,
+	next *string,
+) iter.Seq[ExistingHypha] {
+	name := h.CanonicalName()
+	parent := path.Dir(name)
+	if parent == "/" || parent == "." {
+		parent = ""
+	} else {
+		parent += "/"
 	}
-	return hyphae
+	return func(yield func(ExistingHypha) bool) {
+		indexMutex.RLock()
+		defer indexMutex.RUnlock()
+		i, found := slices.BinarySearchFunc(hyphae, name, CompareName)
+		*prev = childAtIndex(parent, i - 1)
+		if found {
+			i++
+		}
+		prefix := name + "/"
+		yield_ := true
+		for i < len(hyphae) && strings.HasPrefix(hyphae[i].CanonicalName(), prefix) {
+			if yield_ && !yield(hyphae[i]) {
+				yield_ = false
+			}
+			i++
+		}
+		*next = childAtIndex(parent, i)
+	}
 }
-

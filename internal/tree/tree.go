@@ -1,11 +1,7 @@
 package tree
 
 import (
-	"fmt"
 	"html/template"
-	"io"
-	"path"
-	"sort"
 	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
@@ -13,120 +9,135 @@ import (
 	"github.com/bouncepaw/mycorrhiza/util"
 )
 
-// Tree returns the subhypha matrix as HTML and names of the next and previous hyphae (or empty strings).
-func Tree(hyphaName string) (childrenHTML template.HTML, prev, next string) {
-	var (
-		root             = child{hyphaName, true, make([]child, 0)}
-		descendantPrefix = hyphaName + "/"
-		parent           = path.Dir(hyphaName) // Beware, it might be . and whatnot.
-		slashCount       = strings.Count(hyphaName, "/")
+func Tree(h hyphae.Hypha) (childrenHTML template.HTML, prev, next string) {
+	tb := treeBuilder{parent: h.CanonicalName()}
+	nodes := 0
+	for h := range hyphae.YieldSubhyphaeWithSiblings(h, &prev, &next) {
+		if cfg.MaxTreeNodes > 0 && nodes == cfg.MaxTreeNodes {
+			tb.truncateAll(h.CanonicalName())
+			break
+		}
+		tb.Append(h.CanonicalName())
+		nodes++
+	}
+	tb.Close()
+	childrenHTML = template.HTML(tb.String())
+	return
+}
+
+type node struct {
+	name      string
+	hasList   bool
+	truncated bool
+}
+
+type treeBuilder struct {
+	buf    strings.Builder
+	stack  []node
+	parent string
+}
+
+func (tb *treeBuilder) Append(name string) {
+	i := len(tb.parent) + 1
+	level := 0
+	for i < len(name) {
+		if cfg.MaxTreeDepth > 0 && level == cfg.MaxTreeDepth {
+			tb.truncate()
+			return
+		}
+		j := strings.IndexByte(name[i:], '/')
+		last := false
+		if j < 0 {
+			last = true
+			j = len(name)
+		} else {
+			j += i
+		}
+		part := name[i:j]
+		if level == len(tb.stack) || tb.stack[level].name != part {
+			tb.push(level, last, name[i:j], name[:j])
+		}
+		i = j + 1
+		level++
+	}
+}
+
+func (tb *treeBuilder) Close() {
+	tb.pop(len(tb.stack))
+	tb.stack = nil
+}
+
+func (tb *treeBuilder) String() string {
+	return tb.buf.String()
+}
+
+func (tb *treeBuilder) writeStrings(ss... string) {
+	for _, s := range ss {
+		tb.buf.WriteString(s)
+	}
+}
+
+func (tb *treeBuilder) writeTruncation() {
+	tb.buf.WriteString("<li class=\"subhyphae__truncated\">⋯</li>\n")
+}
+
+func (tb *treeBuilder) createList() {
+	level := len(tb.stack) - 1
+	if level >= 0 && !tb.stack[level].hasList {
+		tb.stack[level].hasList = true
+		tb.buf.WriteString("<ul>\n")
+	}
+}
+
+func (tb *treeBuilder) truncate() {
+	level := len(tb.stack) - 1
+	if level >= 0 && !tb.stack[level].truncated {
+		tb.stack[level].truncated = true
+		tb.createList()
+		tb.writeTruncation()
+	}
+}
+
+func (tb *treeBuilder) truncateAll(next string) {
+	level := 0
+	for part := range strings.SplitSeq(next[len(tb.parent) + 1:], "/") {
+		if level == len(tb.stack) || tb.stack[level].name != part {
+			break
+		}
+		level++
+	}
+	tb.pop(len(tb.stack) - level)
+	for len(tb.stack) > 0 {
+		tb.truncate()
+		tb.pop(1)
+	}
+	tb.writeTruncation()
+}
+
+func (tb *treeBuilder) push(level int, last bool, name string, path string) {
+	if level < len(tb.stack) {
+		tb.pop(len(tb.stack) - level)
+	}
+	tb.createList()
+	tb.buf.WriteString("<li class=\"subhyphae__entry\">\n<a class=\"subhyphae__link")
+	if !last {
+		tb.buf.WriteString(" wikilink_new")
+	}
+	tb.writeStrings(
+		"\" href=\"", cfg.Root, "hypha/", path, "\">",
+		util.BeautifulName(name),"</a>\n",
 	)
-	for h := range hyphae.YieldExistingHyphae() {
-		name := h.CanonicalName()
-		if strings.HasPrefix(name, descendantPrefix) {
-			var subPath = strings.TrimPrefix(name, descendantPrefix)
-			addHyphaToChild(name, subPath, &root)
-			// A child is not a sibling, so we skip the rest.
-			continue
-		}
-
-		// Skipping non-siblings.
-		if !(path.Dir(name) == parent && slashCount == strings.Count(name, "/")) {
-			continue
-		}
-
-		if (name < hyphaName) && (name > prev) {
-			prev = name
-		} else if (name > hyphaName) && (name < next || next == "") {
-			next = name
-		}
-	}
-	return subhyphaeMatrix(root.children), prev, next
+	tb.stack = append(tb.stack, node{name: name})
 }
 
-type child struct {
-	name     string
-	exists   bool
-	children []child
-}
-
-/*
-Subhyphae links are recursive. It may end up looking like that if drawn with
-pseudographics:
-╔══════════════╗
-║Foo           ║   The presented hyphae are ./foo and ./foo/bar
-║╔════════════╗║
-║║Bar         ║║
-║╚════════════╝║
-╚══════════════╝
-*/
-func childHTML(c *child, w io.Writer) {
-	sort.Slice(c.children, func(i, j int) bool {
-		return c.children[i].name < c.children[j].name
-	})
-
-	_, _ = io.WriteString(w, "<li class=\"subhyphae__entry\">\n<a class=\"subhyphae__link")
-	if !c.exists {
-		_, _ = io.WriteString(w, " wikilink_new")
-	}
-	_, _ = io.WriteString(w, fmt.Sprintf(
-		"\" href=\"%shypha/%s\">%s</a>\n",
-		cfg.Root,
-		c.name,
-		util.BeautifulName(path.Base(c.name)),
-	))
-
-	if len(c.children) > 0 {
-		_, _ = io.WriteString(w, "<ul>\n")
-		for _, child := range c.children {
-			childHTML(&child, w)
+func (tb *treeBuilder) pop(count int) {
+	i := len(tb.stack) - 1
+	for j := 0; j < count; j++ {
+		if tb.stack[i].hasList {
+			tb.buf.WriteString("</ul>\n")
 		}
-		_, _ = io.WriteString(w, "</ul>\n")
+		tb.buf.WriteString("</li>\n")
+		i--
 	}
-	_, _ = io.WriteString(w, "</li>\n")
-}
-
-func addHyphaToChild(hyphaName, subPath string, child *child) {
-	// when hyphaName = "root/a/b", subPath = "a/b", and child.name = "root"
-	// addHyphaToChild("root/a/b", "b", child{"root/a"})
-	// when hyphaName = "root/a/b", subPath = "b", and child.name = "root/a"
-	// set .exists=true for "root/a/b", and create it if it isn't there already
-	var exists = !strings.Contains(subPath, "/")
-	if exists {
-		var subchild = findOrCreateSubchild(subPath, child)
-		subchild.exists = true
-	} else {
-		var (
-			firstSlash = strings.IndexRune(subPath, '/')
-			firstDir   = subPath[:firstSlash]
-			restOfPath = subPath[firstSlash+1:]
-			subchild   = findOrCreateSubchild(firstDir, child)
-		)
-		addHyphaToChild(hyphaName, restOfPath, subchild)
-	}
-}
-
-func findOrCreateSubchild(name string, baseChild *child) *child {
-	// when name = "a", and baseChild.name = "root"
-	// if baseChild.children contains "root/a", return it
-	// else create it and return that
-	var fullName = baseChild.name + "/" + name
-	for i := range baseChild.children {
-		if baseChild.children[i].name == fullName {
-			return &baseChild.children[i]
-		}
-	}
-	baseChild.children = append(baseChild.children, child{fullName, false, make([]child, 0)})
-	return &baseChild.children[len(baseChild.children)-1]
-}
-
-func subhyphaeMatrix(children []child) template.HTML {
-	sort.Slice(children, func(i, j int) bool {
-		return children[i].name < children[j].name
-	})
-	var buf strings.Builder
-	for _, child := range children {
-		childHTML(&child, &buf)
-	}
-	return template.HTML(buf.String())
+	tb.stack = tb.stack[:i + 1]
 }

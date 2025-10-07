@@ -31,6 +31,9 @@ var (
 	UserHypha           string
 	HeaderLinksHypha    string
 	RedirectionCategory string
+	ShowTree            bool
+	MaxTreeDepth        int
+	MaxTreeNodes        int
 
 	ListenAddr        string
 	URL               string
@@ -110,6 +113,9 @@ type Hyphae struct {
 	UserHypha           string `comment:"This hypha is used as a prefix for user hyphae."`
 	HeaderLinksHypha    string `comment:"You can also specify a hypha to populate your own custom header links from."`
 	RedirectionCategory string `comment:"Redirection hyphae will be added to this category. Default: redirection."`
+	ShowTree            bool   `comment:"Whether to show subhypha trees."`
+	MaxTreeDepth        int    `comment:"Maximum depth of a subhypha tree. If zero, there is no limit."`
+	MaxTreeNodes        int    `comment:"Maximum number of nodes in a subhypha tree. If zero, there is no limit."`
 }
 
 // Network is a section of Config that has fields related to network stuff.
@@ -259,6 +265,9 @@ func ReadConfigFile(path string) error {
 			UserHypha:           "u",
 			HeaderLinksHypha:    "",
 			RedirectionCategory: "redirection",
+			ShowTree:            true,
+			MaxTreeDepth:        0,
+			MaxTreeNodes:        0,
 		},
 		Network: Network{
 			ListenAddr:        "127.0.0.1:1737",
@@ -353,6 +362,9 @@ func ReadConfigFile(path string) error {
 	UserHypha = util.CanonicalName(filepath.ToSlash(cfg.UserHypha))
 	HeaderLinksHypha = util.CanonicalName(filepath.ToSlash(cfg.HeaderLinksHypha))
 	RedirectionCategory = cfg.RedirectionCategory
+	ShowTree = cfg.ShowTree
+	MaxTreeDepth = cfg.MaxTreeDepth
+	MaxTreeNodes = cfg.MaxTreeNodes
 	if ListenAddr == "" {
 		ListenAddr = cfg.ListenAddr
 	}

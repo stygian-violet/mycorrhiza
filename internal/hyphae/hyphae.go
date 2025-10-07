@@ -3,6 +3,7 @@ package hyphae
 import (
 	"math/rand"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/util"
@@ -28,6 +29,22 @@ func modifyHyphae(remove []ExistingHypha, insert []ExistingHypha) int {
 	hyphae = util.ModifySorted(hyphae, Compare, remove, insert)
 	count = len(hyphae) - count
 	return count
+}
+
+func childAtIndex(parent string, i int) string {
+	if i < 0 || i >= len(hyphae) {
+		return ""
+	}
+	name := hyphae[i].CanonicalName()
+	if !strings.HasPrefix(name, parent) {
+		return ""
+	}
+	child := name[len(parent):]
+	j := strings.IndexByte(child, '/')
+	if j < 0 {
+		return name
+	}
+	return parent + child[:j]
 }
 
 // ByName returns a hypha by name. It returns an *EmptyHypha if there is no such hypha. This function is the only source of empty hyphae.
@@ -105,4 +122,27 @@ func Orphans() []string {
 	}
 	indexMutex.RUnlock()
 	return res
+}
+
+// Subhyphae returns slice of subhyphae.
+func Subhyphae(h Hypha) []ExistingHypha {
+	var hyphae []ExistingHypha
+	for subh := range YieldSubhyphae(h) {
+		hyphae = append(hyphae, subh)
+	}
+	return hyphae
+}
+
+func HasSubhyphae(h Hypha) bool {
+	for _ = range YieldSubhyphae(h) {
+		return true
+	}
+	return false
+}
+
+func Siblings(h Hypha) (prev string, next string) {
+	for _ = range YieldSubhyphaeWithSiblings(h, &prev, &next) {
+		break
+	}
+	return
 }

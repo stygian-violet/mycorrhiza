@@ -305,23 +305,31 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		category_list = ":" + strings.Join(cats, ":") + ":"
 		isMyProfile   = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
 
-		subhyphae, prevHyphaName, nextHyphaName = tree.Tree(h.CanonicalName())
-
-		data = map[string]any{
-			"HyphaName":               h.CanonicalName(),
-			"SubhyphaeHTML":           subhyphae,
-			"PrevHyphaName":           prevHyphaName,
-			"NextHyphaName":           nextHyphaName,
-			"IsMyProfile":             isMyProfile,
-			"ShowAdminPanel":          isMyProfile && meta.U.CanProceed("admin"),
-			"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
-			"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
-			"GivenPermissionToModify": meta.U.CanProceed(path.Join("edit", h.CanonicalName())),
-			"Categories":              cats,
-			"CategoryNameOptions":     categories.ListOfCategories(),
-			"IsMediaHypha":            false,
-		}
+		subhyphae     template.HTML
+		prevHyphaName string
+		nextHyphaName string
 	)
+
+	if cfg.ShowTree {
+		subhyphae, prevHyphaName, nextHyphaName = tree.Tree(h)
+	} else {
+		prevHyphaName, nextHyphaName = hyphae.Siblings(h)
+	}
+
+	data := map[string]any{
+		"HyphaName":               h.CanonicalName(),
+		"SubhyphaeHTML":           subhyphae,
+		"PrevHyphaName":           prevHyphaName,
+		"NextHyphaName":           nextHyphaName,
+		"IsMyProfile":             isMyProfile,
+		"ShowAdminPanel":          isMyProfile && meta.U.CanProceed("admin"),
+		"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
+		"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
+		"GivenPermissionToModify": meta.U.CanProceed(path.Join("edit", h.CanonicalName())),
+		"Categories":              cats,
+		"CategoryNameOptions":     categories.ListOfCategories(),
+		"IsMediaHypha":            false,
+	}
 	slog.Info("reading hypha", "name", h.CanonicalName(), "can edit", data["GivenPermissionToModify"])
 	meta.BodyAttributes = map[string]string{
 		"cats": category_list,

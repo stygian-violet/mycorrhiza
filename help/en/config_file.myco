@@ -31,6 +31,10 @@ The non-absolute //path// values are relative to the directory containing the co
 * `HomeHypha`: //string//. The name your home hypha has. **Default:** `home`.
 * `UserHypha`: //string//. The name of the hypha that is parent of all user hyphae. **Default:** `u`.
 * `HeaderLinkHypha`: //string//. The name of the hypha where you can configure the header. See [[{{root}}help/en/top_bar]]. There is no default.
+* `RedirectionCategory`: //string//. Redirection hyphae will be added to this category. **Default:** `redirection`.
+* `ShowTree`: //boolean//. Whether to show subhypha trees. **Default:** `true`.
+* `MaxTreeDepth`: //number//. Maximum depth of a subhypha tree. If zero, there is no limit. **Default:** `0`.
+* `MaxTreeNodes`: //number//. Maximum number of nodes in a subhypha tree. If zero, there is no limit. **Default:** `0`.
 
 == [Network]
 * `ListenAddr`: //number//. What port is used for serving the web interface of Mycorrhiza. **Default:** `1737`.
@@ -65,7 +69,12 @@ The non-absolute //path// values are relative to the directory containing the co
 * `SessionCookieDuration`: //duration//. How long session cookies last. **Default:** `1y`.
 
 == [Search]
-* `FullText`: //string//. Full text search type. **Options:** `none`, `grep`. **Default:** `grep`.
+* {
+  `FullText`: //string//. Full text search type. **Default:** `grep`.
+  **Options:**
+  * `none` — disable.
+  * `grep` — use `git grep`.
+}
 * `FullTextLineLength`: //number//. Maximum length of a single line of a full text search result. If the number is zero, only hypha links are shown. If the number is negative, there is no limit. **Default:** `256`.
 * `FullTextLowerLimit`: //number//. Maximum number of full text search results shown in the `/title-search` page. If the number is zero, full text search is disabled for the page. If the number is negative, there is no limit. **Default:** `0`.
 * `FullTextUpperLimit`: //number//. Maximum number of search results shown in the `/text-search` page. If the number is zero, the page does not exist. If the number is negative, there is no limit. **Default:** `256`.

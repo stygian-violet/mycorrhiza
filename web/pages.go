@@ -10,7 +10,7 @@ import (
 //go:embed views/*.html
 var fs embed.FS
 
-var pageOrphans, pageBacklinks, pageUserList, pageChangePassword *newtmpl.Page
+var pageOrphans, pageBacklinks, pageSubhyphae, pageUserList, pageChangePassword *newtmpl.Page
 var pageHyphaDelete, pageHyphaRevert, pageHyphaEdit, pageHyphaEmpty, pageHypha *newtmpl.Page
 var pageRevision, pageMedia *newtmpl.Page
 var pageAuthLock, pageAuthLogin, pageAuthLogout, pageAuthRegister *newtmpl.Page
@@ -35,6 +35,9 @@ func initPages() {
 		"backlinks to link": `Обратные ссылки на <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>`,
 		"description":       `Ниже перечислены гифы, на которых есть ссылка на эту гифу, трансклюзия этой гифы или эта гифа вставлена как изображение.`,
 	}, "views/backlinks.html")
+	pageSubhyphae = newtmpl.NewPage(fs, map[string]string{
+		"subhyphae of": `Подгифы`,
+	}, "views/subhyphae.html")
 	pageUserList = newtmpl.NewPage(fs, map[string]string{
 		"title": "Список пользователей",
 		"group": "Группа",
@@ -107,6 +110,7 @@ func initPages() {
 		"manage media":  "Медиа",
 		"turn to media": "Превратить в медиа-гифу",
 		"backlinks":     "{{.BacklinkCount}} обратн{{if eq .BacklinkCount 1}}ая ссылка{{else if and (le .BacklinkCount 4) (gt .BacklinkCount 1)}}ые ссылки{{else}}ых ссылок{{end}}",
+		"subhyphae link":"подгифы",
 
 		"empty heading":                    `Эта гифа не существует`,
 		"empty no rights":                  `У вас нет прав для создания новых гиф. Вы можете:`,

@@ -1,0 +1,14 @@
+{{define "subhyphae of"}}Subhyphae of{{end}}
+{{define "title"}}{{template "subhyphae of" .}} {{.HyphaName}}{{end}}
+{{define "body"}}
+<main class="main-width">
+	<h1>{{template "subhyphae of" .}} <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a></h1>
+	<ol>
+		{{range .Subhyphae}}
+		<li>
+			<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.CanonicalName}}">{{beautifulName .CanonicalName}}</a>
+		</li>
+		{{end}}
+	</ol>
+</main>
+{{end}}

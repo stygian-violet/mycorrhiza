@@ -47,6 +47,7 @@ func initReaders(r *mux.Router) {
 	// Backlinks
 	r.PathPrefix("/backlinks/").HandlerFunc(handlerBacklinks).Methods("GET")
 	r.PathPrefix("/orphans").HandlerFunc(handlerOrphans).Methods("GET")
+	r.PathPrefix("/subhyphae/").HandlerFunc(handlerSubhyphae).Methods("GET")
 }
 
 func handlerEditToday(w http.ResponseWriter, rq *http.Request) {
@@ -379,6 +380,18 @@ func handlerBacklinks(w http.ResponseWriter, rq *http.Request) {
 			"Addr":      cfg.Root + "backlinks/" + hyphaName,
 			"HyphaName": hyphaName,
 			"Backlinks": hyphae.BacklinksFor(hyphaName),
+		})
+}
+
+func handlerSubhyphae(w http.ResponseWriter, rq *http.Request) {
+	hyphaName := util.HyphaNameFromRq(rq, "subhyphae")
+	h := hyphae.ByName(hyphaName)
+
+	_ = pageSubhyphae.RenderTo(viewutil.MetaFrom(w, rq),
+		map[string]any{
+			"Addr":      cfg.Root + "subhyphae/" + hyphaName,
+			"HyphaName": hyphaName,
+			"Subhyphae": hyphae.Subhyphae(h),
 		})
 }
 

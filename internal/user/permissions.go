@@ -32,6 +32,7 @@ var routePermission = map[string]int{
 	"rev":                    0,
 	"rev-text":               0,
 	"rev-binary":             0,
+	"subhyphae":              0,
 	"title-search":           0,
 	"text":                   0,
 	"text-search":            0,

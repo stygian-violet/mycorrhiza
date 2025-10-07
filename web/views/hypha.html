@@ -54,33 +54,40 @@
                         <a class="hypha-info__link" href="{{ .Meta.Root }}history/{{.HyphaName}}">
                             {{block "history" .}}View history{{end}}</a></li>
 
+					{{if .CanRename}}
                     <li class="hypha-info__entry hypha-info__entry_rename">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}rename/{{.HyphaName}}">
                             {{block "rename" .}}Rename{{end}}</a></li>
-
+					{{end}}
+					{{if .CanDelete}}
                     <li class="hypha-info__entry hypha-info__entry_delete">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}delete/{{.HyphaName}}">
                             {{block "delete" .}}Delete{{end}}</a></li>
-
+					{{end}}
+					{{if .HasText}}
                     <li class="hypha-info__entry hypha-info__entry_text">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}text/{{.HyphaName}}">
                             {{block "view markup" .}}View markup{{end}}</a></li>
-
+					{{end}}
+					{{if .CanManageMedia}}
                     <li class="hypha-info__entry hypha-info__entry_media">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}media/{{.HyphaName}}">
                             {{- if .IsMediaHypha -}}
-                                {{block "manage media" .}}Manage media{{end}}
+                            {{block "manage media" .}}Manage media{{end}}
                             {{- else -}}
-                                {{block "turn to media" .}}Turn to media{{end}}
+                            {{block "turn to media" .}}Turn to media{{end}}
                             {{- end}}</a></li>
-
+					{{end}}
+					{{if gt .BacklinkCount 0}}
                     <li class="hypha-info__entry hypha-info__entry_backlinks">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}backlinks/{{.HyphaName}}">
                             {{block "backlinks" .}}backlink{{if gt .BacklinkCount 1}}s{{end}}{{end}}</a></li>
-
+					{{end}}
+					{{if .HasSubhyphae}}
 					<li class="hypha-info__entry hypha-info__entry_subhyphae">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}subhyphae/{{.HyphaName}}">
                             {{block "subhyphae link" .}}subhyphae{{end}}</a></li>
+					{{end}}
                 </ul>
             </nav>
         </section>

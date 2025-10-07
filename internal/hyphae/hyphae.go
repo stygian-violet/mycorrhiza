@@ -140,8 +140,9 @@ func HasSubhyphae(h Hypha) bool {
 	return false
 }
 
-func Siblings(h Hypha) (prev string, next string) {
+func Siblings(h Hypha) (prev string, next string, hasSubhyphae bool) {
 	for _ = range YieldSubhyphaeWithSiblings(h, &prev, &next) {
+		hasSubhyphae = true
 		break
 	}
 	return

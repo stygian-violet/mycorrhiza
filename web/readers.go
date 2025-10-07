@@ -309,12 +309,14 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		subhyphae     template.HTML
 		prevHyphaName string
 		nextHyphaName string
+		hasSubhyphae  bool
 	)
 
 	if cfg.ShowTree {
 		subhyphae, prevHyphaName, nextHyphaName = tree.Tree(h)
+		hasSubhyphae = len(subhyphae) > 0
 	} else {
-		prevHyphaName, nextHyphaName = hyphae.Siblings(h)
+		prevHyphaName, nextHyphaName, hasSubhyphae = hyphae.Siblings(h)
 	}
 
 	data := map[string]any{
@@ -327,9 +329,14 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
 		"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
 		"GivenPermissionToModify": meta.U.CanProceed(path.Join("edit", h.CanonicalName())),
+		"CanDelete":               meta.U.CanProceed(path.Join("delete", h.CanonicalName())),
+		"CanRename":               meta.U.CanProceed(path.Join("rename", h.CanonicalName())),
+		"CanManageMedia":          meta.U.CanProceed(path.Join("media", h.CanonicalName())),
 		"Categories":              cats,
 		"CategoryNameOptions":     categories.ListOfCategories(),
 		"IsMediaHypha":            false,
+		"HasText":                 h.HasTextFile(),
+		"HasSubhyphae":            hasSubhyphae,
 	}
 	slog.Info("reading hypha", "name", h.CanonicalName(), "can edit", data["GivenPermissionToModify"])
 	meta.BodyAttributes = map[string]string{

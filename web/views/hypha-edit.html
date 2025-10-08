@@ -55,7 +55,7 @@
 {{end}}
 {{define "body"}}
 <main class="main-width edit {{if .Preview}}edit_with-preview{{else}}edit_no-preview{{end}}">
-    <form method="post" class="edit-form" action="{{ .Meta.Root }}upload-text/{{.HyphaName}}">
+    <form method="post" class="edit-form" action="{{.Meta.Root}}edit/{{.HyphaName}}">
         <h1 class="edit__title">
             {{if .IsNew}}
                 {{block "creating [[hypha]]" .}}

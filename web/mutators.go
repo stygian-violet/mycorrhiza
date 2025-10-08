@@ -22,13 +22,12 @@ import (
 )
 
 func initMutators(r *mux.Router) {
-	r.PathPrefix("/edit/").HandlerFunc(handlerEdit).Methods("GET")
+	r.PathPrefix("/edit/").HandlerFunc(handlerEdit).Methods("GET", "POST")
 	r.PathPrefix("/rename/").HandlerFunc(handlerRename).Methods("GET", "POST")
 	r.PathPrefix("/delete/").HandlerFunc(handlerDelete).Methods("GET", "POST")
 	r.PathPrefix("/revert/").HandlerFunc(handlerRevert).Methods("GET", "POST")
 	r.PathPrefix("/remove-media/").HandlerFunc(handlerRemoveMedia).Methods("POST")
 	r.PathPrefix("/upload-binary/").HandlerFunc(handlerUploadBinary).Methods("POST")
-	r.PathPrefix("/upload-text/").HandlerFunc(handlerUploadText).Methods("POST")
 }
 
 /// TODO: this is no longer ridiculous, but is now ugly. Gotta make it at least bearable to look at :-/
@@ -165,67 +164,54 @@ func handlerEdit(w http.ResponseWriter, rq *http.Request) {
 		hyphaName = util.HyphaNameFromRq(rq, "edit")
 		h         = hyphae.ByName(hyphaName)
 
-		isNew   bool
+		_, isNew  = h.(*hyphae.EmptyHypha)
+
 		content string
+		message string
+		preview template.HTML
 		err     error
 	)
 
-	switch h.(type) {
-	case *hyphae.EmptyHypha:
-		isNew = true
-	default:
+	if rq.Method == "GET" {
 		content, err = h.Text(history.FileReader())
 		if err != nil {
 			slog.Error("Failed to fetch Mycomarkup file", "err", err)
-			viewutil.HttpErr(meta, http.StatusInternalServerError, hyphaName, lc.Get("ui.error_text_fetch"))
+			viewutil.HttpErr(
+				meta, http.StatusInternalServerError,
+				hyphaName, lc.Get("ui.error_text_fetch"),
+			)
+			return
+		}
+	} else {
+		message = rq.PostFormValue("message")
+		content = rq.PostFormValue("text")
+		action := rq.PostFormValue("action")
+		if action == "preview" {
+			ctx, _ := mycocontext.ContextFromStringInput(
+				content,
+				mycoopts.MarkupOptions(hyphaName),
+			)
+			preview = template.HTML(
+				mycomarkup.BlocksToHTML(ctx, mycomarkup.BlockTree(ctx)),
+			)
+		} else {
+			err = shroom.UploadText(h, content, message, meta.U)
+			if err != nil {
+				viewutil.HttpErr(meta, http.StatusBadRequest, hyphaName, err.Error())
+			} else {
+				http.Redirect(w, rq, cfg.Root+"hypha/"+hyphaName, http.StatusSeeOther)
+			}
 			return
 		}
 	}
-	_ = pageHyphaEdit.RenderTo(
-		viewutil.MetaFrom(w, rq),
-		map[string]any{
-			"HyphaName": hyphaName,
-			"Content":   content,
-			"IsNew":     isNew,
-			"Message":   "",
-			"Preview":   "",
-		})
-}
 
-// handlerUploadText uploads a new text part for the hypha.
-func handlerUploadText(w http.ResponseWriter, rq *http.Request) {
-	var (
-		meta      = viewutil.MetaFrom(w, rq)
-		hyphaName = util.HyphaNameFromRq(rq, "upload-text")
-		h         = hyphae.ByName(hyphaName)
-		_, isNew  = h.(*hyphae.EmptyHypha)
-
-		textData = rq.PostFormValue("text")
-		action   = rq.PostFormValue("action")
-		message  = rq.PostFormValue("message")
-	)
-
-	if action == "preview" {
-		ctx, _ := mycocontext.ContextFromStringInput(textData, mycoopts.MarkupOptions(hyphaName))
-		preview := template.HTML(mycomarkup.BlocksToHTML(ctx, mycomarkup.BlockTree(ctx)))
-
-		_ = pageHyphaEdit.RenderTo(
-			viewutil.MetaFrom(w, rq),
-			map[string]any{
-				"HyphaName": hyphaName,
-				"Content":   textData,
-				"IsNew":     isNew,
-				"Message":   message,
-				"Preview":   preview,
-			})
-		return
-	}
-
-	if err := shroom.UploadText(h, textData, message, meta.U); err != nil {
-		viewutil.HttpErr(meta, http.StatusBadRequest, hyphaName, err.Error())
-		return
-	}
-	http.Redirect(w, rq, cfg.Root+"hypha/"+hyphaName, http.StatusSeeOther)
+	_ = pageHyphaEdit.RenderTo(meta, map[string]any{
+		"HyphaName": hyphaName,
+		"Content":   content,
+		"IsNew":     isNew,
+		"Message":   message,
+		"Preview":   preview,
+	})
 }
 
 // handlerUploadBinary uploads a new media for the hypha.

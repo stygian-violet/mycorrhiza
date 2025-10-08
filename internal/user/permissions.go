@@ -47,7 +47,6 @@ var routePermission = map[string]int{
 	"remove-from-category":   1,
 	"rename":                 1,
 	"upload-binary":          1,
-	"upload-text":            1,
 
 	"remove-media":           2,
 

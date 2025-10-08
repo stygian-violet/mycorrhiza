@@ -166,6 +166,5 @@ table {
 | `today`                  | `0`
 | `update-header-links`    | `3`
 | `upload-binary`          | `1`
-| `upload-text`            | `1`
 | `user-list`              | `0`
 }

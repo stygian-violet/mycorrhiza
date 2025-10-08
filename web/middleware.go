@@ -14,7 +14,7 @@ func maxBodySize(rq *http.Request) int64 {
 	path := rq.URL.Path
 	var fileSize int64
 	switch {
-	case strings.HasPrefix(path, cfg.Root + "upload-text/"):
+	case strings.HasPrefix(path, cfg.Root + "edit/"):
 		fileSize = cfg.MaxTextSize
 	case strings.HasPrefix(path, cfg.Root + "upload-binary/"):
 		fileSize = cfg.MaxMediaSize

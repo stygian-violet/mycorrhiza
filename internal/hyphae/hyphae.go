@@ -2,7 +2,6 @@ package hyphae
 
 import (
 	"math/rand"
-	"slices"
 	"strings"
 	"sync"
 
@@ -15,7 +14,7 @@ var (
 	// TODO: use a different data structure?
 	hyphae = []ExistingHypha(nil)
 	byNames = make(map[string]ExistingHypha)
-	backlinksByName = make(map[string]linkSet)
+	backlinksByName = make(map[string][]string)
 )
 
 func modifyHyphae(remove []ExistingHypha, insert []ExistingHypha) {
@@ -90,28 +89,21 @@ func AreFreeNames(hyphaNames ...string) (firstFailure string, ok bool) {
 // BacklinksCount returns the amount of backlinks to the hypha. Pass canonical names.
 func BacklinksCount(hyphaName string) int {
 	indexMutex.RLock()
-	defer indexMutex.RUnlock()
-	if links, exists := backlinksByName[hyphaName]; exists {
-		return len(links)
-	}
-	return 0
+	res := len(backlinksByName[hyphaName])
+	indexMutex.RUnlock()
+	return res
 }
 
 func BacklinksFor(hyphaName string) []string {
 	res := []string(nil)
 	hyphaName = util.CanonicalName(hyphaName)
 	indexMutex.RLock()
-	backlinks, exists := backlinksByName[hyphaName]
-	if exists {
+	backlinks := backlinksByName[hyphaName]
+	if len(backlinks) > 0 {
 		res = make([]string, len(backlinks))
-		i := 0
-		for link := range backlinks {
-			res[i] = link
-			i++
-		}
+		copy(res, backlinks)
 	}
 	indexMutex.RUnlock()
-	slices.SortFunc(res, util.PathographicCompare)
 	return res
 }
 
@@ -120,8 +112,7 @@ func Orphans() []string {
 	indexMutex.RLock()
 	for _, h := range hyphae {
 		name := h.CanonicalName()
-		links, exists := backlinksByName[name]
-		if !exists || len(links) == 0 {
+		if len(backlinksByName[name]) == 0 {
 			res = append(res, name)
 		}
 	}

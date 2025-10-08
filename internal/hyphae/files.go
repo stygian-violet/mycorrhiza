@@ -11,6 +11,7 @@ import (
 	"github.com/bouncepaw/mycorrhiza/history"
 	"github.com/bouncepaw/mycorrhiza/internal/mimetype"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
+	"github.com/bouncepaw/mycorrhiza/util"
 )
 
 type foundFile struct {
@@ -23,7 +24,7 @@ type foundFile struct {
 // Index finds all hypha files in the full `path` and saves them to the hypha storage.
 func Index(path string) error {
 	newByNames := make(map[string]ExistingHypha)
-	newBacklinks := make(map[string]linkSet)
+	newBacklinks := make(map[string][]string)
 	newCount := 0
 	ch := make(chan foundFile, 8)
 	err := error(nil)
@@ -93,14 +94,16 @@ func Index(path string) error {
 func indexBacklinks(
 	h ExistingHypha,
 	text []byte,
-	backlinks map[string]linkSet,
+	backlinks map[string][]string,
 ) {
+	name := h.CanonicalName()
 	foundLinks := ExtractHyphaLinksFromBytes(h.CanonicalName(), text)
 	for _, link := range foundLinks {
-		if _, exists := backlinks[link]; !exists {
-			backlinks[link] = make(linkSet)
-		}
-		backlinks[link][h.CanonicalName()] = struct{}{}
+		backlinks[link] = util.InsertSorted(
+			backlinks[link],
+			util.PathographicCompare,
+			name,
+		)
 	}
 }
 

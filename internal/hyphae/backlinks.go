@@ -1,5 +1,9 @@
 package hyphae
 
+import (
+	"github.com/bouncepaw/mycorrhiza/util"
+)
+
 // Using set here seems like the most appropriate solution
 type linkSet map[string]struct{}
 
@@ -29,17 +33,20 @@ func (op backlinkIndexEdit) apply() {
 	newLinks := toLinkSet(op.newLinks)
 	for link := range oldLinks {
 		if _, exists := newLinks[link]; !exists {
-			delete(backlinksByName[link], op.name)
+			backlinksByName[link] = util.DeleteSorted(
+				backlinksByName[link],
+				util.PathographicCompare,
+				op.name,
+			)
 		}
 	}
 	for link := range newLinks {
 		if _, exists := oldLinks[link]; !exists {
-			lSet, exists := backlinksByName[link]
-			if !exists {
-				lSet = make(linkSet)
-				backlinksByName[link] = lSet
-			}
-			lSet[op.name] = struct{}{}
+			backlinksByName[link] = util.InsertSorted(
+				backlinksByName[link],
+				util.PathographicCompare,
+				op.name,
+			)
 		}
 	}
 }
@@ -53,9 +60,11 @@ type backlinkIndexDeletion struct {
 // apply changes backlink index respective to the operation data
 func (op backlinkIndexDeletion) apply() {
 	for _, link := range op.links {
-		if lSet, exists := backlinksByName[link]; exists {
-			delete(lSet, op.name)
-		}
+		backlinksByName[link] = util.DeleteSorted(
+			backlinksByName[link],
+			util.PathographicCompare,
+			op.name,
+		)
 	}
 }
 
@@ -69,10 +78,12 @@ type backlinkIndexRenaming struct {
 // apply changes backlink index respective to the operation data
 func (op backlinkIndexRenaming) apply() {
 	for _, link := range op.links {
-		if lSet, exists := backlinksByName[link]; exists {
-			delete(lSet, op.oldName)
-			lSet[op.newName] = struct{}{}
-		}
+		backlinksByName[link] = util.ReplaceSorted(
+			backlinksByName[link],
+			util.PathographicCompare,
+			op.oldName,
+			op.newName,
+		)
 	}
 }
 

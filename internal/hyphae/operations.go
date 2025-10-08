@@ -137,7 +137,7 @@ func (op *Op) Apply() *Op {
 	if op.done {
 		return op
 	}
-	count := modifyHyphae(op.remove.hyphae, op.insert.hyphae)
+	modifyHyphae(op.remove.hyphae, op.insert.hyphae)
 	for _, b := range op.remove.backlinks {
 		b.apply()
 	}
@@ -147,7 +147,6 @@ func (op *Op) Apply() *Op {
 	if op.headerLinks != nil {
 		viewutil.SetHeaderLinks(op.headerLinks)
 	}
-	addCount(count)
 	indexMutex.Unlock()
 	return op
 }

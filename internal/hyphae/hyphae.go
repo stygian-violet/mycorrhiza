@@ -18,17 +18,14 @@ var (
 	backlinksByName = make(map[string]linkSet)
 )
 
-func modifyHyphae(remove []ExistingHypha, insert []ExistingHypha) int {
+func modifyHyphae(remove []ExistingHypha, insert []ExistingHypha) {
 	for _, h := range remove {
 		delete(byNames, h.CanonicalName())
 	}
 	for _, h := range insert {
 		byNames[h.CanonicalName()] = h
 	}
-	count := len(hyphae)
 	hyphae = util.ModifySorted(hyphae, Compare, remove, insert)
-	count = len(hyphae) - count
-	return count
 }
 
 func childAtIndex(parent string, i int) string {
@@ -45,6 +42,14 @@ func childAtIndex(parent string, i int) string {
 		return name
 	}
 	return parent + child[:j]
+}
+
+// Count how many hyphae there are. This is a O(1), the number of hyphae is stored in memory.
+func Count() (i int) {
+	indexMutex.RLock()
+	i = len(hyphae)
+	indexMutex.RUnlock()
+	return
 }
 
 // ByName returns a hypha by name. It returns an *EmptyHypha if there is no such hypha. This function is the only source of empty hyphae.

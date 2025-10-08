@@ -84,7 +84,6 @@ func Index(path string) error {
 	hyphae = newHyphae
 	byNames = newByNames
 	backlinksByName = newBacklinks
-	setCount(newCount)
 	indexMutex.Unlock()
 
 	slog.Info("Indexed hyphae", "n", newCount)

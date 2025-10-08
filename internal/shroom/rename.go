@@ -43,7 +43,7 @@ func Rename(
 
 	hyphaeToRename := yieldHyphaeToRename(oldHypha, newName, recursive, iop)
 	names, files, err := renamingPairs(hyphaeToRename, hop, iop)
-	if len(names) == 0 {
+	if len(names) == 0 && err == nil {
 		err = ErrRenameEmpty
 	}
 	if err != nil {

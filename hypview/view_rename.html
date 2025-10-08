@@ -10,7 +10,8 @@
 			<label for="new-name">{{block "new name" .}}New name:{{end}}</label>
 			<input type="text" value="{{.HyphaName}}" required autofocus id="new-name" name="new-name"/>
 
-			<input type="checkbox" id="recursive" name="recursive" value="true" checked/>
+			{{if .IsEmpty}}<input type="hidden" name="recursive" value="true"/>{{end}}
+			<input type="checkbox" id="recursive" {{if .IsEmpty}} disabled {{else}} name="recursive" {{end}} value="true" checked/>
 			<label for="recursive">{{block "rename recursively" .}}Rename subhyphae too{{end}}</label>
 			<br>
 			<input type="checkbox" id="redirection" name="redirection" value="true" {{if .LeaveRedirectionDefault}}checked{{end}}/>

@@ -58,26 +58,29 @@ func handlerDelete(w http.ResponseWriter, rq *http.Request) {
 		meta = viewutil.MetaFrom(w, rq)
 	)
 
-	switch h.(type) {
-	case *hyphae.EmptyHypha:
-		slog.Info("Trying to delete empty hyphae",
-			"user", meta.U, "hypha", h.CanonicalName())
-		// TODO: localize
-		viewutil.HttpErr(meta, http.StatusBadRequest, h.CanonicalName(), "Cannot delete an empty hypha")
-		return
-	}
-
 	if rq.Method == "GET" {
+		_, isEmpty := h.(*hyphae.EmptyHypha)
+		if isEmpty && !hyphae.HasSubhyphae(h) {
+			slog.Info("Trying to delete empty hyphae",
+				"user", meta.U, "hypha", h.CanonicalName())
+			// TODO: localize
+			viewutil.HttpErr(
+				meta, http.StatusBadRequest, h.CanonicalName(),
+				"Cannot delete an empty hypha with no subhyphae",
+			)
+			return
+		}
 		_ = pageHyphaDelete.RenderTo(
 			viewutil.MetaFrom(w, rq),
 			map[string]any{
 				"HyphaName": h.CanonicalName(),
+				"IsEmpty":   isEmpty,
 			})
 		return
 	}
 
 	recursive := rq.PostFormValue("recursive") == "true"
-	if err := shroom.Delete(meta.U, h.(hyphae.ExistingHypha), recursive); err != nil {
+	if err := shroom.Delete(meta.U, h, recursive); err != nil {
 		slog.Error("Failed to delete hypha", "hypha", h, "err", err)
 		viewutil.HttpErr(meta, http.StatusInternalServerError, h.CanonicalName(), err.Error())
 		return
@@ -125,30 +128,29 @@ func handlerRename(w http.ResponseWriter, rq *http.Request) {
 		meta = viewutil.MetaFrom(w, rq)
 	)
 
-	switch h.(type) {
-	case *hyphae.EmptyHypha:
-		slog.Info("Trying to rename empty hypha",
-			"user", meta.U, "hypha", h.CanonicalName())
-		viewutil.HttpErr(meta, http.StatusBadRequest, h.CanonicalName(), "Cannot rename an empty hypha") // TODO: localize
+	if rq.Method == "GET" {
+		_, isEmpty := h.(*hyphae.EmptyHypha)
+		if isEmpty && !hyphae.HasSubhyphae(h) {
+			slog.Info("Trying to rename empty hypha", "user", meta.U, "hypha", h)
+			viewutil.HttpErr(
+				meta, http.StatusBadRequest, h.CanonicalName(),
+				"Cannot rename an empty hypha with no subhyphae",
+			) // TODO: localize
+			return
+		}
+		hypview.RenameHypha(meta, h.CanonicalName(), isEmpty)
 		return
 	}
 
 	var (
-		oldHypha          = h.(hyphae.ExistingHypha)
 		newName           = util.CanonicalName(rq.PostFormValue("new-name"))
 		recursive         = rq.PostFormValue("recursive") == "true"
 		leaveRedirections = rq.PostFormValue("redirection") == "true"
 	)
-
-	if rq.Method == "GET" {
-		hypview.RenameHypha(meta, h.CanonicalName())
-		return
-	}
-
-	if err := shroom.Rename(oldHypha, newName, recursive, leaveRedirections, meta.U); err != nil {
+	if err := shroom.Rename(h, newName, recursive, leaveRedirections, meta.U); err != nil {
 		slog.Error("Failed to rename hypha",
-			"err", err, "user", meta.U, "hypha", oldHypha.CanonicalName())
-		viewutil.HttpErr(meta, http.StatusForbidden, oldHypha.CanonicalName(), lc.Get(err.Error())) // TODO: localize
+			"err", err, "user", meta.U, "hypha", h.CanonicalName())
+		viewutil.HttpErr(meta, http.StatusForbidden, h.CanonicalName(), lc.Get(err.Error())) // TODO: localize
 		return
 	}
 	http.Redirect(w, rq, cfg.Root+"hypha/"+newName, http.StatusSeeOther)

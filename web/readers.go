@@ -310,6 +310,8 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		prevHyphaName string
 		nextHyphaName string
 		hasSubhyphae  bool
+		canDelete     = meta.U.CanProceed(path.Join("delete", h.CanonicalName()))
+		canRename     = meta.U.CanProceed(path.Join("rename", h.CanonicalName()))
 	)
 
 	if cfg.ShowTree {
@@ -329,8 +331,8 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		"NaviTitle":               hypview.NaviTitle(meta, h.CanonicalName()),
 		"BacklinkCount":           hyphae.BacklinksCount(h.CanonicalName()),
 		"GivenPermissionToModify": meta.U.CanProceed(path.Join("edit", h.CanonicalName())),
-		"CanDelete":               meta.U.CanProceed(path.Join("delete", h.CanonicalName())),
-		"CanRename":               meta.U.CanProceed(path.Join("rename", h.CanonicalName())),
+		"CanDelete":               canDelete,
+		"CanRename":               canRename,
 		"CanManageMedia":          meta.U.CanProceed(path.Join("media", h.CanonicalName())),
 		"Categories":              cats,
 		"CategoryNameOptions":     categories.ListOfCategories(),
@@ -347,7 +349,8 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 	case *hyphae.EmptyHypha:
 		w.WriteHeader(http.StatusNotFound)
 		data["Contents"] = ""
-		_ = pageHypha.RenderTo(meta, data)
+		data["CanDelete"] = canDelete && hasSubhyphae
+		data["CanRename"] = canRename && hasSubhyphae
 	case hyphae.ExistingHypha:
 		fileContentsT, err := h.Text(history.FileReader())
 		if err != nil {
@@ -371,11 +374,11 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 
 		data["Contents"] = contents
 		meta.HeadElements = append(meta.HeadElements, openGraph)
-		_ = pageHypha.RenderTo(meta, data)
 
 		// TODO: check head cats
 		// TODO: check opengraph
 	}
+	_ = pageHypha.RenderTo(meta, data)
 }
 
 // handlerBacklinks lists all backlinks to a hypha.

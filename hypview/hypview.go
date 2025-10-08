@@ -36,15 +36,17 @@ func Init() {
 type renameData struct {
 	*viewutil.BaseData
 	HyphaName               string
+	IsEmpty                 bool
 	LeaveRedirectionDefault bool
 }
 
-func RenameHypha(meta viewutil.Meta, hyphaName string) {
+func RenameHypha(meta viewutil.Meta, hyphaName string, isEmpty bool) {
 	viewutil.ExecutePage(meta, chainRenameHypha, renameData{
 		BaseData: &viewutil.BaseData{
 			Addr: cfg.Root + "rename/" + hyphaName,
 		},
 		HyphaName:               hyphaName,
+		IsEmpty:                 isEmpty,
 		LeaveRedirectionDefault: hyphae.BacklinksCount(hyphaName) != 0,
 	})
 }

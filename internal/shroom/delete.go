@@ -1,6 +1,7 @@
 package shroom
 
 import (
+	"errors"
 	"fmt"
 	"iter"
 	"log/slog"
@@ -11,8 +12,10 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 )
 
+var ErrDeleteEmpty = errors.New("nothing to delete")
+
 // Delete deletes the hypha and makes a history record about that.
-func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
+func Delete(u *user.User, h hyphae.Hypha, recursive bool) error {
 	hop := history.
 		Operation().
 		WithUser(u)
@@ -32,9 +35,14 @@ func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
 		files = append(files, hypha.FilePaths()...)
 		iop.WithHyphaDeleted(hypha, text)
 	}
+	if names == nil {
+		iop.Abort()
+		hop.Abort()
+		return ErrDeleteEmpty
+	}
 
 	var msg string
-	if len(names) > 1 {
+	if len(names) > 1 || names[0] != h.CanonicalName() {
 		msg = "Delete ‘%s’ recursively"
 	} else {
 		msg = "Delete ‘%s’"
@@ -55,12 +63,12 @@ func Delete(u *user.User, h hyphae.ExistingHypha, recursive bool) error {
 }
 
 func yieldHyphaeToDelete(
-	h hyphae.ExistingHypha,
+	h hyphae.Hypha,
 	recursive bool,
 	iop *hyphae.Op,
 ) iter.Seq[hyphae.ExistingHypha] {
 	return func(yield func(hyphae.ExistingHypha) bool) {
-		if !yield(h) || !recursive {
+		if he, ok := h.(hyphae.ExistingHypha); ok && !yield(he) || !recursive {
 			return
 		}
 		for subh := range iop.YieldSubhyphae(h) {

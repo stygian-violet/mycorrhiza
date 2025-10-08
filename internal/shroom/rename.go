@@ -17,9 +17,11 @@ const redirectionTemplate = `=> %[1]s | 👁️➡️ %[2]s
 <= %[1]s | full
 `
 
+var ErrRenameEmpty = errors.New("nothing to rename")
+
 // Rename renames the old hypha to the new name and makes a history record about that. Call if and only if the user has the permission to rename.
 func Rename(
-	oldHypha hyphae.ExistingHypha,
+	oldHypha hyphae.Hypha,
 	newName string,
 	recursive bool,
 	leaveRedirections bool,
@@ -41,6 +43,9 @@ func Rename(
 
 	hyphaeToRename := yieldHyphaeToRename(oldHypha, newName, recursive, iop)
 	names, files, err := renamingPairs(hyphaeToRename, hop, iop)
+	if len(names) == 0 {
+		err = ErrRenameEmpty
+	}
 	if err != nil {
 		hop.Abort()
 		iop.Abort()
@@ -48,7 +53,7 @@ func Rename(
 	}
 
 	var msg string
-	if len(names) > 1 {
+	if len(names) > 1 || names[0].From() != oldName {
 		msg = "Rename ‘%s’ to ‘%s’ recursively"
 	} else {
 		msg = "Rename ‘%s’ to ‘%s’"
@@ -106,21 +111,26 @@ func leaveRedirection(
 }
 
 func yieldHyphaeToRename(
-	superhypha hyphae.ExistingHypha,
+	superhypha hyphae.Hypha,
 	newName string,
 	recursive bool,
 	iop *hyphae.Op,
 ) iter.Seq[hyphae.RenamingPair] {
 	return func(yield func(hyphae.RenamingPair) bool) {
-		newSuperhypha := superhypha.WithName(newName)
-		rp := util.NewRenamingPair(superhypha, newSuperhypha)
-		if !yield(rp) || !recursive {
+		if sh, ok := superhypha.(hyphae.ExistingHypha); ok {
+			newSuperhypha := sh.WithName(newName)
+			rp := util.NewRenamingPair(sh, newSuperhypha)
+			if !yield(rp) {
+				return
+			}
+		}
+		if !recursive {
 			return
 		}
 		oldName := superhypha.CanonicalName()
 		for h := range iop.YieldSubhyphae(superhypha) {
 			name := strings.Replace(h.CanonicalName(), oldName, newName, 1)
-			rp = util.NewRenamingPair(h, h.WithName(name))
+			rp := util.NewRenamingPair(h, h.WithName(name))
 			if !yield(rp) {
 				return
 			}

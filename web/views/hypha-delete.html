@@ -11,7 +11,8 @@
 				{{block "want to delete?" .}}Do you really want to delete this hypha?{{end}}
 			</p>
 			<p>
-				<input type="checkbox" id="recursive" name="recursive" value="true" checked/>
+				{{if .IsEmpty}}<input type="hidden" name="recursive" value="true"/>{{end}}
+				<input type="checkbox" id="recursive" {{if .IsEmpty}} disabled {{else}} name="recursive" {{end}} value="true" checked />
 				<label for="recursive">{{block "delete recursively" .}}Delete subhyphae too{{end}}</label>
 			</p>
 			<button type="submit" value="Confirm" class="btn" autofocus>

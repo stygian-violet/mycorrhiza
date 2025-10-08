@@ -24,5 +24,6 @@ Disallow: /random
 Disallow: /title-search/
 Disallow: /text-search/
 Disallow: /backlinks/
+Disallow: /subhyphae/
 Disallow: /user-list
 Crawl-delay: 5

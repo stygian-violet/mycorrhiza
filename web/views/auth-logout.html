@@ -5,7 +5,7 @@
         {{if .CanLogout}}
             <h1>{{block "log out?" .}}Log out?{{end}}</h1>
             <form method="POST" action="{{ .Meta.Root }}logout">
-                <input class="btn btn_accent" type="submit" value='{{block "log out" .}}Log out{{end}}'/>
+                <p><input class="btn btn_accent" type="submit" value='{{block "log out" .}}Log out{{end}}'/></p>
                 <p><a class="btn btn_weak" href="{{ .Meta.Root }}">← {{block "go home" .}}Go home{{end}}</a></p>
             </form>
         {{else}}

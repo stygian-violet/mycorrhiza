@@ -1,6 +1,6 @@
 package viewutil
 
-import "text/template"
+import "html/template"
 
 // Chain represents a chain of different language versions of the same template.
 type Chain struct {

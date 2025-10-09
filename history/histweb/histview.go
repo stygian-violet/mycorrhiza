@@ -205,7 +205,7 @@ func primitiveDiff(meta viewutil.Meta, h hyphae.Hypha, hash, text string) {
 type historyData struct {
 	*viewutil.BaseData
 	HyphaName string
-	Contents  string
+	Contents  template.HTML
 }
 
 func historyView(meta viewutil.Meta, hyphaName, contents string) {
@@ -214,6 +214,6 @@ func historyView(meta viewutil.Meta, hyphaName, contents string) {
 			Addr: cfg.Root + "history/" + util.CanonicalName(hyphaName),
 		},
 		HyphaName: hyphaName,
-		Contents:  contents,
+		Contents:  template.HTML(contents),
 	})
 }

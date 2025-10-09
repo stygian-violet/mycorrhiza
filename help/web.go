@@ -3,6 +3,7 @@ package help
 // stuff.go is used for meta stuff about the wiki or all hyphae at once.
 import (
 	"io"
+	"html/template"
 	"net/http"
 	"strings"
 
@@ -93,7 +94,7 @@ func handlerHelp(w http.ResponseWriter, rq *http.Request) {
 
 type helpData struct {
 	*viewutil.BaseData
-	ContentsHTML string
+	ContentsHTML template.HTML
 	Lang         string
 }
 
@@ -102,7 +103,7 @@ func viewHelp(meta viewutil.Meta, lang, contentsHTML, articlePath string) {
 		BaseData: &viewutil.BaseData{
 			Addr: cfg.Root + "help/" + articlePath,
 		},
-		ContentsHTML: contentsHTML,
+		ContentsHTML: template.HTML(contentsHTML),
 		Lang:         lang,
 	})
 }

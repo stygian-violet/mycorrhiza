@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
-	"text/template" // TODO: save the world
+	"html/template" // TODO: save the world
 
 	"github.com/bouncepaw/mycorrhiza/util"
 )

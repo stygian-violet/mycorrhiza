@@ -1,9 +1,12 @@
 package interwiki
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"log/slog"
+	"iter"
+	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/bouncepaw/mycorrhiza/util"
 )
@@ -16,7 +19,7 @@ const (
 	Betula     WikiEngine = "betula"
 	Agora      WikiEngine = "agora"
 	// Generic is any website.
-	Generic WikiEngine = "generic"
+	Generic    WikiEngine = "generic"
 )
 
 func (we WikiEngine) Valid() bool {
@@ -27,69 +30,194 @@ func (we WikiEngine) Valid() bool {
 	return false
 }
 
+func (we WikiEngine) LinkHrefFormat() string {
+	switch we {
+	case Mycorrhiza:
+		return "%s/hypha/{NAME}"
+	case Betula:
+		return "%s/{BETULA-NAME}"
+	case Agora:
+		return "%s/node/{NAME}"
+	default:
+		return "%s/{NAME}"
+	}
+}
+
+func (we WikiEngine) ImgSrcFormat() string {
+	switch we {
+	case Mycorrhiza:
+		return "%s/binary/{NAME}"
+	default:
+		return "%s/{NAME}"
+	}
+}
+
 // Wiki is an entry in the interwiki map.
 type Wiki struct {
 	// Name is the name of the wiki, and is also one of the possible prefices.
-	Name string `json:"name"`
+	name string
 
 	// Aliases are alternative prefices you can use instead of Name. This slice can be empty.
-	Aliases []string `json:"aliases,omitempty"`
+	aliases []string
 
 	// URL is the address of the wiki.
-	URL string `json:"url"`
+	url string
 
 	// LinkHrefFormat is a format string for interwiki links. See Mycomarkup internal docs hidden deep inside for more information.
 	//
 	// This field is optional. If it is not set, it is derived from other data. See the code.
-	LinkHrefFormat string `json:"link_href_format"`
+	linkHrefFormat string
 
-	ImgSrcFormat string `json:"img_src_format"`
+	imgSrcFormat string
 
 	// Engine is the engine of the wiki. Invalid values will result in a start-up error.
-	Engine WikiEngine `json:"engine"`
+	engine WikiEngine
+}
+
+var emptyWiki = &Wiki{}
+
+// Wiki is an entry in the interwiki map.
+type wikiJson struct {
+	Name           string     `json:"name"`
+	Aliases        []string   `json:"aliases,omitempty"`
+	URL            string     `json:"url"`
+	LinkHrefFormat string     `json:"link_href_format"`
+	ImgSrcFormat   string     `json:"img_src_format"`
+	Engine         WikiEngine `json:"engine"`
+}
+
+func EmptyWiki() *Wiki {
+	return emptyWiki
+}
+
+func FromRequest(rq *http.Request) (*Wiki, error) {
+	wiki := &Wiki{
+		name:           rq.PostFormValue("name"),
+		aliases:        strings.Split(rq.PostFormValue("aliases"), ","),
+		url:            rq.PostFormValue("url"),
+		linkHrefFormat: rq.PostFormValue("link-href-format"),
+		imgSrcFormat:   rq.PostFormValue("img-src-format"),
+		engine:         WikiEngine(rq.PostFormValue("engine")),
+	}
+	if err := wiki.canonize(); err != nil {
+		return EmptyWiki(), err
+	}
+	return wiki, nil
+}
+
+func Compare(w *Wiki, x *Wiki) int {
+	return strings.Compare(w.name, x.name)
+}
+
+func (w *Wiki) IsEmpty() bool {
+	return w == nil || w == emptyWiki
+}
+
+func (w *Wiki) Name() string {
+	return w.name
+}
+
+func (w *Wiki) Names() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		if w.IsEmpty() || !yield(w.name) {
+			return
+		}
+		for _, name := range w.aliases {
+			if !yield(name) {
+				return
+			}
+		}
+	}
+}
+
+func (w *Wiki) URL() string {
+	return w.url
+}
+
+func (w *Wiki) Aliases() iter.Seq2[int, string] {
+	return slices.All(w.aliases)
+}
+
+func (w *Wiki) LinkHrefFormat() string {
+	return w.linkHrefFormat
+}
+
+func (w *Wiki) ImgSrcFormat() string {
+	return w.imgSrcFormat
+}
+
+func (w *Wiki) Engine() WikiEngine {
+	return w.engine
+}
+
+func (w *Wiki) String() string {
+	switch {
+	case w == nil:
+		return "<nil wiki>"
+	case w.IsEmpty():
+		return "<empty wiki>"
+	default:
+		return fmt.Sprintf("<%s wiki '%s' (url %s)>", w.engine, w.name, w.url)
+	}
+}
+
+func (w *Wiki) MarshalJSON() ([]byte, error) {
+	return json.Marshal(wikiJson{
+		Name:           w.name,
+		Aliases:        w.aliases,
+		URL:            w.url,
+		LinkHrefFormat: w.linkHrefFormat,
+		ImgSrcFormat:   w.imgSrcFormat,
+		Engine:         w.engine,
+	})
+}
+
+func (w *Wiki) UnmarshalJSON(b []byte) error {
+	var data wikiJson
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+	w.name = data.Name
+	w.aliases = data.Aliases
+	w.url = data.URL
+	w.linkHrefFormat = data.LinkHrefFormat
+	w.imgSrcFormat = data.ImgSrcFormat
+	w.engine = data.Engine
+	return w.canonize()
 }
 
 func (w *Wiki) canonize() error {
+	w.name = util.CanonicalName(w.name)
+	w.url = strings.TrimSpace(w.url)
+
 	switch {
-	case w.Name == "":
-		slog.Error("A site in the interwiki map has no name")
-		return errors.New("site with no name")
-	case w.URL == "":
-		slog.Error("Site in the interwiki map has no URL", "name", w.Name)
-		return errors.New("site with no URL")
-	case !w.Engine.Valid():
-		slog.Error("Site in the interwiki map has an unknown engine",
-			"siteName", w.Name,
-			"engine", w.Engine,
-		)
-		return errors.New("unknown engine")
+	case w.name == "":
+		return fmt.Errorf("missing wiki name: %s", w)
+	case w.url == "":
+		return fmt.Errorf("missing wiki url: %s", w)
+	case !w.engine.Valid():
+		return fmt.Errorf("invalid wiki engine: %s: %s", w.engine, w)
 	}
 
-	w.Name = util.CanonicalName(w.Name)
-	for i, alias := range w.Aliases {
-		w.Aliases[i] = util.CanonicalName(alias)
+	for i, alias := range w.aliases {
+		w.aliases[i] = util.CanonicalName(alias)
 	}
-
-	if w.LinkHrefFormat == "" {
-		switch w.Engine {
-		case Mycorrhiza:
-			w.LinkHrefFormat = fmt.Sprintf("%s/hypha/{NAME}", w.URL)
-		case Betula:
-			w.LinkHrefFormat = fmt.Sprintf("%s/{BETULA-NAME}", w.URL)
-		case Agora:
-			w.LinkHrefFormat = fmt.Sprintf("%s/node/{NAME}", w.URL)
-		default:
-			w.LinkHrefFormat = fmt.Sprintf("%s/{NAME}", w.URL)
+	nameUsed := map[string]bool { w.name: true }
+	w.aliases = slices.DeleteFunc(w.aliases, func(name string) bool {
+		if name == "" || nameUsed[name] {
+			return true
 		}
+		nameUsed[name] = true
+		return false
+	})
+
+	if w.linkHrefFormat == "" {
+		w.linkHrefFormat = fmt.Sprintf(w.engine.LinkHrefFormat(), w.url)
 	}
 
-	if w.ImgSrcFormat == "" {
-		switch w.Engine {
-		case Mycorrhiza:
-			w.ImgSrcFormat = fmt.Sprintf("%s/binary/{NAME}", w.URL)
-		default:
-			w.ImgSrcFormat = fmt.Sprintf("%s/{NAME}", w.URL)
-		}
+	if w.imgSrcFormat == "" {
+		w.imgSrcFormat = fmt.Sprintf(w.engine.ImgSrcFormat(), w.url)
 	}
 
 	return nil

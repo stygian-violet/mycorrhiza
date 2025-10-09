@@ -3,9 +3,10 @@ package interwiki
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/bouncepaw/mycorrhiza/internal/files"
@@ -14,169 +15,167 @@ import (
 	"git.sr.ht/~bouncepaw/mycomarkup/v5/options"
 )
 
+var (
+	entries    []*Wiki
+	byName     map[string]*Wiki
+	indexMutex sync.RWMutex
+	fileMutex  sync.Mutex
+)
+
 func Init() error {
-	record, err := readInterwiki()
+	newEntries, err := readInterwiki()
 	if err != nil {
 		slog.Error("Failed to read interwiki", "err", err)
 		return err
 	}
 
-	for _, wiki := range record {
-		wiki := wiki // This line is required
-		if err := wiki.canonize(); err != nil {
+	newByName := make(map[string]*Wiki)
+	for _, wiki := range newEntries {
+		if err := canReplace(newByName, EmptyWiki(), wiki); err != nil {
+			slog.Error("Failed to add interwiki entry", "wiki", wiki, "err", err)
 			return err
 		}
-		if err := addEntry(&wiki); err != nil {
-			slog.Error("Failed to add interwiki entry", "err", err)
-			return err
+		for name := range wiki.Names() {
+			newByName[name] = wiki
 		}
 	}
 
-	slog.Info("Indexed interwiki map", "n", len(listOfEntries))
+	slices.SortFunc(newEntries, Compare)
+
+	indexMutex.Lock()
+	entries = newEntries
+	byName = newByName
+	count := len(newEntries)
+	indexMutex.Unlock()
+
+	slog.Info("Indexed interwiki map", "n", count)
 	return nil
 }
 
-func dropEmptyStrings(ss []string) (clean []string) {
-	for _, s := range ss {
-		if s != "" {
-			clean = append(clean, s)
-		}
+func ByName(name string) *Wiki {
+	name = util.CanonicalName(name)
+	indexMutex.RLock()
+	wiki := byName[name]
+	indexMutex.RUnlock()
+	if wiki == nil {
+		wiki = EmptyWiki()
 	}
-	return clean
+	return wiki
 }
 
-// difference returns the elements in `a` that aren't in `b`.
-// Taken from https://stackoverflow.com/a/45428032
-// CC BY-SA 4.0, no changes made
-func difference(a, b []string) []string {
-	mb := make(map[string]struct{}, len(b))
-	for _, x := range b {
-		mb[x] = struct{}{}
-	}
-	var diff []string
-	for _, x := range a {
-		if _, found := mb[x]; !found {
-			diff = append(diff, x)
-		}
-	}
-	return diff
-}
-
-func areNamesFree(names []string) (bool, string) {
-	for _, name := range names {
-		if _, found := entriesByName[name]; found {
-			return false, name
-		}
-	}
-	return true, ""
-}
-
-var mutex sync.Mutex
-
-func replaceEntry(oldWiki *Wiki, newWiki *Wiki) error {
-	diff := difference(
-		append(newWiki.Aliases, newWiki.Name),
-		append(oldWiki.Aliases, oldWiki.Name),
-	)
-	if ok, name := areNamesFree(diff); !ok {
-		return errors.New(name)
-	}
-	deleteEntry(oldWiki)
-	return addEntry(newWiki)
-}
-
-func deleteEntry(wiki *Wiki) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	names := append(wiki.Aliases, wiki.Name)
-	for _, name := range names {
-		name := name // I guess we need that
-		delete(entriesByName, name)
-	}
-
-	for i, w := range listOfEntries {
-		i, w := i, w
-		if w.Name == wiki.Name {
-			// Drop ith element.
-			listOfEntries[i] = listOfEntries[len(listOfEntries)-1]
-			listOfEntries = listOfEntries[:len(listOfEntries)-1]
-			break
-		}
-	}
-}
-
-// TODO: There is something clearly wrong with error-returning in this function.
-func addEntry(wiki *Wiki) error {
-	mutex.Lock()
-	defer mutex.Unlock()
-	wiki.Aliases = dropEmptyStrings(wiki.Aliases)
-
-	var (
-		names    = append(wiki.Aliases, wiki.Name)
-		ok, name = areNamesFree(names)
-	)
-	switch {
-	case !ok:
-		slog.Error("There are multiple uses of the same name", "name", name)
-		return errors.New(name)
-	case len(names) == 0:
-		slog.Error("No names passed for a new interwiki entry")
-		return errors.New("")
-	}
-
-	listOfEntries = append(listOfEntries, wiki)
-	for _, name := range names {
-		entriesByName[name] = wiki
-	}
-	return nil
+func Entries() []*Wiki {
+	indexMutex.RLock()
+	res := make([]*Wiki, len(entries))
+	copy(res, entries)
+	indexMutex.RUnlock()
+	return res
 }
 
 func HrefLinkFormatFor(prefix string) (string, options.InterwikiError) {
-	prefix = util.CanonicalName(prefix)
-	if wiki, ok := entriesByName[prefix]; ok {
-		return wiki.LinkHrefFormat, options.Ok
+	wiki := ByName(prefix)
+	if wiki.IsEmpty() {
+		return "", options.UnknownPrefix
 	}
-	return "", options.UnknownPrefix
+	return wiki.LinkHrefFormat(), options.Ok
 }
 
 func ImgSrcFormatFor(prefix string) (string, options.InterwikiError) {
-	prefix = util.CanonicalName(prefix)
-	if wiki, ok := entriesByName[prefix]; ok {
-		return wiki.ImgSrcFormat, options.Ok
+	wiki := ByName(prefix)
+	if wiki.IsEmpty() {
+		return "", options.UnknownPrefix
 	}
-	return "", options.UnknownPrefix
+	return wiki.ImgSrcFormat(), options.Ok
 }
 
-func readInterwiki() ([]Wiki, error) {
-	var (
-		record            []Wiki
-		fileContents, err = os.ReadFile(files.InterwikiJSON())
-	)
-	if os.IsNotExist(err) {
-		return record, nil
+func ReplaceEntry(oldWiki *Wiki, newWiki *Wiki) error {
+	if oldWiki.IsEmpty() && newWiki.IsEmpty() {
+		return nil
 	}
-	if err != nil {
+	indexMutex.Lock()
+	defer indexMutex.Unlock()
+	if err := canReplace(byName, oldWiki, newWiki); err != nil {
+		return err
+	}
+	newEntries := make([]*Wiki, len(entries))
+	copy(newEntries, entries)
+	switch {
+	case newWiki.IsEmpty():
+		newEntries = util.DeleteSorted(newEntries, Compare, oldWiki)
+	case oldWiki.IsEmpty():
+		newEntries = util.InsertSorted(newEntries, Compare, newWiki)
+	default:
+		newEntries = util.ReplaceSorted(newEntries, Compare, oldWiki, newWiki)
+	}
+	if err := saveInterwikiJson(newEntries); err != nil {
+		return err
+	}
+	entries = newEntries
+	for name := range oldWiki.Names() {
+		delete(byName, name)
+	}
+	for name := range newWiki.Names() {
+		byName[name] = newWiki
+	}
+	return nil
+}
+
+func AddEntry(newWiki *Wiki) error {
+	return ReplaceEntry(EmptyWiki(), newWiki)
+}
+
+func DeleteEntry(oldWiki *Wiki) error {
+	return ReplaceEntry(oldWiki, EmptyWiki())
+}
+
+func canReplace(
+	byname map[string]*Wiki,
+	oldWiki *Wiki,
+	newWiki *Wiki,
+) error {
+	for name := range newWiki.Names() {
+		existingWiki, exists := byname[name]
+		if exists && existingWiki != oldWiki {
+			return fmt.Errorf(
+				"wiki name '%s' of %s is already taken by %s",
+				name, newWiki, existingWiki,
+			)
+		}
+	}
+	return nil
+}
+
+func readInterwiki() ([]*Wiki, error) {
+	fileMutex.Lock()
+	fileContents, err := os.ReadFile(files.InterwikiJSON())
+	fileMutex.Unlock()
+	switch {
+	case os.IsNotExist(err):
+		return nil, nil
+	case err != nil:
 		return nil, err
 	}
-
-	err = json.Unmarshal(fileContents, &record)
-	if err != nil {
+	record := []*Wiki(nil)
+	if err = json.Unmarshal(fileContents, &record); err != nil {
 		return nil, err
 	}
 	return record, nil
 }
 
-func saveInterwikiJson() {
-	// Trust me, wiki crashing when an admin takes an administrative action totally makes sense.
-	data, err := json.MarshalIndent(listOfEntries, "", "\t")
+func saveInterwikiJson(wikis []*Wiki) error {
+	data, err := json.MarshalIndent(wikis, "", "\t")
 	if err != nil {
 		slog.Error("Failed to marshal interwiki entries", "err", err)
-		return
+		return err
 	}
-	if err = os.WriteFile(files.InterwikiJSON(), data, 0660); err != nil {
+
+	fileMutex.Lock()
+	err = os.WriteFile(files.InterwikiJSON(), data, 0660)
+	fileMutex.Unlock()
+	if err != nil {
 		slog.Error("Failed to write interwiki.json", "err", err)
-		return
+		return err
 	}
+
 	slog.Info("Saved interwiki.json")
+	return nil
 }

@@ -879,19 +879,19 @@ dd + dt {
  * Interwiki page
  * A possible improvement: show those two fields when Generic is selected, hide otherwise
  */
-body[data-rrh-addr$="/interwiki"] label,
-body[data-rrh-addr$="/interwiki"] input[type="text"],
-body[data-rrh-addr$="/interwiki"] input[type="url"] {
+.form--interwiki label,
+.form--interwiki input[type="text"],
+.form--interwiki input[type="url"] {
 	display: block;
 	width: 100%;
 	max-width: 35rem;
 }
-body[data-rrh-addr$="/interwiki"] main form {
+.form--interwiki {
 	padding: 0 16px 16px 16px;
-	margin: 0 -16px 16px -16px;
+	margin: 16px 0 16px 0;
 	border: 2px solid #999;
 }
-body[data-rrh-addr$="/interwiki"] main form + form {
+.form--interwiki + .form--interwiki {
 	margin-top: -18px;
 }
 .required-field::after {

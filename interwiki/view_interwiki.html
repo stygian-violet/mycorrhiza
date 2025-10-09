@@ -1,133 +1,142 @@
 {{define "interwiki map"}}Intermap{{end}}
 {{define "title"}}{{template "interwiki map"}}{{end}}
-{{define "name"}}Name:{{end}}
-{{define "aliases"}}Aliases:{{end}}
-{{define "aliases (,)"}}Aliases (separated by commas):{{end}}
-{{define "engine"}}Engine:{{end}}
-	{{define "engine/mycorrhiza"}}Mycorrhiza{{end}}
-	{{define "engine/betula"}}Betula{{end}}
-	{{define "engine/agora"}}Agora{{end}}
-	{{define "engine/generic"}}Generic (any website){{end}}
+{{define "name"}}Name{{end}}
+{{define "aliases"}}Aliases{{end}}
+{{define "aliases (,)"}}Aliases (separated by commas){{end}}
+{{define "engine"}}Engine{{end}}
+{{define "engine/mycorrhiza"}}Mycorrhiza 🍄{{end}}
+{{define "engine/betula"}}Betula 🌳{{end}}
+{{define "engine/agora"}}Agora ἀ{{end}}
+{{define "engine/generic"}}Generic (any website){{end}}
 {{define "url"}}URL{{end}}
-{{define "link href format"}}Link href attribute format string:{{end}}
-{{define "img src format"}}Image src attribute format string:{{end}}
+{{define "link href format"}}Link href attribute format string{{end}}
+{{define "img src format"}}Image src attribute format string{{end}}
 {{define "unset map"}}No interwiki map set.{{end}}
 {{define "add interwiki entry"}}Add interwiki entry{{end}}
+{{define "save"}}Save{{end}}
+{{define "delete"}}Delete{{end}}
 
 {{define "static map"}}
-    {{if len .Entries}}
-		<ul>
-            {{range $i, $wiki := .Entries}}
-				<li>
-					<dl>
-						<dt>{{template "name"}}</dt>
-						<dd>{{.Name}}</dd>
-
-						<dt>{{template "aliases"}}</dt>
-                        {{range .Aliases}}<dd>{{.}}</dd>{{end}}
-
-						<dt>{{template "engine"}}</dt>
-						<dd>{{.Engine}}</dd>
-
-						<dt>{{template "url"}}</dt>
-						<dd><a href="{{.URL}}">{{.URL}}</a></dd>
-
-						<dt>{{template "link href format"}}</dt>
-						<dd>{{.LinkHrefFormat}}</dd>
-
-						<dt>{{template "img src format"}}</dt>
-						<dd>{{.ImgSrcFormat}}</dd>
-					</dl>
-				</li>
-            {{end}}
-		</ul>
+	{{if len .Entries}}
+	<table>
+		<thead>
+			<tr>
+				<th>{{template "name"}}</th>
+				<th>{{template "aliases"}}</th>
+				<th>{{template "engine"}}</th>
+				<th>{{template "url"}}</th>
+				<th>{{template "link href format"}}</th>
+				<th>{{template "img src format"}}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range $i, $wiki := .Entries}}
+			<tr>
+				<td>{{.Name}}</td>
+				<td>{{range $j, $alias := .Aliases}}{{if gt $j 0}}, {{end}}{{.}}{{end}}</td>
+				<td>{{.Engine}}</td>
+				<td>{{.URL}}</td>
+				<td>{{.LinkHrefFormat}}</td>
+				<td>{{.ImgSrcFormat}}</td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
     {{else}}
-		<p>{{template "unset map"}}</p>
-    {{end}}
+	<p>{{template "unset map"}}</p>
+	{{end}}
 {{end}}
 
 {{define "authorized map"}}
 	{{if .Error}}
-		<p class="error">{{.Error}}</p>
+		<p class="notice notice--error">
+			<strong>{{template "error"}}:</strong>
+			{{.Error}}
+		</p>
 	{{end}}
-	{{if len .Entries}}
-		{{range $i, $wiki := .Entries}}
-			<form method="post" action="{{$.Meta.Root}}interwiki/modify-entry/{{.Name}}">
-				<p>
-					<label for="name{{$i}}" class="required-field">{{template "name"}}</label>
-					<input type="text" id="name{{$i}}" name="name" required
-					       value="{{.Name}}">
-				</p>
-				<p>
-					<label for="aliases{{$i}}">{{template "aliases (,)"}}</label>
-					<input type="text" id="aliases{{$i}}" name="aliases"
-					       value="{{range $j, $alias := .Aliases}}{{if gt $j 0}}, {{end}}{{.}}{{end}}">
-				</p>
-				<p>
-					<label for="url{{$i}}" class="required-field">{{template "url"}}</label>
-					<input type="url" id="url{{$i}}" name="url" required
-					       value="{{.URL}}">
-				</p>
-				<p>
-					<label for="engine{{$i}}" class="required-field">{{template "engine"}}</label>
-					<select name="engine" id="engine{{$i}}" required>
-						<option value="mycorrhiza" {{if eq .Engine "mycorrhiza"}}selected{{end}}>{{template "engine/mycorrhiza"}} 🍄</option>
-						<option value="betula" {{if eq .Engine "betula"}}selected{{end}}>{{template "engine/betula"}} 🌳</option>
-						<option value="agora" {{if eq .Engine "agora"}}selected{{end}}>{{template "engine/agora"}} ἀ</option>
-						<option value="generic" {{if eq .Engine "generic"}}selected{{end}}>{{template "engine/generic"}}</option>
-					</select>
-				</p>
-				<p>
-					<label for="link-href-format{{$i}}">{{template "link href format"}}</label>
-					<input type="url" id="link-href-format{{$i}}" name="link-href-format"
-					       value="{{.LinkHrefFormat}}">
-				</p>
-				<p>
-					<label for="img-src-format{{$i}}">{{template "img src format"}}</label>
-					<input type="url" id="img-src-format{{$i}}" name="img-src-format"
-					       value="{{.ImgSrcFormat}}">
-				</p>
-				<input type="submit" class="btn" value="{{template `save`}}">
-			</form>
-		{{end}}
+
+	{{range $i, $wiki := .Entries}}
+		<form method="post" action="{{$.Meta.Root}}interwiki/modify-entry/{{.Name}}" class="form--interwiki">
+			<p>
+				<label for="name{{$i}}" class="required-field">{{template "name"}}:</label>
+				<input type="text" id="name{{$i}}" name="name" required
+				       value="{{.Name}}">
+			</p>
+			<p>
+				<label for="aliases{{$i}}">{{template "aliases (,)"}}:</label>
+				<input type="text" id="aliases{{$i}}" name="aliases"
+				       value="{{range $j, $alias := .Aliases}}{{if gt $j 0}}, {{end}}{{.}}{{end}}">
+			</p>
+			<p>
+				<label for="url{{$i}}" class="required-field">{{template "url"}}:</label>
+				<input type="url" id="url{{$i}}" name="url" required
+				       value="{{.URL}}">
+			</p>
+			<p>
+				<label for="engine{{$i}}" class="required-field">{{template "engine"}}:</label>
+				<select name="engine" id="engine{{$i}}" required>
+					<option value="mycorrhiza" {{if eq .Engine "mycorrhiza"}}selected{{end}}>{{template "engine/mycorrhiza"}}</option>
+					<option value="betula" {{if eq .Engine "betula"}}selected{{end}}>{{template "engine/betula"}}</option>
+					<option value="agora" {{if eq .Engine "agora"}}selected{{end}}>{{template "engine/agora"}}</option>
+					<option value="generic" {{if eq .Engine "generic"}}selected{{end}}>{{template "engine/generic"}}</option>
+				</select>
+			</p>
+			<p>
+				<label for="link-href-format{{$i}}">{{template "link href format"}}:</label>
+				<input type="url" id="link-href-format{{$i}}" name="link-href-format"
+				       value="{{.LinkHrefFormat}}">
+			</p>
+			<p>
+				<label for="img-src-format{{$i}}">{{template "img src format"}}:</label>
+				<input type="url" id="img-src-format{{$i}}" name="img-src-format"
+				       value="{{.ImgSrcFormat}}">
+			</p>
+			<button type="submit" name="action" class="btn btn_accent" value="save">
+				{{template "save"}}
+			</button>
+			<button type="submit" name="action" class="btn btn_destructive" value="delete">
+				{{template "delete"}}
+			</button>
+		</form>
 	{{end}}
-	<form method="post" action="{{.Meta.Root}}interwiki/add-entry">
+
+	<form method="post" action="{{.Meta.Root}}interwiki/add-entry" class="form--interwiki">
 		<h2>{{template "add interwiki entry"}}</h2>
 		<p>
-			<label for="name" class="required-field">{{template "name"}}</label>
+			<label for="name" class="required-field">{{template "name"}}:</label>
 			<input type="text" id="name" name="name" required
 			       placeholder="home_wiki">
 		</p>
 		<p>
-			<label for="aliases">{{template "aliases (,)"}}</label>
+			<label for="aliases">{{template "aliases (,)"}}:</label>
 			<input type="text" id="aliases" name="aliases"
 			       placeholder="homewiki, hw">
 		</p>
 		<p>
-			<label for="url" class="required-field">{{template "url"}}</label>
+			<label for="url" class="required-field">{{template "url"}}:</label>
 			<input type="url" id="url" name="url" required
 			       placeholder="https://wiki.example.org">
 		</p>
 		<p>
-			<label for="engine" class="required-field">{{template "engine"}}</label>
+			<label for="engine" class="required-field">{{template "engine"}}:</label>
 			<select name="engine" id="engine" required>
-				<option value="mycorrhiza">{{template "engine/mycorrhiza"}} 🍄</option>
-				<option value="betula">{{template "engine/betula"}} 🌳</option>
-				<option value="agora">{{template "engine/agora"}} ἀ</option>
+				<option value="mycorrhiza">{{template "engine/mycorrhiza"}}</option>
+				<option value="betula">{{template "engine/betula"}}</option>
+				<option value="agora">{{template "engine/agora"}}</option>
 				<option value="generic">{{template "engine/generic"}}</option>
 			</select>
 		</p>
 		<p>
-			<label for="link-href-format">{{template "link href format"}}</label>
+			<label for="link-href-format">{{template "link href format"}}:</label>
 			<input type="url" id="link-href-format" name="link-href-format"
 			       placeholder="https://wiki.example.org/view/{NAME}">
 		</p>
 		<p>
-			<label for="img-src-format">{{template "img src format"}}</label>
+			<label for="img-src-format">{{template "img src format"}}:</label>
 			<input type="url" id="img-src-format" name="img-src-format"
 			       placeholder="https://wiki.example.org/media/{NAME}">
 		</p>
-		<input type="submit" class="btn" value="Add entry">
+		<input type="submit" class="btn btn_accent" value="Add entry">
 	</form>
 {{end}}
 
@@ -138,7 +147,7 @@
 		<h1>{{template "interwiki map"}}</h1>
 		{{if .CanEdit}}
 			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a> {{template "edit separately."}}</p>
-            {{template "authorized map" .}}
+			{{template "authorized map" .}}
 		{{else}}
 			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a></p>
 			{{template "static map" .}}

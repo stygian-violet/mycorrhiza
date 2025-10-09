@@ -47,6 +47,8 @@ func ReplaceSorted[S ~[]E, E any](
 		return slice
 	case !foundOld:
 		return slices.Insert(slice, j, new)
+	case i == j:
+		slice[j] = new
 	case foundNew:
 		return slices.Delete(slice, i, i + 1)
 	case i < j:
@@ -65,16 +67,6 @@ func ModifySorted[S ~[]E, E any](
 	remove S,
 	insert S,
 ) S {
-	/*n := min(len(remove), len(insert))
-	for i := 0; i < n; i++ {
-		slice = ReplaceSorted(slice, compare, remove[i], insert[i])
-	}
-	switch {
-	case len(remove) > n:
-		slice = DeleteSorted(slice, compare, remove[n:]...)
-	case len(insert) > n:
-		slice = InsertSorted(slice, compare, insert[n:]...)
-	}*/
 	slice = DeleteSorted(slice, compare, remove...)
 	slice = InsertSorted(slice, compare, insert...)
 	return slice

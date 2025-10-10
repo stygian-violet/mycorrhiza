@@ -4,7 +4,7 @@
 <main class="main-width">
 	<h1>{{template "manage users"}}</h1>
 
-	<form action="{{ .Meta.Root }}admin/reindex-users" method="post">
+	<form class="form--block" action="{{ .Meta.Root }}admin/reindex-users" method="post">
 		<a class="btn" href="{{ .Meta.Root }}admin/new-user">{{block "create user" .}}Create a new user{{end}}</a>
 		<button class="btn" type="submit">{{block "reindex users" .}}Reindex users{{end}}</button>
 	</form>

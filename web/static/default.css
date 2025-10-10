@@ -448,6 +448,10 @@ kbd {
 	display: block;
 }
 
+.form--block {
+	margin: 0.5rem 0;
+}
+
 @media (min-width: 600px) {
 	.form--double .form-field {
 		display: grid;

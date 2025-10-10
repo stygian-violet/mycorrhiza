@@ -100,7 +100,7 @@ type BaseData struct {
 	EditScripts    []string
 	Addr           string
 	Title          string // TODO: remove
-	Body           string // TODO: remove
+	Body           template.HTML // TODO: remove
 	BodyAttributes map[string]string
 }
 
@@ -123,7 +123,7 @@ func Base(meta Meta, title, body string, bodyAttributes map[string]string, headE
 		HeaderLinks:    HeaderLinks(),
 		CommonScripts:  cfg.CommonScripts,
 		EditScripts:    cfg.EditScripts,
-		Body:           body,
+		Body:           template.HTML(body),
 		BodyAttributes: bodyAttributes,
 	})
 	if err != nil {

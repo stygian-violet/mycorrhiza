@@ -249,7 +249,7 @@ article .codeblock,
 .upload-amnt,
 textarea,
 thead,
-tbody { background-color: #444444; color: #ddd; }
+tbody { border: 0px; background-color: #444444; color: #ddd; }
 table code { background-color: #383838; }
 .transclusion_stand-out { background-color: rgba(68, 68, 68, 0.5); }
 

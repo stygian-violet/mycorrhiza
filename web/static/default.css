@@ -259,6 +259,14 @@ table code { background-color: #383838; }
 .transclusion code,
 .transclusion .codeblock { background-color: #454545; }
 mark { background: rgba(130, 80, 30, 5); color: inherit; }
+
+@supports (scrollbar-color: auto) {
+	* { scrollbar-color: #aaa #2222227f; }
+}
+@supports selector(::-webkit-scrollbar) {
+	::-webkit-scrollbar { background: #2222227f; }
+	::-webkit-scrollbar-thumb { background: #aaa; }
+}
 }
 
 /*

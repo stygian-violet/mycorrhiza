@@ -5,7 +5,6 @@ import (
 	"iter"
 	"log/slog"
 	"slices"
-	"sort"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 )
@@ -14,11 +13,6 @@ var (
 	groupsByName map[string]Group
 	groups []Group
 )
-
-type UsersInGroup struct {
-	Group string
-	Users []string
-}
 
 func addFixedGroup(g Group) {
 	p, exists := cfg.CustomGroups[g.Name()]
@@ -54,6 +48,12 @@ func initGroups() error {
 	}
 	setGroups(gs)
 	slog.Info("Indexed groups", "n", len(groups))
+	if cfg.AllowRegistration {
+		_, err := GroupByName(cfg.RegistrationGroup)
+		if err != nil {
+			return fmt.Errorf("invalid registration group: %s", err.Error())
+		}
+	}
 	return nil
 }
 
@@ -88,24 +88,5 @@ func YieldGroups() iter.Seq[Group] {
 func Groups() []Group {
 	res := make([]Group, len(groups))
 	copy(res, groups)
-	return res
-}
-
-func UsersInGroups() []UsersInGroup {
-	res := make([]UsersInGroup, len(groups))
-	index := make(map[string]int)
-	for i, g := range groups {
-		name := g.Name()
-		res[i].Group = name
-		index[name] = i
-	}
-	for u := range YieldUsers() {
-		if i, ok := index[u.GroupName()]; ok {
-			res[i].Users = append(res[i].Users, u.Name())
-		}
-	}
-	for _, r := range res {
-		sort.Strings(r.Users)
-	}
 	return res
 }

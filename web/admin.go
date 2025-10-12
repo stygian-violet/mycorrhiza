@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
-	"slices"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/process"
+	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
@@ -55,20 +55,6 @@ const adminTranslationRu = `
 
 func viewPanel(meta viewutil.Meta) {
 	viewutil.ExecutePage(meta, panelChain, &viewutil.BaseData{})
-}
-
-type listData struct {
-	*viewutil.BaseData
-	UserHypha string
-	Users     []*user.User
-}
-
-func viewList(meta viewutil.Meta, users []*user.User) {
-	viewutil.ExecutePage(meta, listChain, listData{
-		BaseData:  &viewutil.BaseData{},
-		UserHypha: cfg.UserHypha,
-		Users:     users,
-	})
 }
 
 type newUserData struct {
@@ -123,24 +109,39 @@ func handlerAdminShutdown(w http.ResponseWriter, rq *http.Request) {
 	process.Shutdown()
 }
 
+// handlerAdminReindexHyphae reindexes all hyphae by checking the wiki storage directory anew.
+func handlerAdminReindexHyphae(w http.ResponseWriter, rq *http.Request) {
+	err := shroom.Reindex()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	redirectTo := rq.Referer()
+	if redirectTo == "" {
+		redirectTo = cfg.Root + "admin"
+	}
+	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
+}
+
 // handlerAdminReindexUsers reinitialises the user system.
 func handlerAdminReindexUsers(w http.ResponseWriter, rq *http.Request) {
 	user.ReadUsersFromFilesystem()
 	redirectTo := rq.Referer()
 	if redirectTo == "" {
-		redirectTo = cfg.Root + "hypha/" + cfg.UserHypha
+		redirectTo = cfg.Root + "users"
 	}
 	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }
 
-func handlerAdminUsers(w http.ResponseWriter, rq *http.Request) {
-	// Get a sorted list of users
-	var users []*user.User
-	for u := range user.YieldUsers() {
-		users = append(users, u)
+// handlerAdminUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.
+func handlerAdminUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
+	slog.Info("Updating header links")
+	shroom.SetHeaderLinks()
+	redirectTo := rq.Referer()
+	if redirectTo == "" {
+		redirectTo = cfg.Root + "admin"
 	}
-	slices.SortFunc(users, user.RegisteredBefore)
-	viewList(viewutil.MetaFrom(w, rq), users)
+	http.Redirect(w, rq, redirectTo, http.StatusSeeOther)
 }
 
 func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
@@ -160,7 +161,7 @@ func handlerAdminUserEdit(w http.ResponseWriter, rq *http.Request) {
 		} else if err = user.ReplaceUser(u, nu); err != nil {
 			f = f.WithError(err)
 		} else {
-			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "users", http.StatusSeeOther)
 			return
 		}
 	}
@@ -192,7 +193,7 @@ func handlerAdminUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 		} else if err = user.ReplaceUser(u, nu); err != nil {
 			f = f.WithError(err)
 		} else {
-			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "users", http.StatusSeeOther)
 			return
 		}
 	} else {
@@ -222,7 +223,7 @@ func handlerAdminUserDelete(w http.ResponseWriter, rq *http.Request) {
 			slog.Info("Failed to delete user", "err", err)
 			f = f.WithError(err)
 		} else {
-			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "users", http.StatusSeeOther)
 			return
 		}
 	}
@@ -252,7 +253,7 @@ func handlerAdminUserNew(w http.ResponseWriter, rq *http.Request) {
 			w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
 			viewNewUser(viewutil.MetaFrom(w, rq), f.WithError(err))
 		} else {
-			http.Redirect(w, rq, cfg.Root + "admin/users/", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "users", http.StatusSeeOther)
 		}
 	}
 }

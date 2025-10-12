@@ -285,6 +285,11 @@ func usernameIsWhiteListed(username string) bool {
 	return false
 }
 
-func RegisteredBefore(a, b *User) int {
+func Compare(a, b *User) int {
+	diff := CompareGroups(a.Group(), b.Group())
+	if diff != 0 {
+		return -diff
+	}
+	// return strings.Compare(a.Name(), b.Name())
 	return a.RegisteredAt().Compare(b.RegisteredAt())
 }

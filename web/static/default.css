@@ -7,12 +7,24 @@
 .non-existent-hypha__title { margin-bottom: 1rem; }
 .non-existent-hypha__subtitle { margin: 0; }
 
-.amnt-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.amnt-grid { display: grid; grid-template-columns: 1fr 1fr; row-gap: 1rem; column-gap: 1rem; }
 #upload-binary__input { display: block; margin: .25rem 0 .25rem 0; }
 
 .modal__title { font-size: 2rem; }
 .modal__title_small { font-size: 1.5rem; }
-.modal__confirmation-msg { margin: 0 0 .5rem 0; }
+.modal__fieldset {
+	padding: 1rem;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+.modal__fieldset > p,
+.modal__fieldset > .notice,
+.modal__fieldset > .form-field,
+.modal__fieldset > .form-buttons .btn {
+	margin-top: 0;
+}
+.modal__fieldset > .form-buttons { margin-top: auto; }
 
 ol:not(.mycomarkup-doc ol) a { text-decoration: none; display: inline-block; padding: .25rem; }
 ol:not(.mycomarkup-doc ol) a:hover { text-decoration: underline; }
@@ -92,13 +104,16 @@ input, kbd { font: inherit; color: inherit; }
 textarea {font-size:16px; font-family: inherit; line-height: 150%; }
 select { cursor: pointer; }
 
+body.modal-page { grid-template-rows: 1fr auto 1fr; grid-template-columns: 1fr auto 1fr; height: 100%; }
+body.modal-page main { grid-row: 2 / span 1; grid-column: 2 / span 1; }
+
 .edit_no-preview { height: 90vh; }
 .edit_with-preview .edit-form { height: 90vh; }
 .edit__title { margin-top: 0; }
-.edit__preview { border: 2px dashed #ddd; padding: 10px; margin: 0 -10px; }
+.edit__preview { border: 2px dashed #ddd; padding: 1rem; margin: 0 -1rem; }
 .edit-form__textarea { width: 100%; height: 80vh; min-height: 4rem; }
 .edit-form p { margin: .25rem 0; }
-.edit-form__message { width: 100%; margin: 0.25em 0; }
+.edit-form__message { width: 100%; margin: 0.25rem 0; }
 .edit-form__save { font-weight: bold; }
 .edit-toolbar__buttons, .edit-toolbar__help { margin: .5rem; }
 .edit-form { height: 100%; display: flex; flex-direction: column; }
@@ -114,17 +129,18 @@ blockquote { margin: 0; padding-left: .75rem; }
 .wikilink_mailto { background: transparent left no-repeat url("icon/mailto-proto.svg"); }
 
 article { overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; line-height: 150%; }
-main h1 { margin: .5rem 0 0 0; }
-main h2, main h3, main h4, main h5, main h6 { margin: 1.5rem 0 0 0; clear: both; }
+main h1 { margin: .5rem 0; }
+main h2, main h3, main h4, main h5, main h6 { margin: 1.5rem 0 .5rem 0; clear: both; }
 .heading__link { text-decoration: none; display: inline-block; }
 .heading__link::after { width: 1rem; content: "§"; color: transparent; }
 .heading__link:hover::after, .heading__link:active::after { color: #999; }
 article p, article table, article ul, ol { margin: .5rem 0; }
 article ul { padding-left: 1rem; }
+article ul.launchpad { padding-left: 2rem; }
 ol { padding-left: 1.5rem; }
 article code { padding: .1rem .3rem; border-radius: .25rem; font-size: 90%; font-family: 'Menlo', 'PT Mono', monospace; }
 article pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
-.codeblock code {padding:0; font-size:15px; tab-size: 3; }
+.codeblock code {padding:0; font-size:16px; tab-size: 3;}
 .transclusion { border-radius: .25rem; margin-bottom: .25rem; clear: both; }
 .transclusion_failed { padding: 0 .5rem; }
 .transclusion__content > *:not(.binary-container) {margin: 0.5rem; }
@@ -137,9 +153,8 @@ article pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25
 .binary-container { width: 100%; text-align: center; }
 .binary-container_with-img img,
 .binary-container_with-video video,
-.binary-container_with-audio audio { max-width: 100%; max-height: 30em; width: auto; }
+.binary-container_with-audio audio { max-width: 100%; max-height: 30rem; width: auto; }
 
-.subhyphae__title { padding-bottom: .5rem; clear: both; }
 .navi-title { padding-bottom: .5rem; margin: .25rem 0; }
 .navi-title a {text-decoration:none; }
 .navi-title__separator { margin: 0 .25rem; }
@@ -162,16 +177,8 @@ aside { clear: both; }
 .history-entry__time { font-weight: bold; }
 .history-entry__author { font-style: italic; }
 
-table {
-	background: transparent;
-	border-collapse: collapse;
-	display: block;
-	max-width: 100%;
-	overflow-x: auto;
-	overflow-wrap: normal;
-	word-break: keep-all;
-}
-td, th { min-width: 10rem; padding: 0 0.5rem; }
+table { background: transparent; border: 0px; border-collapse: collapse; display: block; overflow-x: auto; word-break: keep-all; }
+td, th { min-width: 10rem; max-width: 20rem; padding: 0 0.5rem; }
 caption { caption-side: top; font-size: small; }
 
 .subhyphae__list, .subhyphae__list ul { display: flex; padding: 0; margin: 0; flex-wrap: wrap; }
@@ -370,7 +377,7 @@ kbd {
 
 .dialog__title {
 	margin: 0;
-	font-size: 1.5em;
+	font-size: 1.5rem;
 }
 
 .dialog__close-button {
@@ -379,11 +386,11 @@ kbd {
 	top: 0;
 	right: 0;
 	margin: 0;
-	padding: 8px;
+	padding: 0.5rem;
 	border: none;
-	background: url(icon/x.svg) no-repeat 8px 8px / 16px 16px;
-	width: 32px;
-	height: 32px;
+	background: url(icon/x.svg) no-repeat 0.5rem 0.5rem / 1rem 1rem;
+	width: 2rem;
+	height: 2rem;
 	cursor: pointer;
 }
 
@@ -405,8 +412,8 @@ kbd {
 }
 
 .shortcuts-group-heading {
-	margin: 1em 0 0.5em;
-	font-size: 1.2em;
+	margin: 1rem 0 0.5rem;
+	font-size: 1.2rem;
 }
 
 .shortcuts-list {
@@ -415,12 +422,12 @@ kbd {
 }
 
 .shortcuts-list + .shortcuts-list {
-	margin-top: 1.5em;
+	margin-top: 1.5rem;
 }
 
 .shortcut-row {
 	display: flex;
-	margin: 0.5em 0;
+	margin: 0.5rem 0;
 	padding: 0;
 	list-style: none;
 }
@@ -444,7 +451,7 @@ kbd {
  */
 
 .users-table {
-	width: 100%;
+	margin: 1rem 0;
 }
 
 .users-table th, .users-table td {
@@ -460,23 +467,18 @@ kbd {
  * Form fields
  */
 
-.form-field {
-	margin: 1em 0;
-}
-
-.form-field label {
-	display: block;
-}
-
-.form--block {
-	margin: 0.5rem 0;
-}
+.form-field { margin: 1rem 0; }
+.modal__title + .form-field, .modal__title + p { margin-top: 0; }
+.form-field label { display: block; }
+.form-field input[type="checkbox"] + label { display: inline-block; }
+.form-buttons { display: flex; flex-flow: row wrap; margin: -0.5rem; }
+.form-buttons .btn { margin: 0.5rem; }
 
 @media (min-width: 600px) {
 	.form--double .form-field {
 		display: grid;
-		grid-template-columns: 150px max-content;
-		grid-column-gap: 16px;
+		grid-template-columns: 9rem max-content;
+		grid-column-gap: 1rem;
 	}
 	.form--double .form-field label {
 		grid-column: 1;
@@ -495,8 +497,8 @@ kbd {
  */
 
 .form-wrap h2 {
-	margin: 1.5em 0 0.25em;
-	font-size: 1.2em;
+	margin: 1.5rem 0 0.25rem;
+	font-size: 1.2rem;
 }
 
 /*
@@ -504,9 +506,9 @@ kbd {
  */
 
 .notice {
-	margin: 0.5em 0;
+	margin: 1rem 0;
 	border: 1px solid;
-	padding: 0.5em 0.7em;
+	padding: 0.5rem 0.7rem;
 }
 
 .notice--error {
@@ -537,6 +539,16 @@ kbd {
 	font-size: 1rem;
 	margin: 0;
 	cursor: pointer;
+}
+
+.btn-row {
+	display: flex;
+	flex-flow: row wrap;
+	margin: -0.5rem;
+}
+
+.btn-row > * {
+	margin: 0.5rem;
 }
 
 .btn_accent {
@@ -584,14 +596,14 @@ a.btn_destructive:visited,
  */
 
 .recent-changes__heading {
-	margin: 1.2em 0 0.3em;
-	font-size: 1.2em;
+	margin: 1.2rem 0 0.3rem;
+	font-size: 1.2rem;
 }
 
 .recent-changes__entry {
-	padding: 8px 16px;
+	padding: 0.5rem 1rem;
 	border: 2px solid #999;
-	margin: 0 -16px;
+	margin: 0 -1rem;
 }
 .recent-changes__entry + .recent-changes__entry {
 	margin-top: -2px;
@@ -603,51 +615,6 @@ a.btn_destructive:visited,
 
 .recent-changes__entry__time {
 	font-weight: bold;
-}
-
-/*
- * The lock page
- */
-.locked-notice {
-	background-color: transparent;
-	display: flex;
-	justify-content: center;
-}
-.locked-notice .telegram-notice {
-	display: none;
-}
-
-.locked-notice__message {
-	max-width: 30rem;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-
-.locked-notice__lock {
-	font-size: 8rem;
-	margin: 0;
-}
-
-.locked-notice__title {
-	margin: 0 0 1rem 0;
-}
-
-.locked-notice__login-form input {
-	margin-bottom: 1rem;
-}
-
-/*
- * To-do lists
- */
-.item_todo {
-	position: relative;
-	list-style: none;
-}
-.item_todo > input[type=checkbox] {
-	position: absolute;
-	left: -1.6rem;
-	top: .1rem;
 }
 
 /*
@@ -925,13 +892,6 @@ dd + dt {
 }
 
 /*
- * Admin pages
- */
-.users-table {
-	margin-top: 1rem;
-}
-
-/*
  * Image galleries
  */
 .img-gallery { margin-top: .25rem; margin-bottom: .25rem; }
@@ -944,7 +904,7 @@ dd + dt {
 	.img-gallery_layout-side {
 		float: right;
 		max-width: 50%;
-		margin-left: 1em;
+		margin-left: 1rem;
 	}
 
 	.img-gallery_layout-normal {

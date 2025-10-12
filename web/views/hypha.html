@@ -10,9 +10,9 @@
             {{end}}
 
             {{if .IsMyProfile}}
-                <div class="btn btn_navititle">
-                    <a class="btn__link_navititle" href="{{ .Meta.Root }}logout">
-                        {{block "log out" .}}Log out{{end}}</a></div>
+                <form class="btn_navititle" method="POST" action="{{ .Meta.Root }}logout">
+                    <button class="btn" type="submit">{{block "log out" .}}Log out{{end}}</button>
+                </form>
                 {{if .ShowAdminPanel}}
                     <div class="btn btn_navititle">
                         <a class="btn__link_navititle" href="{{ .Meta.Root }}admin">
@@ -54,22 +54,22 @@
                         <a class="hypha-info__link" href="{{ .Meta.Root }}history/{{.HyphaName}}">
                             {{block "history" .}}View history{{end}}</a></li>
 
-					{{if .CanRename}}
+                    {{if .CanRename}}
                     <li class="hypha-info__entry hypha-info__entry_rename">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}rename/{{.HyphaName}}">
                             {{block "rename" .}}Rename{{end}}</a></li>
-					{{end}}
-					{{if .CanDelete}}
+                    {{end}}
+                    {{if .CanDelete}}
                     <li class="hypha-info__entry hypha-info__entry_delete">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}delete/{{.HyphaName}}">
                             {{block "delete" .}}Delete{{end}}</a></li>
-					{{end}}
-					{{if .HasText}}
+                    {{end}}
+                    {{if .HasText}}
                     <li class="hypha-info__entry hypha-info__entry_text">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}text/{{.HyphaName}}">
                             {{block "view markup" .}}View markup{{end}}</a></li>
-					{{end}}
-					{{if .CanManageMedia}}
+                    {{end}}
+                    {{if .CanManageMedia}}
                     <li class="hypha-info__entry hypha-info__entry_media">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}media/{{.HyphaName}}">
                             {{- if .IsMediaHypha -}}
@@ -77,17 +77,17 @@
                             {{- else -}}
                             {{block "turn to media" .}}Turn to media{{end}}
                             {{- end}}</a></li>
-					{{end}}
-					{{if gt .BacklinkCount 0}}
+                    {{end}}
+                    {{if gt .BacklinkCount 0}}
                     <li class="hypha-info__entry hypha-info__entry_backlinks">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}backlinks/{{.HyphaName}}">
                             {{block "backlinks" .}}backlink{{if gt .BacklinkCount 1}}s{{end}}{{end}}</a></li>
-					{{end}}
-					{{if .HasSubhyphae}}
-					<li class="hypha-info__entry hypha-info__entry_subhyphae">
+                    {{end}}
+                    {{if .HasSubhyphae}}
+                    <li class="hypha-info__entry hypha-info__entry_subhyphae">
                         <a class="hypha-info__link" href="{{ .Meta.Root }}subhyphae/{{.HyphaName}}">
                             {{block "subhyphae link" .}}subhyphae{{end}}</a></li>
-					{{end}}
+                    {{end}}
                 </ul>
             </nav>
         </section>

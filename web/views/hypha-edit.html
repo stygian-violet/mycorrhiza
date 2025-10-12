@@ -78,7 +78,7 @@
                 placeholder="{{block "describe your changes" .}}Describe your changes{{end}}"
                 aria-label="{{template "describe your changes" .}}">
         </p>
-        <p class="edit-form__buttons">
+        <div class="form-buttons">
             <button type="submit" name="action" class="btn btn_accent edit-form__save" value="save">
                 {{template "save" .}}
             </button>
@@ -88,7 +88,7 @@
             <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}" class="btn btn_weak">
                 {{template "cancel" .}}
             </a>
-        </p>
+        </div>
     </form>
     {{if .Preview}}
         <p class="warning">

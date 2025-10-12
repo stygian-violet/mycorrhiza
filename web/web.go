@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -42,7 +41,6 @@ func Handler() *mux.Router {
 	r := router.PathPrefix("").Subrouter()
 	r.Use(authMiddleware)
 	// Auth
-	r.HandleFunc("/lock", handlerLock).Methods(http.MethodGet)
 	// The check below saves a lot of extra checks and lines of codes in other places in this file.
 	if cfg.UseAuth {
 		if cfg.AllowRegistration {
@@ -52,7 +50,7 @@ func Handler() *mux.Router {
 			r.HandleFunc("/telegram-login", handlerTelegramLogin).Methods(http.MethodPost, http.MethodGet)
 		}
 		r.HandleFunc("/login", handlerLogin).Methods(http.MethodPost, http.MethodGet)
-		r.HandleFunc("/logout", handlerLogout).Methods(http.MethodPost, http.MethodGet)
+		r.HandleFunc("/logout", handlerLogout).Methods(http.MethodPost)
 	}
 
 	// Wiki routes. They may be locked or restricted.
@@ -67,8 +65,6 @@ func Handler() *mux.Router {
 	histweb.InitHandlers(r)
 	interwiki.InitHandlers(r)
 
-	r.HandleFunc("/user-list", handlerUserList).Methods(http.MethodGet)
-
 	r.PathPrefix("/add-to-category").HandlerFunc(handlerAddToCategory).Methods("POST")
 	r.PathPrefix("/remove-from-category").HandlerFunc(handlerRemoveFromCategory).Methods("POST")
 	r.PathPrefix("/category/").HandlerFunc(handlerCategory).Methods("GET")
@@ -77,16 +73,19 @@ func Handler() *mux.Router {
 
 	// Admin routes
 	if cfg.UseAuth {
+		r.HandleFunc("/users", handlerUserList).Methods(http.MethodGet)
+
 		adminRouter := r.PathPrefix("/admin").Subrouter()
 
 		adminRouter.HandleFunc("/shutdown", handlerAdminShutdown).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/reindex-users", handlerAdminReindexUsers).Methods(http.MethodPost)
+		adminRouter.HandleFunc("/reindex-hyphae", handlerAdminReindexHyphae).Methods(http.MethodPost)
+		adminRouter.HandleFunc("/update-header-links", handlerAdminUpdateHeaderLinks).Methods(http.MethodPost)
 
 		adminRouter.HandleFunc("/new-user", handlerAdminUserNew).Methods(http.MethodGet, http.MethodPost)
 		adminRouter.HandleFunc("/users/{username}/edit", handlerAdminUserEdit).Methods(http.MethodGet, http.MethodPost)
 		adminRouter.HandleFunc("/users/{username}/change-password", handlerAdminUserChangePassword).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/users/{username}/delete", handlerAdminUserDelete).Methods(http.MethodGet, http.MethodPost)
-		adminRouter.HandleFunc("/users", handlerAdminUsers).Methods("GET")
 
 		adminRouter.HandleFunc("/", handlerAdmin).Methods("GET")
 
@@ -112,55 +111,44 @@ func Handler() *mux.Router {
 }
 
 // Auth
-func handlerUserList(w http.ResponseWriter, rq *http.Request) {
-	groups := user.UsersInGroups()
-	_ = pageUserList.RenderTo(viewutil.MetaFrom(w, rq),
-		map[string]any{
-			"Groups": groups,
-		})
-}
-
-func handlerLock(w http.ResponseWriter, rq *http.Request) {
-	_ = pageAuthLock.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{})
-}
 
 // handlerRegister displays the register form (GET) or registers the user (POST).
 func handlerRegister(w http.ResponseWriter, rq *http.Request) {
+	registerAnonOnLocked := cfg.Locked && cfg.RegistrationGroup == "anon"
 	if rq.Method == http.MethodGet {
-		slog.Info("Showing registration form")
 		_ = pageAuthRegister.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":           cfg.UseAuth,
-			"AllowRegistration": cfg.AllowRegistration,
-			"RawQuery":          rq.URL.RawQuery,
-			"WikiName":          cfg.WikiName,
+			"RawQuery":             rq.URL.RawQuery,
+			"RegisterAnonOnLocked": registerAnonOnLocked,
 		})
 		return
 	}
-
 	var (
 		username = rq.PostFormValue("username")
 		password = rq.PostFormValue("password")
-		err      = user.Register(username, password, "editor", "local", false)
+		err      = user.Register(username, password, cfg.RegistrationGroup, "local", false)
 	)
 	if err != nil {
 		slog.Info("Failed to register", "username", username, "err", err.Error())
-		w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
 		w.WriteHeader(http.StatusBadRequest)
 		_ = pageAuthRegister.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":           cfg.UseAuth,
-			"AllowRegistration": cfg.AllowRegistration,
-			"RawQuery":          rq.URL.RawQuery,
-			"WikiName":          cfg.WikiName,
-
-			"Err":      err,
-			"Username": username,
-			"Password": password,
+			"RawQuery":             rq.URL.RawQuery,
+			"Err":                  err,
+			"Username":             username,
+			"Password":             password,
+			"RegisterAnonOnLocked": registerAnonOnLocked,
 		})
 		return
 	}
-
 	slog.Info("Registered user", "username", username)
-	if err := user.LoginDataHTTP(w, username, password); err != nil {
+	err = user.LoginDataHTTP(w, username, password)
+	if err != nil {
+		meta := viewutil.MetaFrom(w, rq)
+		_ = pageAuthLogin.RenderTo(meta, map[string]any{
+			"AllowRegistration": true,
+			"Locked":            meta.U.ShowLock(),
+			"Err":               err,
+			"Username":          username,
+		})
 		return
 	}
 	http.Redirect(w, rq, cfg.Root+rq.URL.RawQuery, http.StatusSeeOther)
@@ -168,42 +156,22 @@ func handlerRegister(w http.ResponseWriter, rq *http.Request) {
 
 // handlerLogout shows the logout form (GET) or logs the user out (POST).
 func handlerLogout(w http.ResponseWriter, rq *http.Request) {
-	if rq.Method == http.MethodPost {
-		slog.Info("Somebody logged out")
-		user.LogoutFromRequest(w, rq)
-		http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
-		return
-	}
-
-	var (
-		u   = user.FromRequest(rq)
-		can = !u.IsEmpty()
-	)
-	w.Header().Set("Content-Type", "text/html;charset=utf-8")
-	if can {
-		slog.Info("Logging out", "username", u.Name)
-		w.WriteHeader(http.StatusOK)
-	} else {
-		slog.Info("Unknown user logging out")
-		w.WriteHeader(http.StatusForbidden)
-	}
-	_ = pageAuthLogout.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-		"CanLogout": can,
-	})
+	user.LogoutFromRequest(w, rq)
+	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 
 // handlerLogin shows the login form (GET) or logs the user in (POST).
 func handlerLogin(w http.ResponseWriter, rq *http.Request) {
+	meta := viewutil.MetaFrom(w, rq)
+	locked := meta.U.ShowLock()
+
 	if rq.Method == http.MethodGet {
 		w.WriteHeader(http.StatusOK)
-		_ = pageAuthLogin.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":     cfg.UseAuth,
-			"ErrLogin":    false,
-			"ErrTelegram": false,
-			"Err":         nil,
-			"WikiName":    cfg.WikiName,
+		_ = pageAuthLogin.RenderTo(meta, map[string]any{
+			"AllowRegistration": cfg.AllowRegistration,
+			"Locked":            locked,
+			"WikiName":          cfg.WikiName,
 		})
-		slog.Info("Somebody logging in")
 		return
 	}
 
@@ -213,12 +181,12 @@ func handlerLogin(w http.ResponseWriter, rq *http.Request) {
 		err      = user.LoginDataHTTP(w, username, password)
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = pageAuthLogin.RenderTo(viewutil.MetaFrom(w, rq), map[string]any{
-			"UseAuth":     cfg.UseAuth,
+		_ = pageAuthLogin.RenderTo(meta, map[string]any{
+			"AllowRegistration": cfg.AllowRegistration,
 			"ErrLogin":    errors.Is(err, user.ErrLogin),
 			"ErrTelegram": false, // TODO: ?
 			"Err":         err.Error(),
+			"Locked":      locked,
 			"WikiName":    cfg.WikiName,
 			"Username":    username,
 		})
@@ -241,7 +209,7 @@ func handlerTelegramLogin(w http.ResponseWriter, rq *http.Request) {
 		err        = user.Register(
 			username,
 			"", // Password matters not
-			"editor",
+			cfg.RegistrationGroup,
 			"telegram",
 			false,
 		)

@@ -10,17 +10,19 @@
 			<p class="modal__confirmation-msg">
 				{{block "want to delete?" .}}Do you really want to delete this hypha?{{end}}
 			</p>
-			<p>
+			<div class="form-field">
 				{{if .IsEmpty}}<input type="hidden" name="recursive" value="true"/>{{end}}
 				<input type="checkbox" id="recursive" {{if .IsEmpty}} disabled {{else}} name="recursive" {{end}} value="true" checked />
 				<label for="recursive">{{block "delete recursively" .}}Delete subhyphae too{{end}}</label>
-			</p>
-			<button type="submit" value="Confirm" class="btn" autofocus>
-				{{template "confirm"}}
-			</button>
-			<a href="{{ .Meta.Root }}hypha/{{.HyphaName}}" class="btn btn_weak">
-				{{template "cancel"}}
-			</a>
+			</div>
+			<div class="form-buttons">
+				<button type="submit" value="Confirm" class="btn" autofocus>
+					{{template "confirm"}}
+				</button>
+				<a href="{{ .Meta.Root }}hypha/{{.HyphaName}}" class="btn btn_weak">
+					{{template "cancel"}}
+				</a>
+			</div>
 		</fieldset>
 	</form>
 </main>

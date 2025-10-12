@@ -1,58 +1,69 @@
 {{define "user x"}}User {{.}}{{end}}
 {{define "title"}}{{template "user x" .U.Name}}{{end}}
 {{define "body"}}
-	<main class="main-width form-wrap">
-		<h1>
-			<a href="{{ .Meta.Root }}admin/users/">&larr;</a>
-			{{.U.Name}}
-		</h1>
+<main class="main-width form-wrap">
+    <h1><a href="{{ .Meta.Root }}users">&larr;</a> {{.U.Name}}</h1>
 
-		{{if .Form.HasError}}
-		<div class="notice notice--error">
-			<strong>{{template "error"}}:</strong>
-			{{.Form.Error}}
-		</div>
-		{{end}}
+    {{if .Form.HasError}}
+    <div class="notice notice--error">
+        <strong>{{template "error"}}:</strong> {{.Form.Error}}
+    </div>
+    {{end}}
 
-		<h2>{{block "change group" .}}Change group{{end}}</h2>
+    <section class="amnt-grid">
+        <form action="" method="post" class="modal amnt-menu-block">
+            <fieldset class="modal__fieldset">
+                <legend class="modal__title modal__title_small">
+                    {{block "change group" .}}Change group{{end}}
+                </legend>
+                <div class="form-field">
+					<label for="group">{{block `group` .}}Group{{end}}:</label>
+                    <select id="group" name="group" aria-label="{{template `group`}}">
+                        {{$g := .Form.Get "group"}}
+                        {{range .Groups}}
+                        <option {{if $g | eq .Name }}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-buttons">
+                    <button class="btn" type="submit">{{block "update" .}}Update{{end}}</button>
+                </div>
+            </fieldset>
+        </form>
 
-		<form action="" method="post">
-			<div class="form-field">
-				<select id="group" name="group" aria-label="{{block "group" .}}Group{{end}}">
-					{{$g := .Form.Get "group"}}
-					{{range .Groups}}
-					<option {{if $g | eq .Name }}selected{{end}}>{{.Name}}</option>
-					{{end}}
-				</select>
-			</div>
+        <form action="{{ .Meta.Root }}admin/users/{{.U.Name}}/change-password" method="post" class="modal amnt-menu-block">
+            <fieldset class="modal__fieldset">
+                <legend class="modal__title modal__title_small">
+                    {{block "change password" .}}Change password{{end}}
+                </legend>
+				{{if .U.IsLocal}}
+				<div class="form-field">
+					<label for="pass">{{block "password" .}}Password{{end}}:</label>
+					<input required type="password" autocomplete="new-password" id="pass" name="password">
+					<br>
+					<label for="pass_confirm">{{block "confirm password" .}}Confirm password{{end}}:</label>
+					<input required type="password" autocomplete="new-password" id="pass_confirm" name="password_confirm">
+				</div>
 
-			<div class="form-field">
-				<button class="btn" type="submit">{{block "update" .}}Update{{end}}</button>
-			</div>
-		</form>
+				<div class="form-buttons">
+					<input class="btn" type="submit" value='{{block "submit" .}}Submit{{end}}'>
+				</div>
+				{{else}}
+				<p>{{block "non local password change" .}}Non-local accounts cannot have their passwords changed.{{end}}</p>
+				{{end}}
+            </fieldset>
+        </form>
 
-		<h2>{{block "change password" .}}Change password{{end}}</h2>
-
-		{{if .U.IsLocal}}
-		<form action="{{ .Meta.Root }}admin/users/{{.U.Name}}/change-password" method="post">
-			<div class="form-field">
-				<label for="pass">{{block "password" .}}Password{{end}}</label>
-				<input required type="password" autocomplete="new-password" id="pass" name="password">
-				<br>
-				<label for="pass_confirm">{{block "confirm password" .}}Confirm password{{end}}</label>
-				<input required type="password" autocomplete="new-password" id="pass_confirm" name="password_confirm">
-			</div>
-
-			<div class="form-field">
-				<input class="btn" type="submit" value='{{block "submit" .}}Submit{{end}}'>
-			</div>
-		</form>
-        {{else}}
-        <p>{{block "non local password change" .}}Non-local accounts cannot have their passwords changed.{{end}}</p>
-        {{end}}
-
-		<h2>{{block "delete user" .}}Delete user{{end}}</h2>
-		<p>{{block "delete user tip" .}}Remove the user from the database. Changes made by the user will be preserved. It will be possible to take this username later.{{end}}</p>
-		<a class="btn btn_destructive" href="{{ .Meta.Root }}admin/users/{{.U.Name}}/delete">{{template "delete"}}</a>
-	</main>
+        <div class="modal amnt-menu-block">
+            <fieldset class="modal__fieldset">
+                <legend class="modal__title modal__title_small">
+                    {{block "delete user" .}}Delete user{{end}}
+                </legend>
+				<p>{{block "delete user tip" .}}Remove the user from the database. Changes made by the user will be preserved. It will be possible to take this username later.{{end}}</p>
+				<div class="form-buttons">
+					<a class="btn btn_destructive" href="{{ .Meta.Root }}admin/users/{{.U.Name}}/delete">{{template "delete"}}</a>
+				</div>
+            </fieldset>
+        </div>
+    </main>
 {{end}}

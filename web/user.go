@@ -4,12 +4,37 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"slices"
 
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/user"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
+
+func handlerUserList(w http.ResponseWriter, rq *http.Request) {
+	var (
+		meta  = viewutil.MetaFrom(w, rq)
+		canAdd = meta.U.CanProceed("admin/new-user")
+		canEdit = meta.U.CanProceed("admin/users")
+		canReindex = meta.U.CanProceed("admin/reindex-users")
+		canManage = canAdd || canEdit || canReindex
+		users []*user.User
+	)
+
+	for u := range user.YieldUsers() {
+		users = append(users, u)
+	}
+	slices.SortFunc(users, user.Compare)
+
+	_ = pageUserList.RenderTo(meta, map[string]any{
+		"CanAdd":     canAdd,
+		"CanEdit":    canEdit,
+		"CanReindex": canReindex,
+		"CanManage":  canManage,
+		"Users":      users,
+	})
+}
 
 func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
 	u := user.FromRequest(rq)

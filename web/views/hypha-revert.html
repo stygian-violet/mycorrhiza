@@ -9,12 +9,14 @@
 			<p class="modal__confirmation-msg">
 				{{block "want to revert?" .}}Do you really want to revert this hypha?{{end}}
 			</p>
-			<button type="submit" value="Confirm" class="btn" autofocus>
-				{{template "confirm"}}
-			</button>
-			<a href="{{ .Meta.Root }}rev/{{.RevHash}}/{{.HyphaName}}" class="btn btn_weak">
-				{{template "cancel"}}
-			</a>
+			<div class="form-buttons">
+				<button type="submit" value="Confirm" class="btn" autofocus>
+					{{template "confirm"}}
+				</button>
+				<a href="{{ .Meta.Root }}rev/{{.RevHash}}/{{.HyphaName}}" class="btn btn_weak">
+					{{template "cancel"}}
+				</a>
+			</div>
 		</fieldset>
 	</form>
 </main>

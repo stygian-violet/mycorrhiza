@@ -70,15 +70,17 @@
 				       value="{{.Wiki.ImgSrcFormat}}"
 				       placeholder="https://wiki.example.org/media/{NAME}">
 			</p>
-			<button type="submit" name="action" class="btn btn_accent" value="save">
-				{{template "save"}}
-			</button>
-			{{if .CanDelete}}
-			<button type="submit" name="action" class="btn btn_destructive" value="delete">
-				{{template "delete"}}
-			</button>
-			{{end}}
-			<a class="btn btn_weak" href="{{.Meta.Root}}interwiki">{{template "cancel"}}</a>
+			<div class="form-buttons">
+				<button type="submit" name="action" class="btn btn_accent" value="save">
+					{{template "save"}}
+				</button>
+				{{if .CanDelete}}
+				<button type="submit" name="action" class="btn btn_destructive" value="delete">
+					{{template "delete"}}
+				</button>
+				{{end}}
+				<a class="btn btn_weak" href="{{.Meta.Root}}interwiki">{{template "cancel"}}</a>
+			</div>
 		</form>
 	</main>
 {{end}}

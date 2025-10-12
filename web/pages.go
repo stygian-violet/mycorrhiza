@@ -13,15 +13,14 @@ var fs embed.FS
 var pageOrphans, pageBacklinks, pageSubhyphae, pageUserList, pageChangePassword *newtmpl.Page
 var pageHyphaDelete, pageHyphaRevert, pageHyphaEdit, pageHyphaEmpty, pageHypha *newtmpl.Page
 var pageRevision, pageMedia *newtmpl.Page
-var pageAuthLock, pageAuthLogin, pageAuthLogout, pageAuthRegister *newtmpl.Page
+var pageAuthLogin, pageAuthRegister *newtmpl.Page
 var pageCatPage, pageCatList, pageCatEdit *newtmpl.Page
 
-var panelChain, listChain, newUserChain, editUserChain, deleteUserChain viewutil.Chain
+var panelChain, newUserChain, editUserChain, deleteUserChain viewutil.Chain
 
 func initPages() {
 
 	panelChain = viewutil.CopyEnRuWith(fs, "views/admin-panel.html", adminTranslationRu)
-	listChain = viewutil.CopyEnRuWith(fs, "views/admin-user-list.html", adminTranslationRu)
 	newUserChain = viewutil.CopyEnRuWith(fs, "views/admin-new-user.html", adminTranslationRu)
 	editUserChain = viewutil.CopyEnRuWith(fs, "views/admin-edit-user.html", adminTranslationRu)
 	deleteUserChain = viewutil.CopyEnRuWith(fs, "views/admin-delete-user.html", adminTranslationRu)
@@ -39,8 +38,15 @@ func initPages() {
 		"subhyphae of": `Подгифы`,
 	}, "views/subhyphae.html")
 	pageUserList = newtmpl.NewPage(fs, map[string]string{
-		"title": "Список пользователей",
-		"group": "Группа",
+		"user list":     "Список пользователей",
+		"manage users":  "Управление пользователями",
+		"create user":   "Создать пользователя",
+		"reindex users": "Переиндексировать пользователей",
+		"name":          "Имя",
+		"group":         "Группа",
+		"registered at": "Зарегистрирован",
+		"actions":       "Действия",
+		"edit":          "Изменить",
 	}, "views/user-list.html")
 	pageChangePassword = newtmpl.NewPage(fs, map[string]string{
 		"change password":           "Сменить пароль",
@@ -147,41 +153,31 @@ func initPages() {
 		"remove btn":   "Открепить",
 	}, "views/hypha-media.html")
 
-	pageAuthLock = newtmpl.NewPage(fs, map[string]string{
-		"lock title": "Доступ закрыт",
-		"username":   "Логин",
-		"password":   "Пароль",
-		"log in":     "Войти",
-	}, "views/auth-telegram.html", "views/auth-lock.html")
-
 	pageAuthLogin = newtmpl.NewPage(fs, map[string]string{
 		"username":       "Логин",
 		"password":       "Пароль",
 		"log in":         "Войти",
+		"log out":        "Выйти",
+		"approval tip":   "Новые пользователи должны быть одобрены администратором, прежде чем они смогут получить доступ к вики.",
 		"cookie tip":     "Отправляя эту форму, вы разрешаете вики хранить cookie в вашем браузере. Это позволит движку связывать ваши правки с вашей учётной записью. Вы будете авторизованы, пока не выйдете из учётной записи.",
 		"log in to x":    "Войти в {{.}}",
-		"auth disabled":  "Аутентификация отключена. Вы можете делать правки анонимно.",
+		"lock title":     "🔒 Доступ закрыт",
+		"error":          "Ошибка",
 		"error login":    "Неправильное имя пользователя или пароль.",
 		"error telegram": "Не удалось войти через Телеграм.",
-		"go home":        "Домой",
-	}, "views/auth-telegram.html", "views/auth-login.html")
-
-	pageAuthLogout = newtmpl.NewPage(fs, map[string]string{
-		"log out?":            "Выйти?",
-		"log out":             "Выйти",
-		"cannot log out anon": "Вы не можете выйти, потому что ещё не вошли.",
-		"log in":              "Войти",
-		"go home":             "Домой",
-	}, "views/auth-logout.html")
+		"register":       "Регистрация",
+	}, "views/auth-base.html", "views/auth-telegram.html", "views/auth-login.html")
 
 	pageAuthRegister = newtmpl.NewPage(fs, map[string]string{
 		"username":      "Логин",
 		"password":      "Пароль",
+		"approval tip":  "Новые пользователи должны быть одобрены администратором, прежде чем они смогут получить доступ к вики.",
 		"cookie tip":    "Отправляя эту форму, вы разрешаете вики хранить cookie в вашем браузере. Это позволит движку связывать ваши правки с вашей учётной записью. Вы будете авторизованы, пока не выйдете из учётной записи.",
 		"password tip":  "Сервер хранит ваш пароль в зашифрованном виде, даже администраторы не смогут его прочесть.",
+		"error":         "Ошибка",
 		"register btn":  "Зарегистрироваться",
 		"register on x": "Регистрация на {{.}}",
-	}, "views/auth-telegram.html", "views/auth-register.html")
+	}, "views/auth-base.html", "views/auth-telegram.html", "views/auth-register.html")
 
 	pageCatPage = newtmpl.NewPage(fs, map[string]string{
 		"category x": "Категория {{. | beautifulName}}",

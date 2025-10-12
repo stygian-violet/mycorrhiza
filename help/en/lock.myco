@@ -1,7 +1,7 @@
 = Lock
 //This article is intended for wiki administrators.//
 
-Sometimes, you may want to let only authorized users to view your wiki. This is when **lock** comes in handy.
+Sometimes, you may want to let only authorized users view your wiki. This is when **lock** comes in handy.
 
 == Enabling
 In `config.ini`, set `Locked` to `true` to enable. `UseAuth` must also be `true`.
@@ -17,11 +17,12 @@ Restart your wiki.
 
 == Usage
 When unauthorized people visit your wiki, they will see something like this:
-img {
-{{root}}static/help/lock_screenshot.png
+img grid {
+{{root}}static/help/lock_no_user.png { The user is not logged in. }
+{{root}}static/help/lock_anon_user.png { The user is in the `anon` group. }
 }
 
-If they log in, they will be able to navigate the wiki. They are not able to register, though. [[{{root}}help/en/telegram | Telegram]] authorization is supported.
+Only logged in users who are not in the `anon` group will be able to navigate the wiki. [[{{root}}help/en/telegram | Telegram]] authorization is supported.
 
 == Readers
 You might want to add some users to the `reader` group. Readers can log in even to locked wikis, but they cannot edit.

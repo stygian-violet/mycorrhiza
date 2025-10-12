@@ -1,18 +1,52 @@
-{{define "title"}}List of users{{end}}
+{{define "user list"}}List of users{{end}}
+{{define "manage users"}}Manage users{{end}}
+{{define "title"}}{{if .CanManage}}{{template "manage users"}}{{else}}{{template "user list"}}{{end}}{{end}}
 {{define "body"}}
-<main class="main-width user-list">
+<main class="main-width">
 	<h1>{{template "title"}}</h1>
-	{{$u := .UserHypha}}
-	{{$root := .Meta.Root}}
-	{{range .Groups}}
-	{{if len .Users}}
-	<section>
-		<h2>{{block "group" .}}Group{{end}} "{{.Group}}"</h2>
-		<ol>
-			{{range .Users}}<li><a href="{{$root}}hypha/{{$u}}/{{.}}">{{.}}</a></li>{{end}}
-		</ol>
-	</section>
-	{{end}}
-	{{end}}
+
+	<div class="btn-row">
+		{{if .CanAdd}}
+		<a class="btn" href="{{ .Meta.Root }}admin/new-user">{{block "create user" .}}Create a new user{{end}}</a>
+		{{end}}
+		{{if .CanReindex}}
+		<form action="{{ .Meta.Root }}admin/reindex-users" method="post">
+			<button class="btn" type="submit">{{block "reindex users" .}}Reindex users{{end}}</button>
+		</form>
+		{{end}}
+	</div>
+
+	<table class="users-table">
+		<thead>
+			<tr>
+				<th>{{block "name" .}}Name{{end}}</th>
+				<th>{{block "group" .}}Group{{end}}</th>
+				<th>{{block "registered at" .}}Registered at{{end}}</th>
+				{{if .CanEdit}}<th>{{block "actions" .}}Actions{{end}}</th>{{end}}
+			</tr>
+		</thead>
+		<tbody>{{$userHypha := .UserHypha}}{{$canEdit := .CanEdit}}
+			{{range .Users}}
+			<tr>
+				<td class="table-cell--fill">
+					<a href="{{ $.Meta.Root }}hypha/{{$userHypha}}/{{.Name}}">{{.Name}}</a>
+				</td>
+				<td>{{.GroupName}}</td>
+				<td>
+					{{if .RegisteredAt.IsZero}}
+					{{block "unknown registration time" .}}Unknown{{end}}
+					{{else}}
+					{{.RegisteredAt.UTC.Format "2006-01-02 15:04" }}
+					{{end}}
+				</td>
+				{{if $canEdit}}
+				<td>
+					<a href="{{ $.Meta.Root }}admin/users/{{.Name}}/edit">{{block "edit" .}}Edit{{end}}</a>
+				</td>
+				{{end}}
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
 </main>
 {{end}}

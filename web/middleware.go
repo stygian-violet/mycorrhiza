@@ -72,7 +72,7 @@ func wikiMiddleware(next http.Handler) http.Handler {
 		user := user.FromRequest(rq)
 		// slog.Info("wikiMiddleware", "path", rq.URL.Path, "method", rq.Method, "user", user)
 		if user.ShowLock() {
-			http.Redirect(w, rq, cfg.Root + "lock", http.StatusSeeOther)
+			http.Redirect(w, rq, cfg.Root + "login", http.StatusSeeOther)
 			return
 		}
 		route := rq.URL.Path

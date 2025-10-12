@@ -37,7 +37,7 @@ var routePermission = map[string]int{
 	"text":                   0,
 	"text-search":            0,
 	"today":                  0,
-	"user-list":              0,
+	"users":                  0,
 
 	"add-to-category":        1,
 	"edit":                   1,
@@ -52,12 +52,10 @@ var routePermission = map[string]int{
 
 	"delete":                 3,
 	"revert":                 3,
-	"update-header-links":    3,
 
 	"admin":                  4,
 	"interwiki/add-entry":    4,
 	"interwiki/modify-entry": 4,
-	"reindex":                4,
 }
 
 func initPermissions() error {

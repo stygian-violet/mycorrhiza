@@ -91,12 +91,14 @@
 				<input type="url" id="img-src-format{{$i}}" name="img-src-format"
 				       value="{{.ImgSrcFormat}}">
 			</p>
-			<button type="submit" name="action" class="btn btn_accent" value="save">
-				{{template "save"}}
-			</button>
-			<button type="submit" name="action" class="btn btn_destructive" value="delete">
-				{{template "delete"}}
-			</button>
+			<div class="form-buttons">
+				<button type="submit" name="action" class="btn btn_accent" value="save">
+					{{template "save"}}
+				</button>
+				<button type="submit" name="action" class="btn btn_destructive" value="delete">
+					{{template "delete"}}
+				</button>
+			</div>
 		</form>
 	{{end}}
 
@@ -136,7 +138,9 @@
 			<input type="url" id="img-src-format" name="img-src-format"
 			       placeholder="https://wiki.example.org/media/{NAME}">
 		</p>
-		<input type="submit" class="btn btn_accent" value="Add entry">
+		<div class="form-buttons">
+			<input type="submit" class="btn btn_accent" value="Add entry">
+		</div>
 	</form>
 {{end}}
 

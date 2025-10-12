@@ -55,6 +55,7 @@ var (
 
 	UseAuth               bool
 	AllowRegistration     bool
+	RegistrationGroup     string
 	RegistrationLimit     uint64
 	Locked                bool
 	UseWhiteList          bool
@@ -157,6 +158,7 @@ type CustomScripts struct {
 type Authorization struct {
 	UseAuth               bool
 	AllowRegistration     bool
+	RegistrationGroup     string   `comment:"Newly registered users will be added to this group."`
 	RegistrationLimit     uint64   `comment:"This field controls the maximum amount of allowed registrations."`
 	Locked                bool     `comment:"Set if users have to authorize to see anything on the wiki."`
 	UseWhiteList          bool     `comment:"If true, WhiteList is used. Else it is not used."`
@@ -293,6 +295,7 @@ func ReadConfigFile(path string) error {
 		Authorization: Authorization{
 			UseAuth:               false,
 			AllowRegistration:     false,
+			RegistrationGroup:     "anon",
 			RegistrationLimit:     0,
 			Locked:                false,
 			UseWhiteList:          false,
@@ -421,6 +424,7 @@ func ReadConfigFile(path string) error {
 	}
 	UseAuth = cfg.UseAuth
 	AllowRegistration = cfg.AllowRegistration
+	RegistrationGroup = cfg.RegistrationGroup
 	RegistrationLimit = cfg.RegistrationLimit
 	Locked = cfg.Locked
 	if Locked && !UseAuth {

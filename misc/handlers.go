@@ -13,7 +13,6 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/cfg"
 	"github.com/bouncepaw/mycorrhiza/internal/hyphae"
 	"github.com/bouncepaw/mycorrhiza/internal/search"
-	"github.com/bouncepaw/mycorrhiza/internal/shroom"
 	"github.com/bouncepaw/mycorrhiza/l18n"
 	"github.com/bouncepaw/mycorrhiza/util"
 	"github.com/bouncepaw/mycorrhiza/web/static"
@@ -32,8 +31,6 @@ func InitAssetHandlers(rtr *mux.Router) {
 
 func InitHandlers(rtr *mux.Router) {
 	rtr.HandleFunc("/list", handlerList)
-	rtr.HandleFunc("/reindex", handlerReindex)
-	rtr.HandleFunc("/update-header-links", handlerUpdateHeaderLinks)
 	rtr.HandleFunc("/random", handlerRandom)
 	rtr.HandleFunc("/about", handlerAbout)
 	rtr.HandleFunc("/title-search/", handlerTitleSearch)
@@ -54,23 +51,6 @@ func handlerList(w http.ResponseWriter, rq *http.Request) {
 		entries = append(entries, entry)
 	}
 	viewList(viewutil.MetaFrom(w, rq), entries)
-}
-
-// handlerReindex reindexes all hyphae by checking the wiki storage directory anew.
-func handlerReindex(w http.ResponseWriter, rq *http.Request) {
-	err := shroom.Reindex()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
-	}
-}
-
-// handlerUpdateHeaderLinks updates header links by reading the configured hypha, if there is any, or resorting to default values.
-func handlerUpdateHeaderLinks(w http.ResponseWriter, rq *http.Request) {
-	slog.Info("Updated header links")
-	shroom.SetHeaderLinks()
-	http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
 }
 
 // handlerRandom redirects to a random hypha.

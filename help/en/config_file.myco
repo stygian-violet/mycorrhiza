@@ -59,6 +59,7 @@ The non-absolute //path// values are relative to the directory containing the co
 == [Authorization]
 * `UseAuth`: //boolean//. Whether to enable authorization system. **Default:** `false`.
 * `AllowRegistration`: //boolean//. Whether you want unregistered visitors to be able to register themselves using the web form. **Default:** `false`.
+* `RegistrationGroup`: //group name//. Newly registered users will be added to this group. **Default:** `anon`.
 * `RegistrationLimit`: //number//. There cannot be more registered users than this number. If the number is zero, there is no limit. Makes sense only when `UseRegistration` is `true`. **Default:** `0`.
 * `Locked`: //boolean//. Whether the users have to authorize first to access the wiki. **Default:** `false`.
 * `UseWhiteList`: //boolean//. Whether to use a whitelist to allow specific users in. **Default:** `false`.
@@ -151,7 +152,6 @@ table {
 | `recent-changes-rss`     | `0`
 | `recent-changes-atom`    | `0`
 | `recent-changes-json`    | `0`
-| `reindex`                | `4`
 | `remove-from-category`   | `1`
 | `remove-media`           | `2`
 | `rename`                 | `1`
@@ -164,7 +164,6 @@ table {
 | `text`                   | `0`
 | `text-search`            | `0`
 | `today`                  | `0`
-| `update-header-links`    | `3`
 | `upload-binary`          | `1`
-| `user-list`              | `0`
+| `users`                  | `0`
 }

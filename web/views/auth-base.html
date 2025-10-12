@@ -1,0 +1,18 @@
+{{define "page"}}
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="referrer" content="{{.Meta.Referrer}}">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>{{template "title" .}}</title>
+		<link rel="shortcut icon" href="{{.Meta.Root}}static/favicon.ico">
+		<link rel="stylesheet" href="{{.Meta.Root}}static/style.css">
+	</head>
+	<body class="modal-page">
+		<main class="main-width">
+			{{template "body" .}}
+		</main>
+	</body>
+</html>
+{{end}}

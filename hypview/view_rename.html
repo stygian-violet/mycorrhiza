@@ -7,23 +7,28 @@
 			<legend class="modal__title">
 				{{block "rename [[hypha]]?" .}}Rename <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>?{{end}}
 			</legend>
-			<label for="new-name">{{block "new name" .}}New name:{{end}}</label>
-			<input type="text" value="{{.HyphaName}}" required autofocus id="new-name" name="new-name"/>
-
-			{{if .IsEmpty}}<input type="hidden" name="recursive" value="true"/>{{end}}
-			<input type="checkbox" id="recursive" {{if .IsEmpty}} disabled {{else}} name="recursive" {{end}} value="true" checked/>
-			<label for="recursive">{{block "rename recursively" .}}Rename subhyphae too{{end}}</label>
-			<br>
-			<input type="checkbox" id="redirection" name="redirection" value="true" {{if .LeaveRedirectionDefault}}checked{{end}}/>
-			<label for="redirection">{{block "leave redirection" .}}Leave redirection{{end}}</label>
-
+			<div class="form-field">
+				<label for="new-name">{{block "new name" .}}New name:{{end}}</label>
+				<input type="text" value="{{.HyphaName}}" required autofocus id="new-name" name="new-name"/>
+			</div>
+			<div class="form-field">
+				{{if .IsEmpty}}<input type="hidden" name="recursive" value="true"/>{{end}}
+				<input type="checkbox" id="recursive" {{if .IsEmpty}} disabled {{else}} name="recursive" {{end}} value="true" checked/>
+				<label for="recursive">{{block "rename recursively" .}}Rename subhyphae too{{end}}</label>
+			</div>
+			<div class="form-field">
+				<input type="checkbox" id="redirection" name="redirection" value="true" {{if .LeaveRedirectionDefault}}checked{{end}}/>
+				<label for="redirection">{{block "leave redirection" .}}Leave redirection{{end}}</label>
+			</div>
 			<p>{{block "rename tip" .}}Rename carefully. <a href="{{.Meta.Root}}help/en/rename">Documentation.</a>{{end}}</p>
-			<button type="submit" value="Confirm" class="btn">
-				{{template "confirm"}}
-			</button>
-			<a href="{{.Meta.Root}}hypha/{{.HyphaName}}" class="btn btn_weak">
-				{{template "cancel"}}
-			</a>
+			<div class="form-buttons">
+				<button type="submit" value="Confirm" class="btn">
+					{{template "confirm"}}
+				</button>
+				<a href="{{.Meta.Root}}hypha/{{.HyphaName}}" class="btn btn_weak">
+					{{template "cancel"}}
+				</a>
+			</div>
 		</fieldset>
 	</form>
 </main>

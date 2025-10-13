@@ -26,8 +26,8 @@
 }
 .modal__fieldset > .form-buttons { margin-top: auto; }
 
-ol:not(.mycomarkup-doc ol) a { text-decoration: none; display: inline-block; padding: .25rem; }
-ol:not(.mycomarkup-doc ol) a:hover { text-decoration: underline; }
+ol:not(.mycomarkup-doc ol) a, ul:not(.mycomarkup-doc ul) a { text-decoration: none; display: inline-block; padding: .25rem; }
+ol:not(.mycomarkup-doc ol) a:hover, ul:not(.mycomarkup-doc ul) a:hover { text-decoration: underline; }
 .media-type-badge { font-size: smaller; color: #999; }
 
 /* General element positions, from small to big */
@@ -134,12 +134,12 @@ main h2, main h3, main h4, main h5, main h6 { margin: 1.5rem 0 .5rem 0; clear: b
 .heading__link { text-decoration: none; display: inline-block; }
 .heading__link::after { width: 1rem; content: "§"; color: transparent; }
 .heading__link:hover::after, .heading__link:active::after { color: #999; }
-article p, article table, article ul, ol { margin: .5rem 0; }
-article ul { padding-left: 1rem; }
-article ul.launchpad { padding-left: 2rem; }
-ol { padding-left: 1.5rem; }
-article code { padding: .1rem .3rem; border-radius: .25rem; font-size: 90%; font-family: 'Menlo', 'PT Mono', monospace; }
-article pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
+p, table, main ul, ol { margin: .5rem 0; }
+main ul { padding-left: 1rem; }
+main ul.launchpad { padding-left: 2rem; }
+ol { padding-left: 2.5rem; }
+code { padding: .1rem .3rem; border-radius: .25rem; font-size: 90%; font-family: 'Menlo', 'PT Mono', monospace; }
+pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
 .codeblock code {padding:0; font-size:16px; tab-size: 3;}
 .transclusion { border-radius: .25rem; margin-bottom: .25rem; clear: both; }
 .transclusion_failed { padding: 0 .5rem; }

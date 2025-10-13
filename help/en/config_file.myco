@@ -145,7 +145,6 @@ table {
 | `list`                   | `0`
 | `media`                  | `1`
 | `orphans`                | `0`
-| `page`                   | `0`
 | `primitive-diff`         | `0`
 | `random`                 | `0`
 | `recent-changes`         | `0`

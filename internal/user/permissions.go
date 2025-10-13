@@ -22,7 +22,6 @@ var routePermission = map[string]int{
 	"interwiki":              0,
 	"list":                   0,
 	"orphans":                0,
-	"page":                   0,
 	"primitive-diff":         0,
 	"random":                 0,
 	"recent-changes":         0,

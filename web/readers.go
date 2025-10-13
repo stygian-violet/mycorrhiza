@@ -33,7 +33,6 @@ import (
 )
 
 func initReaders(r *mux.Router) {
-	r.PathPrefix("/page/").HandlerFunc(handlerHypha).Methods("GET")
 	r.PathPrefix("/hypha/").HandlerFunc(handlerHypha).Methods("GET")
 	r.PathPrefix("/text/").HandlerFunc(handlerText).Methods("GET")
 	r.PathPrefix("/binary/").HandlerFunc(handlerBinary).Methods("GET")
@@ -297,7 +296,7 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 	meta := viewutil.MetaFrom(w, rq)
 	username := meta.U.Name()
 	var (
-		hyphaName     = util.HyphaNameFromRq(rq, "page", "hypha")
+		hyphaName     = util.HyphaNameFromRq(rq, "hypha")
 		h             = hyphae.ByName(hyphaName)
 		contents      template.HTML
 		openGraph     template.HTML

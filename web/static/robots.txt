@@ -3,9 +3,7 @@ Allow: /help/
 Allow: /hypha/
 Allow: /recent-changes
 Allow: /list
-Disallow: /page/
 Disallow: /admin/
-Disallow: /lock
 Disallow: /text/
 Disallow: /binary/
 Disallow: /rev/
@@ -25,5 +23,5 @@ Disallow: /title-search/
 Disallow: /text-search/
 Disallow: /backlinks/
 Disallow: /subhyphae/
-Disallow: /user-list
+Disallow: /users
 Crawl-delay: 5

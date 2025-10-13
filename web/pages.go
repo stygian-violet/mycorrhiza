@@ -15,6 +15,7 @@ var pageHyphaDelete, pageHyphaRevert, pageHyphaEdit, pageHyphaEmpty, pageHypha *
 var pageRevision, pageMedia *newtmpl.Page
 var pageAuthLogin, pageAuthRegister *newtmpl.Page
 var pageCatPage, pageCatList, pageCatEdit *newtmpl.Page
+var pageShutdown *newtmpl.Page
 
 var panelChain, newUserChain, editUserChain, deleteUserChain viewutil.Chain
 
@@ -201,4 +202,12 @@ func initPages() {
 		"category list": "Список категорий",
 		"no categories": "В этой вики нет категорий.",
 	}, "views/cat-list.html")
+
+	pageShutdown = newtmpl.NewPage(fs, map[string]string{
+		"shutdown":              "Выключить {{template `wiki name`}}?",
+		"shutdown btn":          "Выключить",
+		"want to shutdown?":     "Вы действительно хотите выключить {{template `wiki name`}}?",
+		"shutting down":         "Выключение {{template `wiki name`}}",
+		"shutting down message": "{{template `wiki name`}} сейчас выключится.",
+	}, "views/admin-shutdown.html")
 }

@@ -77,7 +77,7 @@ func Handler() *mux.Router {
 
 		adminRouter := r.PathPrefix("/admin").Subrouter()
 
-		adminRouter.HandleFunc("/shutdown", handlerAdminShutdown).Methods(http.MethodPost)
+		adminRouter.HandleFunc("/shutdown", handlerAdminShutdown).Methods(http.MethodGet, http.MethodPost)
 		adminRouter.HandleFunc("/reindex-users", handlerAdminReindexUsers).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/reindex-hyphae", handlerAdminReindexHyphae).Methods(http.MethodPost)
 		adminRouter.HandleFunc("/update-header-links", handlerAdminUpdateHeaderLinks).Methods(http.MethodPost)

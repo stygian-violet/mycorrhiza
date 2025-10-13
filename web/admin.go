@@ -105,8 +105,14 @@ func handlerAdmin(w http.ResponseWriter, rq *http.Request) {
 
 // handlerAdminShutdown kills the wiki.
 func handlerAdminShutdown(w http.ResponseWriter, rq *http.Request) {
-	slog.Info("An admin commanded the wiki to shutdown")
-	process.Shutdown()
+	done := rq.Method == http.MethodPost
+	_ = pageShutdown.RenderTo(viewutil.MetaFrom(w, rq), map[string]interface{}{
+		"Done": done,
+	})
+	if done {
+		slog.Info("An admin commanded the wiki to shutdown")
+		process.Shutdown()
+	}
 }
 
 // handlerAdminReindexHyphae reindexes all hyphae by checking the wiki storage directory anew.

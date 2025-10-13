@@ -15,9 +15,9 @@
 	<section>
 		<h2>{{block "panel unsafe section title" .}}Unsafe section{{end}}</h2>
 		<div class="btn-row">
-			<form action="{{ .Meta.Root }}admin/shutdown" method="POST">
-				<button type="submit" class="btn btn_destructive">{{block "panel shutdown" .}}Shutdown wiki{{end}}</button>
-			</form>
+			<a href="{{ .Meta.Root }}admin/shutdown" class="btn btn_destructive">
+				{{block "panel shutdown" .}}Shutdown wiki{{end}}
+			</a>
 			<form action="{{ .Meta.Root }}admin/reindex-hyphae" method="POST">
 				<button type="submit" class="btn">{{block "panel reindex hyphae" .}}Reindex hyphae{{end}}</button>
 			</form>

@@ -1,0 +1,35 @@
+{{define "title"}}
+{{if .Done}}
+{{block "shutting down" .}}Shutting down {{template "wiki name"}}{{end}}
+{{else}}
+{{block "shutdown" .}}Shut down {{template "wiki name"}}?{{end}}
+{{end}}
+{{end}}
+{{define "body"}}
+<main class="main-width">
+	<form class="modal" action="" method="post">
+		<fieldset class="modal__fieldset">
+			<legend class="modal__title">
+				{{template "title" .}}
+			</legend>
+			<p class="modal__confirmation-msg">
+				{{if .Done}}
+				{{block "shutting down message" .}}{{template "wiki name"}} will shut down now.{{end}}
+				{{else}}
+				{{block "want to shutdown?" .}}Do you really want to shut down {{template "wiki name"}}?{{end}}
+				{{end}}
+			</p>
+			{{if not .Done}}
+			<div class="form-buttons">
+				<button type="submit" value="Confirm" class="btn btn_destructive" autofocus>
+					{{block "shutdown btn" .}}Shut down{{end}}
+				</button>
+				<a href="{{ .Meta.Root }}admin" class="btn btn_weak">
+					{{template "cancel"}}
+				</a>
+			</div>
+			{{end}}
+		</fieldset>
+	</form>
+</main>
+{{end}}

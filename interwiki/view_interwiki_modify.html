@@ -33,23 +33,23 @@
 		</p>
 		{{end}}
 		<form method="post" action="{{.Meta.Root}}interwiki/{{.Action}}" class="form--interwiki">
-			<p>
+			<div class="form-field">
 				<label for="name" class="required-field">{{template "name"}}:</label>
 				<input type="text" id="name" name="name" required
 				       value="{{.Wiki.Name}}" placeholder="home_wiki">
-			</p>
-			<p>
+			</div>
+			<div class="form-field">
 				<label for="aliases">{{template "aliases (,)"}}:</label>
 				<input type="text" id="aliases" name="aliases"
 				       value="{{range $j, $alias := .Wiki.Aliases}}{{if gt $j 0}}, {{end}}{{.}}{{end}}"
 				       placeholder="homewiki, hw">
-			</p>
-			<p>
+			</div>
+			<div class="form-field">
 				<label for="url" class="required-field">{{template "url"}}:</label>
 				<input type="url" id="url" name="url" required
 				       value="{{.Wiki.URL}}" placeholder="https://wiki.example.org">
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__engine">
 				<label for="engine" class="required-field">{{template "engine"}}:</label>
 				<select name="engine" id="engine" required>
 					<option value="mycorrhiza" {{if eq .Wiki.Engine "mycorrhiza"}}selected{{end}}>{{template "engine/mycorrhiza"}}</option>
@@ -57,19 +57,19 @@
 					<option value="agora" {{if eq .Wiki.Engine "agora"}}selected{{end}}>{{template "engine/agora"}}</option>
 					<option value="generic" {{if eq .Wiki.Engine "generic"}}selected{{end}}>{{template "engine/generic"}}</option>
 				</select>
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__format">
 				<label for="link-href-format">{{template "link href format"}}:</label>
 				<input type="url" id="link-href-format" name="link-href-format"
 				       value="{{.Wiki.LinkHrefFormat}}"
 				       placeholder="https://wiki.example.org/view/{NAME}">
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__format">
 				<label for="img-src-format">{{template "img src format"}}:</label>
 				<input type="url" id="img-src-format" name="img-src-format"
 				       value="{{.Wiki.ImgSrcFormat}}"
 				       placeholder="https://wiki.example.org/media/{NAME}">
-			</p>
+			</div>
 			<div class="form-buttons">
 				<button type="submit" name="action" class="btn btn_accent" value="save">
 					{{template "save"}}

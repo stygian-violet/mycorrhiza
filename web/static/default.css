@@ -898,6 +898,9 @@ dd + dt {
 .form--interwiki + .form--interwiki {
 	margin-top: -18px;
 }
+.form--interwiki__engine:has(option[value="generic"]:not(:checked)) ~ .form--interwiki__format {
+	display: none;
+}
 .required-field::after {
 	color: red;
 	content: "*";

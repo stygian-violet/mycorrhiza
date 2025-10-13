@@ -57,22 +57,22 @@
 
 	{{range $i, $wiki := .Entries}}
 		<form method="post" action="{{$.Meta.Root}}interwiki/modify-entry/{{.Name}}" class="form--interwiki">
-			<p>
+			<div class="form-field">
 				<label for="name{{$i}}" class="required-field">{{template "name"}}:</label>
 				<input type="text" id="name{{$i}}" name="name" required
 				       value="{{.Name}}">
-			</p>
-			<p>
+			</div>
+			<div class="form-field">
 				<label for="aliases{{$i}}">{{template "aliases (,)"}}:</label>
 				<input type="text" id="aliases{{$i}}" name="aliases"
 				       value="{{range $j, $alias := .Aliases}}{{if gt $j 0}}, {{end}}{{.}}{{end}}">
-			</p>
-			<p>
+			</div>
+			<div class="form-field">
 				<label for="url{{$i}}" class="required-field">{{template "url"}}:</label>
 				<input type="url" id="url{{$i}}" name="url" required
 				       value="{{.URL}}">
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__engine">
 				<label for="engine{{$i}}" class="required-field">{{template "engine"}}:</label>
 				<select name="engine" id="engine{{$i}}" required>
 					<option value="mycorrhiza" {{if eq .Engine "mycorrhiza"}}selected{{end}}>{{template "engine/mycorrhiza"}}</option>
@@ -80,17 +80,17 @@
 					<option value="agora" {{if eq .Engine "agora"}}selected{{end}}>{{template "engine/agora"}}</option>
 					<option value="generic" {{if eq .Engine "generic"}}selected{{end}}>{{template "engine/generic"}}</option>
 				</select>
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__format">
 				<label for="link-href-format{{$i}}">{{template "link href format"}}:</label>
 				<input type="url" id="link-href-format{{$i}}" name="link-href-format"
 				       value="{{.LinkHrefFormat}}">
-			</p>
-			<p>
+			</div>
+			<div class="form-field form--interwiki__format">
 				<label for="img-src-format{{$i}}">{{template "img src format"}}:</label>
 				<input type="url" id="img-src-format{{$i}}" name="img-src-format"
 				       value="{{.ImgSrcFormat}}">
-			</p>
+			</div>
 			<div class="form-buttons">
 				<button type="submit" name="action" class="btn btn_accent" value="save">
 					{{template "save"}}
@@ -104,22 +104,22 @@
 
 	<form method="post" action="{{.Meta.Root}}interwiki/add-entry" class="form--interwiki">
 		<h2>{{template "add interwiki entry"}}</h2>
-		<p>
+		<div class="form-field">
 			<label for="name" class="required-field">{{template "name"}}:</label>
 			<input type="text" id="name" name="name" required
 			       placeholder="home_wiki">
-		</p>
-		<p>
+		</div>
+		<div class="form-field">
 			<label for="aliases">{{template "aliases (,)"}}:</label>
 			<input type="text" id="aliases" name="aliases"
 			       placeholder="homewiki, hw">
-		</p>
-		<p>
+		</div>
+		<div class="form-field">
 			<label for="url" class="required-field">{{template "url"}}:</label>
 			<input type="url" id="url" name="url" required
 			       placeholder="https://wiki.example.org">
-		</p>
-		<p>
+		</div>
+		<div class="form-field form--interwiki__engine">
 			<label for="engine" class="required-field">{{template "engine"}}:</label>
 			<select name="engine" id="engine" required>
 				<option value="mycorrhiza">{{template "engine/mycorrhiza"}}</option>
@@ -127,17 +127,17 @@
 				<option value="agora">{{template "engine/agora"}}</option>
 				<option value="generic">{{template "engine/generic"}}</option>
 			</select>
-		</p>
-		<p>
+		</div>
+		<div class="form-field form--interwiki__format">
 			<label for="link-href-format">{{template "link href format"}}:</label>
 			<input type="url" id="link-href-format" name="link-href-format"
 			       placeholder="https://wiki.example.org/view/{NAME}">
-		</p>
-		<p>
+		</div>
+		<div class="form-field form--interwiki__format">
 			<label for="img-src-format">{{template "img src format"}}:</label>
 			<input type="url" id="img-src-format" name="img-src-format"
 			       placeholder="https://wiki.example.org/media/{NAME}">
-		</p>
+		</div>
 		<div class="form-buttons">
 			<input type="submit" class="btn btn_accent" value="Add entry">
 		</div>

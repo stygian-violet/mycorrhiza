@@ -40,11 +40,11 @@
 				<div class="form-field">
 					<label for="pass">{{block "password" .}}Password{{end}}:</label>
 					<input required type="password" autocomplete="new-password" id="pass" name="password">
-					<br>
+				</div>
+				<div class="form-field">
 					<label for="pass_confirm">{{block "confirm password" .}}Confirm password{{end}}:</label>
 					<input required type="password" autocomplete="new-password" id="pass_confirm" name="password_confirm">
 				</div>
-
 				<div class="form-buttons">
 					<input class="btn" type="submit" value='{{block "submit" .}}Submit{{end}}'>
 				</div>
@@ -65,5 +65,6 @@
 				</div>
             </fieldset>
         </div>
-    </main>
+	</section>
+</main>
 {{end}}

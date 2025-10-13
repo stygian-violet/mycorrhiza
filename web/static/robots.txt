@@ -19,6 +19,7 @@ Disallow: /remove-media/
 Disallow: /history/
 Disallow: /orphans
 Disallow: /random
+Disallow: /settings
 Disallow: /title-search/
 Disallow: /text-search/
 Disallow: /backlinks/

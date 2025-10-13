@@ -303,7 +303,7 @@ func handlerHypha(w http.ResponseWriter, rq *http.Request) {
 		lc            = l18n.FromRequest(rq)
 		cats          = categories.CategoriesWithHypha(h.CanonicalName())
 		category_list = ":" + strings.Join(cats, ":") + ":"
-		isMyProfile   = cfg.UseAuth && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
+		isMyProfile   = cfg.UseAuth && !meta.U.IsEmpty() && util.IsProfileName(h.CanonicalName()) && username == strings.TrimPrefix(h.CanonicalName(), cfg.UserHypha+"/")
 
 		subhyphae     template.HTML
 		prevHyphaName string

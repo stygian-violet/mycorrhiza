@@ -10,7 +10,8 @@ import (
 //go:embed views/*.html
 var fs embed.FS
 
-var pageOrphans, pageBacklinks, pageSubhyphae, pageUserList, pageChangePassword *newtmpl.Page
+var pageOrphans, pageBacklinks, pageSubhyphae, pageUserList *newtmpl.Page
+var pageUserSettings, pageUserDelete *newtmpl.Page
 var pageHyphaDelete, pageHyphaRevert, pageHyphaEdit, pageHyphaEmpty, pageHypha *newtmpl.Page
 var pageRevision, pageMedia *newtmpl.Page
 var pageAuthLogin, pageAuthRegister *newtmpl.Page
@@ -49,14 +50,21 @@ func initPages() {
 		"actions":       "Действия",
 		"edit":          "Изменить",
 	}, "views/user-list.html")
-	pageChangePassword = newtmpl.NewPage(fs, map[string]string{
+	pageUserSettings = newtmpl.NewPage(fs, map[string]string{
+		"user settings":             "Настройки пользователя",
+		"error":                     "Ошибка",
 		"change password":           "Сменить пароль",
 		"confirm password":          "Повторите пароль",
 		"current password":          "Текущий пароль",
 		"non local password change": "Пароль можно поменять только местным аккаунтам. Telegram-аккаунтам нельзя.",
 		"password":                  "Пароль",
-		"submit":                    "Поменять",
-	}, "views/change-password.html")
+		"delete user":               "Удалить пользователя",
+		"delete user tip":           "Удаляет пользователя из базы данных. Правки пользователя будут сохранены. Имя пользователя освободится для повторной регистрации.",
+	}, "views/user-settings.html")
+	pageUserDelete = newtmpl.NewPage(fs, map[string]string{
+		"delete user?":        "Удалить пользователя?",
+		"delete user warning": "Вы уверены, что хотите удалиться из базы данных? Это действие нельзя отменить.",
+	}, "views/user-delete.html")
 	pageHyphaDelete = newtmpl.NewPage(fs, map[string]string{
 		"delete hypha?":      "Удалить {{beautifulName .}}?",
 		"delete [[hypha]]?":  "Удалить <a href=\"{{.Meta.Root}}hypha/{{.HyphaName}}\">{{beautifulName .HyphaName}}</a>?",
@@ -109,6 +117,7 @@ func initPages() {
 		"edit text":     "Редактировать",
 		"log out":       "Выйти",
 		"admin panel":   "Админка",
+		"user settings": "Настройки",
 		"subhyphae":     "Подгифы",
 		"history":       "История",
 		"rename":        "Переименовать",

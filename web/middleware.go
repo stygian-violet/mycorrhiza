@@ -67,6 +67,17 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func requireLoginMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
+		user := user.FromRequest(rq)
+		if user.IsEmpty() {
+			http.Redirect(w, rq, cfg.Root + "login", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, rq)
+	})
+}
+
 func wikiMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 		user := user.FromRequest(rq)

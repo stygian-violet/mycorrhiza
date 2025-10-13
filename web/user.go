@@ -2,7 +2,7 @@ package web
 
 import (
 	"fmt"
-	"mime"
+	"log/slog"
 	"net/http"
 	"slices"
 
@@ -36,51 +36,68 @@ func handlerUserList(w http.ResponseWriter, rq *http.Request) {
 	})
 }
 
+func handlerUserSettings(w http.ResponseWriter, rq *http.Request) {
+	meta := viewutil.MetaFrom(w, rq)
+	_ = pageUserSettings.RenderTo(meta, map[string]any{
+		"ReturnTo": cfg.Root + "hypha/" + cfg.UserHypha + "/" + meta.U.Name(),
+	})
+}
+
+func handlerUserDelete(w http.ResponseWriter, rq *http.Request) {
+	meta := viewutil.MetaFrom(w, rq)
+	f := util.NewFormData()
+	if rq.Method == "POST" {
+		if err := user.DeleteUser(meta.U.Name()); err != nil {
+			slog.Info("Failed to delete user", "err", err)
+			f = f.WithError(err)
+		} else {
+			http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
+			return
+		}
+	}
+	_ = pageUserDelete.RenderTo(meta, map[string]any{
+		"Form": f,
+	})
+}
+
 func handlerUserChangePassword(w http.ResponseWriter, rq *http.Request) {
-	u := user.FromRequest(rq)
-	if u.IsEmpty() {
+	meta := viewutil.MetaFrom(w, rq)
+	if meta.U.IsEmpty() {
 		util.HTTP404Page(w, "404 not found")
 		return
 	}
-
 	f := util.FormDataFromRequest(rq, []string{"current_password", "password", "password_confirm"})
 
 	if rq.Method == "POST" {
 		currentPassword := f.Get("current_password")
+		err := error(nil)
 
-		if u.IsCorrectPassword(currentPassword) {
+		if meta.U.IsCorrectPassword(currentPassword) {
 			password := f.Get("password")
 			passwordConfirm := f.Get("password_confirm")
 			if password == passwordConfirm {
-				nu, err := u.WithPassword(password)
-				if err != nil {
-					f = f.WithError(err)
-				} else if err = user.ReplaceUser(u, nu); err != nil {
-					f = f.WithError(err)
-				} else {
-					http.Redirect(w, rq, cfg.Root, http.StatusSeeOther)
+				var u *user.User
+				u, err = meta.U.WithPassword(password)
+				if err == nil {
+					err = user.ReplaceUser(meta.U, u)
+				}
+				if err == nil {
+					http.Redirect(w, rq, cfg.Root + "/settings", http.StatusSeeOther)
 					return
 				}
 			} else {
-				err := fmt.Errorf("passwords do not match")
-				f = f.WithError(err)
+				err = fmt.Errorf("passwords do not match")
 			}
 		} else {
-			err := fmt.Errorf("incorrect password")
-			f = f.WithError(err)
+			err = fmt.Errorf("incorrect password")
 		}
-	}
 
-	if f.HasError() {
+		f = f.WithError(err)
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
 
-	_ = pageChangePassword.RenderTo(
-		viewutil.MetaFrom(w, rq),
-		map[string]any{
-			"Form": f,
-			"U":    u,
-		},
-	)
+	_ = pageUserSettings.RenderTo(meta, map[string]any{
+		"Form": f,
+		"ReturnTo": cfg.Root + "hypha/" + cfg.UserHypha + "/" + meta.U.Name(),
+	})
 }

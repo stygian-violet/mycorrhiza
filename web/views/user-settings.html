@@ -1,0 +1,55 @@
+{{define "user settings"}}User settings{{end}}
+{{define "title"}}{{template "user settings"}}{{end}}
+{{define "body"}}
+<main class="main-width form-wrap">
+	<h1><a href="{{.ReturnTo}}">&larr;</a> {{template "title" .}}</h1>
+
+	{{if .Form.HasError}}
+	<div class="notice notice--error">
+		<strong>{{template "error"}}:</strong> {{.Form.Error}}
+	</div>
+	{{end}}
+
+	<section class="amnt-grid">
+		<form action="{{ .Meta.Root }}settings/change-password" method="post" class="modal amnt-menu-block">
+			<fieldset class="modal__fieldset">
+				<legend class="modal__title modal__title_small">
+					{{block "change password" .}}Change password{{end}}
+				</legend>
+				{{if .Meta.U.IsLocal}}
+				<div class="form-field">
+					<label for="pass_current">{{block "current password" .}}Current password{{end}}:</label>
+					<input required type="password" autocomplete="current-password" id="pass_current" name="current_password">
+				</div>
+				<div class="form-field">
+					<label for="pass">{{block "password" .}}Password{{end}}:</label>
+					<input required type="password" autocomplete="new-password" id="pass" name="password">
+				</div>
+				<div class="form-field">
+					<label for="pass_confirm">{{block "confirm password" .}}Confirm password{{end}}:</label>
+					<input required type="password" autocomplete="new-password" id="pass_confirm" name="password_confirm">
+				</div>
+
+				<div class="form-buttons">
+					<input class="btn" type="submit" value='{{block "submit" .}}Submit{{end}}'>
+				</div>
+				{{else}}
+				<p>{{block "non local password change" .}}Non-local accounts cannot have their passwords changed.{{end}}</p>
+				{{end}}
+			</fieldset>
+		</form>
+
+		<div class="modal amnt-menu-block">
+			<fieldset class="modal__fieldset">
+				<legend class="modal__title modal__title_small">
+					{{block "delete user" .}}Delete user{{end}}
+				</legend>
+				<p>{{block "delete user tip" .}}Remove the user from the database. Changes made by the user will be preserved. It will be possible to take this username later.{{end}}</p>
+				<div class="form-buttons">
+					<a class="btn btn_destructive" href="{{ .Meta.Root }}settings/delete">{{template "delete"}}</a>
+				</div>
+			</fieldset>
+		</div>
+	</section>
+</main>
+{{end}}

@@ -90,8 +90,12 @@ func Handler() *mux.Router {
 		adminRouter.HandleFunc("/", handlerAdmin).Methods("GET")
 
 		settingsRouter := r.PathPrefix("/settings").Subrouter()
-		// TODO: check if necessary?
-		settingsRouter.HandleFunc("/change-password", handlerUserChangePassword).Methods(http.MethodGet, http.MethodPost)
+		if !cfg.Locked {
+			settingsRouter.Use(requireLoginMiddleware)
+		}
+		settingsRouter.HandleFunc("/change-password", handlerUserChangePassword).Methods(http.MethodPost)
+		settingsRouter.HandleFunc("/delete", handlerUserDelete).Methods(http.MethodGet, http.MethodPost)
+		settingsRouter.HandleFunc("/", handlerUserSettings).Methods(http.MethodGet)
 	}
 
 	// Index page

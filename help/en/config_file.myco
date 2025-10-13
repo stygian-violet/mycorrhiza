@@ -158,6 +158,7 @@ table {
 | `rev-text`               | `0`
 | `rev-binary`             | `0`
 | `revert`                 | `3`
+| `settings`               | `0`
 | `subhyphae`              | `0`
 | `title-search`           | `0`
 | `text`                   | `0`

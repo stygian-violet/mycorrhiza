@@ -13,6 +13,9 @@
                 <form class="btn_navititle" method="POST" action="{{ .Meta.Root }}logout">
                     <button class="btn" type="submit">{{block "log out" .}}Log out{{end}}</button>
                 </form>
+                <div class="btn btn_navititle">
+                    <a class="btn__link_navititle" href="{{ .Meta.Root }}settings">
+                        {{block "user settings" .}}Settings{{end}}</a></div>
                 {{if .ShowAdminPanel}}
                     <div class="btn btn_navititle">
                         <a class="btn__link_navititle" href="{{ .Meta.Root }}admin">

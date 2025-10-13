@@ -567,6 +567,19 @@ a.btn_destructive:visited,
 	color: white;
 }
 
+/*
+ * To-do lists
+ */
+.item_todo {
+	position: relative;
+	list-style: none;
+}
+.item_todo > input[type=checkbox] {
+	position: absolute;
+	left: -1.6rem;
+	top: .1rem;
+}
+
 @media (prefers-color-scheme: dark) {
 	::file-selector-button, .btn {
 		border: #444 solid 1px;

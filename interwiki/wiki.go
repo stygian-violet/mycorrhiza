@@ -212,11 +212,11 @@ func (w *Wiki) canonize() error {
 		return false
 	})
 
-	if w.linkHrefFormat == "" {
+	if w.linkHrefFormat == "" || w.engine != Generic {
 		w.linkHrefFormat = fmt.Sprintf(w.engine.LinkHrefFormat(), w.url)
 	}
 
-	if w.imgSrcFormat == "" {
+	if w.imgSrcFormat == "" || w.engine != Generic {
 		w.imgSrcFormat = fmt.Sprintf(w.engine.ImgSrcFormat(), w.url)
 	}
 

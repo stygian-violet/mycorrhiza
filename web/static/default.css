@@ -593,6 +593,8 @@ a.btn_destructive:visited,
 		background-color: transparent;
 	}
 
+	a.btn_destructive,
+	a.btn_destructive:visited,
 	.btn_destructive {
 		border-color: #e34343;
 		background-color: #b92828;

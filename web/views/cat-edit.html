@@ -2,7 +2,7 @@
 {{define "title"}}{{template "edit category x" .CatName}}{{end}}
 {{define "body"}}
 <main class="main-width category">
-	<h1>{{block "edit category heading" .}}Edit category <a href="{{ .Meta.Root }}category/{{.CatName}}">{{beautifulName .CatName}}</a>{{end}}</h1>
+	<h1>{{block "edit category heading" .}}Edit category <a class="wikilink" href="{{ .Meta.Root }}category/{{.CatName}}">{{beautifulName .CatName}}</a>{{end}}</h1>
 	{{if len .Hyphae | not}}
 	<p>{{block "empty cat" .}}This category is empty{{end}}</p>
 	{{end}}
@@ -30,7 +30,7 @@
 			{{range .Hyphae}}
 			<li>
 				<input type="checkbox" name="_{{.}}" id="_{{.}}">
-				<label for="_{{.}}"><a href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a></label>
+				<label for="_{{.}}"><a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a></label>
 			</li>
 			{{end}}
 		</ol>

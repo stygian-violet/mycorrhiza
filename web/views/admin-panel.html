@@ -5,11 +5,11 @@
 	<h1>{{template "panel title"}}</h1>
 	<section>
 		<h2>{{block "panel safe section title" .}}Safe section{{end}}</h2>
-		<ul>
-			<li><a href="{{ .Meta.Root }}about">{{block "panel link about" .}}About this wiki{{end}}</a></li>
-			<li><a href="{{ .Meta.Root }}users">{{block "panel users" .}}Manage users{{end}}</a></li>
-			<li><a href="{{ .Meta.Root }}interwiki">{{block "panel interwiki" .}}Interwiki{{end}}</a></li>
-			<li><a href="{{ .Meta.Root }}orphans">{{block "panel/orphans" .}}Orphaned hyphae{{end}}</a></li>
+		<ul class="link-list">
+			<li><a href="{{ .Meta.Root }}about" class="wikilink">{{block "panel link about" .}}About this wiki{{end}}</a></li>
+			<li><a href="{{ .Meta.Root }}users" class="wikilink">{{block "panel users" .}}Manage users{{end}}</a></li>
+			<li><a href="{{ .Meta.Root }}interwiki" class="wikilink">{{block "panel interwiki" .}}Interwiki{{end}}</a></li>
+			<li><a href="{{ .Meta.Root }}orphans" class="wikilink">{{block "panel/orphans" .}}Orphaned hyphae{{end}}</a></li>
 		</ul>
 	</section>
 	<section>

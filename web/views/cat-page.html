@@ -12,7 +12,7 @@
         {{if len .Hyphae | not}}
 			<p>{{block "empty cat" .}}This category is empty{{end}}</p>
         {{end}}
-		<ol>
+		<ol class="link-list">
             {{range .Hyphae}}
 				<li>
 					<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a>

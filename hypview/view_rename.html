@@ -5,7 +5,7 @@
 	<form class="modal" action="{{.Meta.Root}}rename/{{.HyphaName}}" method="post" enctype="multipart/form-data">
 		<fieldset class="modal__fieldset">
 			<legend class="modal__title">
-				{{block "rename [[hypha]]?" .}}Rename <a href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>?{{end}}
+				{{block "rename [[hypha]]?" .}}Rename <a class="wikilink" href="{{.Meta.Root}}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>?{{end}}
 			</legend>
 			<div class="form-field">
 				<label for="new-name">{{block "new name" .}}New name:{{end}}</label>
@@ -20,7 +20,7 @@
 				<input type="checkbox" id="redirection" name="redirection" value="true" {{if .LeaveRedirectionDefault}}checked{{end}}/>
 				<label for="redirection">{{block "leave redirection" .}}Leave redirection{{end}}</label>
 			</div>
-			<p>{{block "rename tip" .}}Rename carefully. <a href="{{.Meta.Root}}help/en/rename">Documentation.</a>{{end}}</p>
+			<p>{{block "rename tip" .}}Rename carefully. <a class="wikilink" href="{{.Meta.Root}}help/en/rename">Documentation.</a>{{end}}</p>
 			<div class="form-buttons">
 				<button type="submit" value="Confirm" class="btn">
 					{{template "confirm"}}

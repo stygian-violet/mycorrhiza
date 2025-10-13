@@ -33,7 +33,7 @@ func WithRevisions(hyphaName string, revs []Revision) string {
 
 		buf.WriteString(fmt.Sprintf(
 			`<section class="history__month">
-	<a href="#%s" class="history__month-anchor">
+	<a href="#%s" class="wikilink history__month-anchor">
 		<h2 id="%s" class="history__month-title">%d %s</h2>
 	</a>
 	<ul class="history__entries">`,
@@ -43,10 +43,10 @@ func WithRevisions(hyphaName string, revs []Revision) string {
 		for _, rev := range grp {
 			buf.WriteString(fmt.Sprintf(
 				`<li class="history__entry">
-	<a class="history-entry" href="%srev/%s/%s">
+	<a class="wikilink history-entry" href="%srev/%s/%s">
 		<time class="history-entry__time">%s</time>
 	</a>
-	<span class="history-entry__hash"><a href="%sprimitive-diff/%s/%s">%s</a></span>
+	<span class="history-entry__hash"><a class="wikilink" href="%sprimitive-diff/%s/%s">%s</a></span>
 	<span class="history-entry__msg">%s</span>`,
 				cfg.Root, rev.Hash, hyphaName,
 				rev.timeToDisplay(),
@@ -56,7 +56,7 @@ func WithRevisions(hyphaName string, revs []Revision) string {
 
 			if rev.Username != "anon" {
 				buf.WriteString(fmt.Sprintf(
-					` <span class="history-entry__author">by <a href="%shypha/%s/%s" rel="author">%s</a></span>`,
+					` <span class="history-entry__author">by <a class="wikilink" href="%shypha/%s/%s" rel="author">%s</a></span>`,
 					cfg.Root, cfg.UserHypha, rev.Username, rev.Username,
 				))
 			}
@@ -87,7 +87,7 @@ func (rev Revision) HyphaeDiffsHTML() template.HTML {
 	entries := rev.hyphaeAffected()
 	if len(entries) == 1 {
 		return template.HTML(fmt.Sprintf(
-			`<a href="%sprimitive-diff/%s/%s">%s</a>`,
+			`<a class="wikilink" href="%sprimitive-diff/%s/%s">%s</a>`,
 			cfg.Root, rev.Hash, entries[0], rev.Hash,
 		))
 	}
@@ -97,7 +97,7 @@ func (rev Revision) HyphaeDiffsHTML() template.HTML {
 		if i > 0 {
 			buf.WriteString(`<span aria-hidden="true">, </span>`)
 		}
-		buf.WriteString(`<a href="`)
+		buf.WriteString(`<a class="wikilink" href="`)
 		buf.WriteString(cfg.Root)
 		buf.WriteString(`primitive-diff/`)
 		buf.WriteString(rev.Hash)
@@ -135,7 +135,7 @@ func (rev Revision) HyphaeLinksHTML() template.HTML {
 		}
 
 		urlSafeHyphaName := url.PathEscape(hyphaName)
-		buf.WriteString(fmt.Sprintf(`<a href="%shypha/%s">%s</a>`, cfg.Root, urlSafeHyphaName, hyphaName))
+		buf.WriteString(fmt.Sprintf(`<a class="wikilink" href="%shypha/%s">%s</a>`, cfg.Root, urlSafeHyphaName, hyphaName))
 	}
 	return template.HTML(buf.String())
 }

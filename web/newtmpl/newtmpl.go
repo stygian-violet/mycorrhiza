@@ -37,7 +37,10 @@ func NewPage(fs embed.FS, russianTranslation map[string]string, tmpls ...string)
 			"beautifulLink": func(hyphaName string) template.HTML {
 				return template.HTML(
 					fmt.Sprintf(
-						`<a href="%shypha/%s">%s</a>`, cfg.Root, hyphaName, hyphaName))
+						`<a class="wikilink" href="%shypha/%s">%s</a>`,
+						cfg.Root, hyphaName, util.BeautifulName(hyphaName),
+					),
+				)
 			},
 		}).
 		Parse(fmt.Sprintf(`

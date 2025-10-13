@@ -4,10 +4,10 @@
 <main class="main-width">
 	<h1>{{template "list of hyphae"}}</h1>
 	<p>{{block "x total" .HyphaCount}}{{.}} total.{{end}}</p>
-	<ol>
+	<ol class="link-list">
 		{{range .Entries}}
 			<li>
-				<a href="{{$.Meta.Root}}hypha/{{.Name}}">{{beautifulName .Name}}</a>
+				<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.Name}}">{{beautifulName .Name}}</a>
 				{{if .Ext}}<span class="media-type-badge">{{.Ext}}</span>{{end}}
 			</li>
 		{{end}}

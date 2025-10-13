@@ -4,7 +4,7 @@
 	<main class="main-width">
 		<h1>{{template "orphaned hyphae"}}</h1>
 		<p>{{block "orphan description" .}}Hyphae which have no backlinks are listed here.{{end}}</p>
-		<ol>
+		<ol class="link-list">
             {{range .Orphans}}
 				<li>
 					<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a>

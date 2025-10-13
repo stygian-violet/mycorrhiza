@@ -11,7 +11,7 @@
 	{{if len .Results}}
 	<section>
 		<h2>{{block "title search results" .}}In titles{{end}}</h2>
-		<ol>
+		<ol class="link-list">
 		{{range .Results}}
 			<li>
 				<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.}}">{{beautifulName .}}</a>
@@ -23,7 +23,7 @@
 	{{if .HasTextResults}}
 	<section>
 		<h2>{{block "text search results" .}}In text{{end}}</h2>
-		<ol>
+		<ol class="link-list">
 			{{range .TextResults.Hyphae}}
 			<li>
 				<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.Hypha}}">{{beautifulName .Hypha}}</a>

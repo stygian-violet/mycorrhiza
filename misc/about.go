@@ -41,7 +41,7 @@ const aboutTemplateString = `
 			<dd>{{ .Version }}</dd>
 		{{ if .Cfg.UseAuth }}
 			<dt>{{ get .L.HomeHypha }}</dt>
-			<dd><a href="{{ .Cfg.Root }}hypha/{{ .Cfg.HomeHypha }}">{{ .Cfg.HomeHypha }}</a></dd>
+			<dd><a class="wikilink" href="{{ .Cfg.Root }}hypha/{{ .Cfg.HomeHypha }}">{{ .Cfg.HomeHypha }}</a></dd>
 
 			<dt>{{get .L.Auth}}</dt>
 			<dd>{{ get .L.AuthOn }}</dd>
@@ -56,7 +56,7 @@ const aboutTemplateString = `
 
 			<dt>{{ get .L.Admins }}</dt>
 			{{$cfg := .Cfg}}{{ range $i, $username := .Admins }}
-				<dd><a href="{{ $cfg.Root }}hypha/{{ $cfg.UserHypha }}/{{ $username }}">{{ $username }}</a></dd>
+				<dd><a class="wikilink" href="{{ $cfg.Root }}hypha/{{ $cfg.UserHypha }}/{{ $username }}">{{ $username }}</a></dd>
 			{{ end }}
 
 		{{ else }}
@@ -77,7 +77,7 @@ var aboutData = struct {
 }{
 	L: map[string]L10nEntry{
 		"Title":             En("About %s").Ru("О %s"),
-		"Version":           En("<a href=\"https://mycorrhiza.wiki\">Mycorrhiza Wiki</a> version").Ru("Версия <a href=\"https://mycorrhiza.wiki\">Микоризы</a>"),
+		"Version":           En(`<a class="wikilink wikilink_external wikilink_http" href="https://mycorrhiza.wiki">Mycorrhiza Wiki</a> version`).Ru(`Версия <a class="wikilink wikilink_external wikilink_http" href="https://mycorrhiza.wiki">Микоризы</a>`),
 		"UserCount":         En("User count").Ru("Число пользователей"),
 		"HomeHypha":         En("Home hypha").Ru("Домашняя гифа"),
 		"RegistrationLimit": En("RegistrationLimit").Ru("Максимум пользователей"),

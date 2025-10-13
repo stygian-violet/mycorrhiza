@@ -5,7 +5,7 @@
 	<h1>{{block "search results for" .Query}}Search results for ‘{{.}}’{{end}}</h1>
 	{{if .HasResults}}
 	{{if len .Results.Hyphae}}
-	<ol>
+	<ol class="link-list">
 		{{range .Results.Hyphae}}
 		<li>
 			<a class="wikilink" href="{{$.Meta.Root}}hypha/{{.Hypha}}">{{beautifulName .Hypha}}</a>

@@ -150,10 +150,10 @@
 	<main class="main-width">
 		<h1>{{template "interwiki map"}}</h1>
 		{{if .CanEdit}}
-			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a> {{template "edit separately."}}</p>
+			<p><a class="wikilink" href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a> {{template "edit separately."}}</p>
 			{{template "authorized map" .}}
 		{{else}}
-			<p><a href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a></p>
+			<p><a class="wikilink" href="{{ .Meta.Root }}help/en/interwiki">{{template "documentation."}}</a></p>
 			{{template "static map" .}}
 		{{end}}
 	</main>

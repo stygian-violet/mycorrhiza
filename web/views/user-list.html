@@ -29,7 +29,7 @@
 			{{range .Users}}
 			<tr>
 				<td class="table-cell--fill">
-					<a href="{{ $.Meta.Root }}hypha/{{$userHypha}}/{{.Name}}">{{.Name}}</a>
+					<a href="{{ $.Meta.Root }}hypha/{{$userHypha}}/{{.Name}}" class="wikilink">{{.Name}}</a>
 				</td>
 				<td>{{.GroupName}}</td>
 				<td>
@@ -41,7 +41,7 @@
 				</td>
 				{{if $canEdit}}
 				<td>
-					<a href="{{ $.Meta.Root }}admin/users/{{.Name}}/edit">{{block "edit" .}}Edit{{end}}</a>
+					<a href="{{ $.Meta.Root }}admin/users/{{.Name}}/edit" class="wikilink">{{block "edit" .}}Edit{{end}}</a>
 				</td>
 				{{end}}
 			</tr>

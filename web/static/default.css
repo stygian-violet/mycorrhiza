@@ -101,7 +101,7 @@ header { width: 100%; }
 }
 
 *, *::before, *::after {box-sizing: border-box;}
-html { height:100%; padding:0; }
+html { height:100%; padding:0; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
 body { margin: 0; font-size:16px; font-family: sans-serif; color: black; }
 input, kbd { font: inherit; color: inherit; }
 textarea {font-size:16px; font-family: inherit; line-height: 150%; }
@@ -133,7 +133,7 @@ blockquote { margin: 0; padding-left: .75rem; }
 .wikilink_gemini { background: transparent left no-repeat url("icon/gemini-proto.svg"); }
 .wikilink_mailto { background: transparent left no-repeat url("icon/mailto-proto.svg"); }
 
-article { overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; line-height: 150%; }
+article { line-height: 150%; }
 main h1 { margin: .5rem 0; }
 main h2, main h3, main h4, main h5, main h6 { margin: 1.5rem 0 .5rem 0; clear: both; }
 .heading__link { text-decoration: none; display: inline-block; }
@@ -460,7 +460,6 @@ kbd {
 }
 
 .users-table th, .users-table td {
-	white-space: nowrap;
 	padding: 0.5rem;
 }
 
@@ -794,7 +793,7 @@ a.btn_destructive:visited,
 	}
 	.top-bar__wrapper {
 		margin: 0;
-		grid-template-columns: 2fr 1.3fr .7fr;
+		grid-template-columns: 2fr 1.3fr minmax(max-content, 0.7fr);
 	}
 	.top-bar__section_home {
 		grid-column: 1 / span 1;

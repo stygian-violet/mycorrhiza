@@ -1,23 +1,23 @@
 {{define "category x"}}Category {{. | beautifulName}}{{end}}
 {{define "title"}}{{template "category x" .CatName}}{{end}}
 {{define "body"}}
-    {{$catName := .CatName}}
-	<main class="main-width category">
-		{{if .GivenPermissionToModify}}
-			<div class="btn btn_navititle">
-				<a class="btn__link_navititle" href="{{ .Meta.Root }}edit-category/{{$catName}}">{{block "edit" .}}Edit{{end}}</a>
-			</div>
-		{{end}}
-		<h1>{{block "cat" .}}Category{{end}} <i>{{beautifulName $catName}}</i></h1>
-        {{if len .Hyphae | not}}
-			<p>{{block "empty cat" .}}This category is empty{{end}}</p>
+{{$catName := .CatName}}
+<main class="main-width category">
+	{{if .GivenPermissionToModify}}
+	<div class="navi-title-buttons">
+		<a class="btn" href="{{ .Meta.Root }}edit-category/{{$catName}}">{{block "edit" .}}Edit{{end}}</a>
+	</div>
+	{{end}}
+	<h1>{{block "cat" .}}Category{{end}} <i>{{beautifulName $catName}}</i></h1>
+    {{if len .Hyphae | not}}
+	<p>{{block "empty cat" .}}This category is empty{{end}}</p>
+    {{end}}
+	<ol class="link-list">
+        {{range .Hyphae}}
+		<li>
+			<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a>
+		</li>
         {{end}}
-		<ol class="link-list">
-            {{range .Hyphae}}
-				<li>
-					<a class="wikilink" href="{{ $.Meta.Root }}hypha/{{.}}">{{beautifulName .}}</a>
-				</li>
-            {{end}}
-		</ol>
-	</main>
+	</ol>
+</main>
 {{end}}

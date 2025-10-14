@@ -3,15 +3,13 @@
 {{define "body"}}
 <main class="main-width">
 	<section>
-		{{if .CanRevert}}
-		<div class="btn btn_navititle">
-			<a class="btn__link_navititle" href="{{ .Meta.Root }}revert/{{.RevHash}}/{{.HyphaName}}">
+		<div class="navi-title-buttons">
+			{{if .CanRevert}}
+			<a class="btn" href="{{ .Meta.Root }}revert/{{.RevHash}}/{{.HyphaName}}">
 				{{block "revert" .}}Revert{{end}}
 			</a>
-		</div>
-		{{end}}
-		<div class="btn btn_navititle">
-			<a class="btn__link_navititle" href="{{ .Meta.Root }}rev-text/{{.RevHash}}/{{.HyphaName}}">
+			{{end}}
+			<a class="btn" href="{{ .Meta.Root }}rev-text/{{.RevHash}}/{{.HyphaName}}">
 				{{block "revision link" .}}View markup{{end}}
 			</a>
 		</div>

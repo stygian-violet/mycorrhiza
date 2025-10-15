@@ -101,8 +101,8 @@ header { width: 100%; }
 }
 
 *, *::before, *::after {box-sizing: border-box;}
-html { height:100%; padding:0; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
-body { margin: 0; font-size:16px; font-family: sans-serif; color: black; }
+html { height:100%; font-size:16px; padding:0; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
+body { margin: 0; font-family: sans-serif; color: black; }
 input, kbd { font: inherit; color: inherit; }
 textarea {font-size:16px; font-family: inherit; line-height: 150%; }
 select { cursor: pointer; }
@@ -127,11 +127,11 @@ main h1:not(.navi-title) {font-size:1.7rem;}
 blockquote { margin: 0; padding-left: .75rem; }
 .wikilink { text-decoration: none; }
 .wikilink:hover { text-decoration: underline; }
-.wikilink_external { padding-left: 1.2rem; }
-.wikilink_gopher { background: transparent left no-repeat url("icon/gopher-proto.svg"); }
-.wikilink_http, .wikilink_https { background: transparent left no-repeat url("icon/http-proto.svg"); }
-.wikilink_gemini { background: transparent left no-repeat url("icon/gemini-proto.svg"); }
-.wikilink_mailto { background: transparent left no-repeat url("icon/mailto-proto.svg"); }
+.wikilink_external { padding-left: 1.2em; }
+.wikilink_gopher { background: url("icon/gopher-proto.svg") left/1em no-repeat; }
+.wikilink_http, .wikilink_https { background: url("icon/http-proto.svg") left/1em no-repeat; }
+.wikilink_gemini { background: url("icon/gemini-proto.svg") left/1em no-repeat; }
+.wikilink_mailto { background: url("icon/mailto-proto.svg") left/1em no-repeat; }
 
 article { line-height: 150%; }
 main h1 { margin: .5rem 0; }
@@ -141,7 +141,7 @@ main h2, main h3, main h4, main h5, main h6 { margin: 1.5rem 0 .5rem 0; clear: b
 .heading__link:hover::after, .heading__link:active::after { color: #999; }
 p, table, main ul, ol { margin: .5rem 0; }
 main ul { padding-left: 1rem; }
-main ul.launchpad { padding-left: 2rem; }
+main ul.launchpad { padding-left: 0; }
 ol { padding-left: 2.5rem; }
 code { padding: .1rem .3rem; border-radius: .25rem; font-size: 90%; font-family: 'Menlo', 'PT Mono', monospace; }
 pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
@@ -152,8 +152,11 @@ pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
 .transclusion__link {position: relative; display: block; float: right; text-align: right; font-style: italic; margin-right: .25rem; text-decoration: none; z-index: 2;}
 .transclusion__link::before {content: "⇐ ";}
 
-/* Derived from https://commons.wikimedia.org/wiki/File:U%2B21D2.svg */
-.launchpad__entry { list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.0' width='25' height='12'%3E%3Cg transform='scale(0.7,0.8) translate(-613.21429,-421)'%3E%3Cpath fill='%23999' d='M 638.06773,429.49751 L 631.01022,436.87675 L 630.1898,436.02774 L 632.416,433.30375 L 613.46876,433.30375 L 613.46876,431.66382 L 633.82089,431.66382 L 635.57789,429.5261 L 633.79229,427.35979 L 613.46876,427.35979 L 613.46876,425.71985 L 632.416,425.71985 L 630.1898,422.99587 L 631.01022,422.08788 L 638.06773,429.49751 z '/%3E%3C/g%3E%3C/svg%3E"); }
+.launchpad__entry {
+	list-style: none;
+	padding-left: 1.5em;
+	background: url("icon/rocket-link.svg") left 0.25em / auto 1em no-repeat;
+}
 
 .binary-container { width: 100%; text-align: center; }
 .binary-container_with-img img,

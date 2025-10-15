@@ -21,7 +21,6 @@ import (
 	"github.com/bouncepaw/mycorrhiza/internal/version"
 	"github.com/bouncepaw/mycorrhiza/interwiki"
 	"github.com/bouncepaw/mycorrhiza/web"
-	"github.com/bouncepaw/mycorrhiza/web/static"
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
@@ -79,9 +78,6 @@ func main() {
 	if err := interwiki.Init(); err != nil {
 		exit()
 	}
-
-	// Static files:
-	static.InitFS(files.StaticFiles())
 
 	switch {
 	case !cfg.UseAuth:

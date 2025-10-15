@@ -2,6 +2,7 @@
 package files
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -56,11 +57,7 @@ func InterwikiJSON() string { return paths.interwikiJSON }
 // PrepareWikiRoot ensures all needed directories and files exist and have
 // correct permissions.
 func PrepareWikiRoot() error {
-	isFirstInit := false
 	paths.wikiDir = filepath.FromSlash(cfg.WikiDir)
-	if _, err := os.Stat(paths.wikiDir); err != nil && os.IsNotExist(err) {
-		isFirstInit = true
-	}
 	if err := os.MkdirAll(paths.wikiDir, os.ModeDir|0770); err != nil {
 		return err
 	}
@@ -79,6 +76,14 @@ func PrepareWikiRoot() error {
 	if err := os.MkdirAll(paths.staticFiles, os.ModeDir|0770); err != nil {
 		return err
 	}
+	static.InitFS(paths.staticFiles)
+	iconPath := filepath.Join(paths.staticFiles, "icon")
+	if err := os.MkdirAll(iconPath, os.ModeDir|0770); err != nil {
+		return err
+	}
+	if err := copyStatic("icon/favicon.ico", "icon/favicon.svg"); err != nil {
+		return err
+	}
 
 	paths.configPath = filepath.Join(paths.wikiDir, "config.ini")
 	paths.userCredentialsJSON = filepath.Join(paths.wikiDir, "users.json")
@@ -87,41 +92,36 @@ func PrepareWikiRoot() error {
 	paths.categoriesJSON = filepath.Join(paths.wikiDir, "categories.json")
 	paths.interwikiJSON = FileInRoot("interwiki.json")
 
-	// Are we initializing the wiki for the first time?
-	if isFirstInit {
-		err := firstTimeInit()
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-// firstTimeInit takes care of any tasks that only need to happen the first time the wiki is initialized
-func firstTimeInit() error {
-	static.InitFS(StaticFiles())
+func copyStatic(path... string) error {
+	for _, p := range path {
+		dstPath := filepath.Join(paths.staticFiles, p)
+		if _, err := os.Stat(dstPath); err == nil {
+			continue
+		}
 
-	defaultFavicon, err := static.FS.Open("icon/mushroom.png")
-	if err != nil {
-		return err
+		src, err := static.FS.Open(p)
+		if err != nil {
+			return err
+		}
+
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			src.Close()
+			return err
+		}
+
+		_, err = io.Copy(dst, src)
+		src.Close()
+		dst.Close()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to copy static file '%s' to '%s': %s",
+				p, dstPath, err.Error(),
+			)
+		}
 	}
-
-	defer defaultFavicon.Close()
-
-	outputFileName := filepath.Join(paths.wikiDir, "static", "favicon.ico")
-
-	outputFile, err := os.Create(outputFileName)
-	if err != nil {
-		return err
-	}
-
-	defer outputFile.Close()
-
-	_, err = io.Copy(outputFile, defaultFavicon)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

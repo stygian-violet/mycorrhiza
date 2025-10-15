@@ -2,7 +2,9 @@ package static
 
 import (
 	"embed"
+	"errors"
 	"io/fs"
+	// "log/slog"
 	"os"
 )
 
@@ -11,6 +13,8 @@ var embedFS embed.FS
 
 // FS serves all static files.
 var FS HybridFS
+
+var ErrNotInitialized = errors.New("static fs is not initialized")
 
 // HybridFS is a filesystem that implements fs.FS. It can serve files
 // from multiple filesystems, falling back on failures.
@@ -26,11 +30,15 @@ func (f HybridFS) Open(name string) (fs.File, error) {
 
 	for _, candidate := range f.fs {
 		file, err = candidate.Open(name)
+		// slog.Info("open", "name", name, "err", err)
 		if err == nil {
 			return file, nil
 		}
 	}
 
+	if err == nil {
+		err = ErrNotInitialized
+	}
 	return nil, err
 }
 

@@ -19,14 +19,12 @@ import (
 	"github.com/bouncepaw/mycorrhiza/web/viewutil"
 )
 
-func InitAssetHandlers(rtr *mux.Router) {
+func InitAssetHandlers(rtr *mux.Router, root *mux.Router) {
 	rtr.HandleFunc("/static/style.css", handlerStyle)
 	rtr.HandleFunc("/robots.txt", handlerRobotsTxt)
 	rtr.PathPrefix("/static/").
 		Handler(http.StripPrefix(cfg.Root + "static/", http.FileServer(http.FS(static.FS))))
-	rtr.HandleFunc("/favicon.ico", func(w http.ResponseWriter, rq *http.Request) {
-		http.Redirect(w, rq, cfg.Root + "static/favicon.ico", http.StatusSeeOther)
-	})
+	root.HandleFunc("/favicon.ico", handlerFavicon)
 }
 
 func InitHandlers(rtr *mux.Router) {
@@ -38,6 +36,10 @@ func InitHandlers(rtr *mux.Router) {
 		rtr.HandleFunc("/text-search/", handlerTextSearch)
 	}
 	initViews()
+}
+
+func handlerFavicon(w http.ResponseWriter, rq *http.Request) {
+	http.Redirect(w, rq, cfg.Root + "static/icon/favicon.ico", http.StatusSeeOther)
 }
 
 // handlerList shows a list of all hyphae in the wiki.

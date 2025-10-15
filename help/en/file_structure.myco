@@ -8,7 +8,9 @@ You can edit all of the files manually, if you want, just do your best to not br
 * `config.ini` is the [[{{root}}help/en/config_file | configuration file]]. It has comments in it, feel free to edit it.
 * `wiki.git/` is the Git repository of the wiki, it has all hyphae in it. You can edit it directly, but do not forget to make Git commits with your changes and [[{{root}}reindex]] you wiki afterwards.
 * `static` holds static data. You can access data there from your wiki with addresses like `{{root}}static/image.png`.
-** `static/favicon.ico` is your wiki's favicon, accessed at [[{{root}}favicon.ico]] by browsers.
+** `static/icon/` contains icons.
+*** `static/icon/favicon.ico` is your wiki's 32x32 raster favicon, accessed at [[/favicon.ico]] and [[{{root}}static/icon/favicon.ico]] by browsers.
+*** `static/icon/favicon.svg` is your wiki's vector favicon, accessed at [[{{root}}static/icon/favicon.svg]] by browsers that support SVG icons.
 ** `static/default.css` redefines the engine's default style, if exists. You probably don't need to use it.
 ** `static/custom.css` is loaded after the main style. If you want to make visual changes to your wiki, this is probably where you should do that.
 ** `static/robots.txt` redefines default `robots.txt` file.

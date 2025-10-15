@@ -11,7 +11,8 @@
 	<meta name="referrer" content="{{ .Meta.Referrer }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{block "title" .}}{{end}}</title>
-	<link rel="icon" href="{{ .Meta.Root }}static/favicon.ico">
+	<link rel="icon" href="{{ .Meta.Root }}static/icon/favicon.ico" sizes="32x32">
+	<link rel="icon" href="{{ .Meta.Root }}static/icon/favicon.svg">
 	<link rel="stylesheet" href="{{ .Meta.Root }}static/style.css">
 	{{range .HeadElements}}{{.}}{{end}}
 </head>

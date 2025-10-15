@@ -36,7 +36,7 @@ func Handler() *mux.Router {
 	router.StrictSlash(true)
 
 	// Public routes. They're always accessible regardless of the user status.
-	misc.InitAssetHandlers(router)
+	misc.InitAssetHandlers(router, ret)
 
 	r := router.PathPrefix("").Subrouter()
 	r.Use(authMiddleware)

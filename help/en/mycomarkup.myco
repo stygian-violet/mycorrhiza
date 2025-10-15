@@ -191,9 +191,9 @@ an image hypha
 
 If you put just one image, it will be displayed with no decorations:
 * {```
-img { {{root}}static/favicon.ico }
+img { {{root}}static/icon/favicon.svg }
 ```}
-* {img { {{root}}static/favicon.ico }}
+* {img { {{root}}static/icon/favicon.svg }}
 
 === Gallery layout
 

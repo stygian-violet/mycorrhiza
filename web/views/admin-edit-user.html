@@ -1,8 +1,8 @@
 {{define "user x"}}User {{.}}{{end}}
 {{define "title"}}{{template "user x" .U.Name}}{{end}}
 {{define "body"}}
-<main class="main-width form-wrap">
-    <h1><a href="{{ .Meta.Root }}users">&larr;</a> {{.U.Name}}</h1>
+<main class="main-width">
+    <h1><a class="wikilink" href="{{ .Meta.Root }}users">&larr;</a> {{.U.Name}}</h1>
 
     {{if .Form.HasError}}
     <div class="notice notice--error">

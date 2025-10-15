@@ -65,7 +65,6 @@ func NaviTitle(meta viewutil.Meta, hyphaName string) template.HTML {
 	err := chainNaviTitle.Get(meta).ExecuteTemplate(&buf, "navititle", naviTitleData{
 		HyphaNameParts:            parts,
 		HyphaNamePartsWithParents: partsWithParents,
-		Icon:                      cfg.NaviTitleIcon,
 		HomeHypha:                 cfg.HomeHypha,
 		Root:                      cfg.Root,
 	})

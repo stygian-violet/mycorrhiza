@@ -25,7 +25,6 @@ import (
 // documentation.
 var (
 	WikiName      string
-	NaviTitleIcon string
 
 	HomeHypha           string
 	UserHypha           string
@@ -97,7 +96,6 @@ var WikiDir string
 // only when reading configs.
 type Config struct {
 	WikiName      string `comment:"This name appears in the header and on various pages."`
-	NaviTitleIcon string `comment:"This icon is used in the breadcrumbs bar."`
 	Hyphae
 	Network
 	HTTPS
@@ -260,8 +258,7 @@ func intKeysHash(s *ini.Section) (map[string]int, error) {
 // configuration. Call it sometime during the initialization.
 func ReadConfigFile(path string) error {
 	cfg := &Config{
-		WikiName:      "Mycorrhiza Wiki",
-		NaviTitleIcon: "🍄",
+		WikiName: "Mycorrhiza Wiki",
 		Hyphae: Hyphae{
 			HomeHypha:           "home",
 			UserHypha:           "u",
@@ -360,7 +357,6 @@ func ReadConfigFile(path string) error {
 
 	// Map the struct to the global variables
 	WikiName = cfg.WikiName
-	NaviTitleIcon = cfg.NaviTitleIcon
 	HomeHypha = util.CanonicalName(filepath.ToSlash(cfg.HomeHypha))
 	UserHypha = util.CanonicalName(filepath.ToSlash(cfg.UserHypha))
 	HeaderLinksHypha = util.CanonicalName(filepath.ToSlash(cfg.HeaderLinksHypha))

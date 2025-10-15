@@ -167,6 +167,7 @@ pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
 .navi-title a {text-decoration:none; }
 .navi-title__separator { margin: 0 .25rem; }
 .navi-title__colon { margin-right: .5rem; }
+.navi-title__home { padding-left: 1.25em; background: url("icon/favicon.svg") left / 1em 1em no-repeat; }
 .upload-amnt { clear: both; padding: .5rem; border-radius: .25rem; }
 .upload-amnt__unattach { display: block; }
 aside { clear: both; }
@@ -396,7 +397,7 @@ kbd {
 	margin: 0;
 	padding: 0.5rem;
 	border: none;
-	background: url(icon/x.svg) no-repeat 0.5rem 0.5rem / 1rem 1rem;
+	background: url("icon/x.svg") no-repeat 0.5rem 0.5rem / 1rem 1rem;
 	width: 2rem;
 	height: 2rem;
 	cursor: pointer;

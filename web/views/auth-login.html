@@ -1,11 +1,11 @@
 {{define "log in to x"}}Log in to {{.}}{{end}}
-{{define "lock title"}}🔒 Locked{{end}}
+{{define "lock title"}}Locked{{end}}
 {{define "title"}}{{if .Locked}}{{template "lock title"}}{{else}}{{template "log in to x" .WikiName}}{{end}}{{end}}
 {{define "body"}}
 {{if and .Locked (not .Meta.U.IsEmpty) }}
 <form class="modal" method="post" action="{{ .Meta.Root }}logout">
 	<fieldset class="modal__fieldset">
-		<legend class="modal__title">{{template "title" .}}</legend>
+		<legend class="modal__title icon icon-lock">{{template "title" .}}</legend>
 		<p>{{block "approval tip" .}}New users must be approved by an administrator before they can access the wiki.{{end}}</p>
 		<div class="form-buttons">
 			<button class="btn" type="submit">{{block "log out" .}}Log out{{end}}</button>
@@ -15,7 +15,7 @@
 {{else}}
 <form class="modal form--double" method="post" action="{{ .Meta.Root }}login" id="login-form" enctype="multipart/form-data" autocomplete="on">
 	<fieldset class="modal__fieldset">
-		<legend class="modal__title">{{template "title" .}}</legend>
+		<legend class="modal__title {{if .Locked}}icon icon-lock{{end}}">{{template "title" .}}</legend>
 		{{if .Err}}
 		<div class="notice notice--error">
 			{{if .ErrLogin}}

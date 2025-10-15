@@ -121,7 +121,16 @@ body.modal-page main { grid-row: 2 / span 1; grid-column: 2 / span 1; }
 .edit-toolbar__buttons, .edit-toolbar__help { margin: .5rem; }
 .edit-form { height: 100%; display: flex; flex-direction: column; }
 
-.icon {margin-right: .25rem; vertical-align: bottom; }
+.icon {
+	padding-left: 1.5em;
+	background-position: left center;
+	background-repeat: no-repeat;
+	background-size: 1em 1em;
+}
+.modal__title.icon { background-position: 0.25em center; }
+.icon-lock { background-image: url("icon/lock.svg"); }
+.icon-text { background-image: url("icon/text.svg"); }
+.icon-media { background-image: url("icon/media.svg"); }
 
 main h1:not(.navi-title) {font-size:1.7rem;}
 blockquote { margin: 0; padding-left: .75rem; }
@@ -934,7 +943,6 @@ figcaption >:last-child { margin-bottom: 0; }
 	.img-gallery_layout-grid {
 		grid-template-columns: 1fr 1fr;
 	}
-	.img-gallery_layout-grid figcaption { margin-top: 0; }
 
 	.img-gallery_layout-side {
 		float: right;

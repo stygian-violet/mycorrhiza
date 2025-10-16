@@ -25,7 +25,7 @@ header { width: 100%; }
 html { height:100%; font-size:16px; padding:0; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
 body { margin: 0; font-family: sans-serif; color: black; }
 input, kbd { font: inherit; color: inherit; }
-textarea {font-size:16px; font-family: inherit; line-height: 150%; }
+textarea { font-size: inherit; font-family: 'Menlo', 'PT Mono', monospace; line-height: 150%; }
 select { cursor: pointer; }
 
 body.modal-page { grid-template-rows: 1fr auto 1fr; grid-template-columns: 1fr auto 1fr; height: 100%; }

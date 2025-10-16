@@ -1,26 +1,25 @@
 {{define "title"}}{{block "create user" .}}Create a new user{{end}}{{end}}
 {{define "body"}}
-	<main class="main-width">
-		<h1>{{block "new user" .}}New user{{end}}</h1>
-
-		{{if .Form.HasError}}
-		<div class="notice notice--error">
-			<strong>{{template "error"}}:</strong>
-			{{.Form.Error}}
-		</div>
-		{{end}}
-
-		<form class="form--double" action="" method="post">
+<main class="main-width">
+	<form action="" method="post" class="modal form--double">
+		<fieldset class="modal__fieldset">
+			<legend class="modal__title">
+				{{block "new user" .}}New user{{end}}
+			</legend>
+			{{if .Form.HasError}}
+			<div class="notice notice--error">
+				<strong>{{template "error"}}:</strong>
+				{{.Form.Error}}
+			</div>
+			{{end}}
 			<div class="form-field">
 				<label for="name">{{block "name" .}}Name{{end}}:</label>
 				<input type="text" name="name" id="name" value="{{.Form.Get `name`}}" autofocus>
 			</div>
-
 			<div class="form-field">
 				<label for="password">{{block "password" .}}Password{{end}}:</label>
 				<input type="password" name="password" id="password" value="{{.Form.Get `password`}}">
 			</div>
-
 			<div class="form-field">
 				<label for="group">{{block "group" .}}Group{{end}}:</label>
 				<select id="group" name="group">
@@ -30,11 +29,11 @@
 					{{end}}
 				</select>
 			</div>
-
 			<div class="form-buttons">
 				<button class="btn" type="submit">{{block "create" .}}Create{{end}}</button>
 				<a class="btn btn_weak" href="{{ .Meta.Root }}users">{{template "cancel"}}</a>
 			</div>
-		</form>
-	</main>
+		</fieldset>
+	</form>
+</main>
 {{end}}

@@ -68,16 +68,14 @@
             {{end}}
         </h1>
         <textarea name="text" class="edit-form__textarea" autofocus>{{.Content}}</textarea>
-        <p class="edit-form__message-zone">
-            <input
-                id="text"
-                type="text"
-                name="message"
-                class="edit-form__message"
-                value="{{.Message}}"
-                placeholder="{{block "describe your changes" .}}Describe your changes{{end}}"
-                aria-label="{{template "describe your changes" .}}">
-        </p>
+        <input
+            id="text"
+            type="text"
+            name="message"
+            class="edit-form__message"
+            value="{{.Message}}"
+            placeholder="{{block "describe your changes" .}}Describe your changes{{end}}"
+            aria-label="{{template "describe your changes" .}}">
         <div class="form-buttons">
             <button type="submit" name="action" class="btn btn_accent edit-form__save" value="save">
                 {{template "save" .}}

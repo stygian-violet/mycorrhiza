@@ -25,7 +25,7 @@ header { width: 100%; }
 html { height:100%; font-size:16px; padding:0; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
 body { margin: 0; font-family: sans-serif; color: black; }
 input, kbd { font: inherit; color: inherit; }
-textarea { font-size: inherit; font-family: 'Menlo', 'PT Mono', monospace; line-height: 150%; }
+textarea { font-size: 1rem; font-family: 'Menlo', 'PT Mono', monospace; line-height: 150%; }
 select { cursor: pointer; }
 
 body.modal-page { grid-template-rows: 1fr auto 1fr; grid-template-columns: 1fr auto 1fr; height: 100%; }
@@ -34,7 +34,7 @@ body.modal-page main { grid-row: 2 / span 1; grid-column: 2 / span 1; }
 .edit_no-preview { height: 90vh; }
 .edit_with-preview .edit-form { height: 90vh; }
 .edit__title { margin-top: 0; }
-.edit__preview { border: 2px dashed #ddd; padding: 0 1rem; margin: 0 -1rem; }
+.edit__preview { border: 0.125rem dashed #ddd; padding: 0 1rem; margin: 0 -1rem; }
 .edit-form__textarea { height: 80vh; min-height: 4rem; resize: none; }
 .edit-toolbar__buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
 .edit-toolbar__buttons, .edit-toolbar__help { margin: .5rem; }
@@ -128,7 +128,7 @@ main ul.launchpad { padding-left: 0; }
 ol { padding-left: 2.5rem; }
 code { padding: .1rem .3rem; border-radius: .25rem; font-size: 90%; font-family: 'Menlo', 'PT Mono', monospace; }
 pre.codeblock { padding:.5rem; white-space: pre-wrap; border-radius: .25rem;}
-.codeblock code {padding:0; font-size:16px; tab-size: 3;}
+.codeblock code {padding:0; font-size:1rem; tab-size: 3;}
 .transclusion { border-radius: .25rem; margin-bottom: .25rem; clear: both; }
 .transclusion_failed { padding: 0 .5rem; }
 .transclusion__content > *:not(.binary-container) {margin: 0.5rem; }
@@ -169,17 +169,18 @@ aside { clear: both; }
 .history-entry__time { font-weight: bold; }
 .history-entry__author { font-style: italic; }
 
-table { background: transparent; border: 0px; border-collapse: collapse; display: block; overflow-x: auto; word-break: keep-all; }
+table { background: transparent; border: 0; border-collapse: collapse; display: block; overflow-x: auto; word-break: keep-all; }
 td, th { min-width: 10rem; max-width: 20rem; padding: 0 0.5rem; }
 caption { caption-side: top; font-size: small; }
 
 .subhyphae__list, .subhyphae__list ul { display: flex; flex-flow: row wrap; gap: 0.25rem; padding: 0; margin: 0; }
 .subhyphae__list ul { font-size: 90%; margin-top: 0.25rem; }
+.subhyphae__list ul li { border-width: 0.0625rem; }
 .subhyphae__entry, .subhyphae__link { padding: 0.25rem; border-radius: .25rem; }
-.subhyphae__entry { list-style-type: none; border: 1px solid #999; }
+.subhyphae__entry { list-style-type: none; border: 0.125rem solid #999; }
 .subhyphae__link { display: block; margin: -0.25rem; text-decoration: none; }
 .subhyphae__link:hover { background: #eee; }
-.subhyphae__truncated { list-style-type: none; border: 0px; padding: 0; margin: 0 0.25rem; align-self: center; }
+.subhyphae__truncated { list-style-type: none; border: 0; padding: 0; margin: 0 0.25rem; align-self: center; }
 .subhyphae__truncated:first-child { width: 100%; margin-top: -0.25rem; text-align: center; }
 
 /* Color stuff */
@@ -196,13 +197,13 @@ tbody,
 	background-color: rgba(220, 220, 220, 0.5);
 }
 .transclusion_failed {
-	border: 1px solid #a55858;
+	border: 0.125rem solid #a55858;
 }
 .transclusion_blend .transclusion__link { display: none; }
 
 .layout-card { border-radius: .25rem; background-color: white; }
 .layout-card__title { font-size: 1rem; margin: 0; padding: .25rem .5rem; border-radius: .25rem .25rem 0 0; }
-.layout-card__title { border-bottom: 1px solid #aaa; }
+.layout-card__title { border-bottom: 0.125rem solid #aaa; }
 
 /* Other stuff */
 html { background-color: #eee;
@@ -211,16 +212,16 @@ header { background-color: #ddd; }
 main { background-color: white; }
 .shy-link { color: black; }
 
-blockquote { border-left: 2px #999 solid; }
+blockquote { border-left: 0.125rem #999 solid; }
 .wikilink_interwiki {color:#080;}
 .wikilink_new {color:#a55858;}
 .transclusion code, .transclusion .codeblock {background-color:#ddd;}
 .transclusion__link { color: black; }
 .wikilink_new:visited {color:#a55858;}
-.navi-title { border-bottom: #aaa 1px solid; }
-.upload-amnt { border: #aaa 1px solid; }
-.prevnext { border-top: #aaa 1px solid; clear: both; }
-td, th { border: #aaa 1px solid; }
+.navi-title { border-bottom: #aaa 0.125rem solid; }
+.upload-amnt { border: #aaa 0.125rem solid; }
+.prevnext { border-top: #aaa 0.125rem solid; clear: both; }
+td, th { border: #aaa 0.125rem solid; }
 
 .categories-card__link:hover { background-color: #eee; }
 
@@ -249,12 +250,12 @@ article .codeblock,
 .upload-amnt,
 textarea,
 thead,
-tbody { border: 0px; background-color: #444444; color: #ddd; }
+tbody { border: 0; background-color: #444444; color: #ddd; }
 table code { background-color: #383838; }
 .transclusion_stand-out { background-color: rgba(68, 68, 68, 0.5); }
 
-:focus { outline: 2px solid #aaa; }
-.modal__fieldset { border: 2px solid #aaa; }
+:focus { outline: 0.125rem solid #aaa; }
+.modal__fieldset { border: 0.125rem solid #aaa; }
 
 .transclusion code,
 .transclusion .codeblock { background-color: #454545; }
@@ -346,12 +347,12 @@ kbd {
 	width: 100%;
 	max-width: 1000px;
 	margin: 96px auto;
-	padding: 24px;
+	padding: 1.5rem;
 	transform: translate(-50%, 0);
 
 	background-color: #fff;
-	border-radius: 4px;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+	border-radius: 0.25rem;
+	box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
 }
 
 .dialog-backdrop {
@@ -490,7 +491,7 @@ kbd {
 
 .notice {
 	margin: 1rem 0;
-	border: 1px solid;
+	border: 0.125rem solid;
 	padding: 0.5rem 0.7rem;
 }
 
@@ -530,7 +531,7 @@ kbd {
 .btn {
 	line-height: normal;
 	display: inline-block;
-	border: 1px #999 solid;
+	border: 0.125rem #999 solid;
 	border-radius: .15rem;
 	text-decoration: none;
 	padding: .25rem .5rem;
@@ -544,7 +545,7 @@ kbd {
 }
 
 .btn_weak {
-	border: 1px dashed #999;
+	border: 0.125rem dashed #999;
 }
 
 a.btn_destructive,
@@ -589,7 +590,7 @@ input[type="checkbox"]:checked::after {
 
 input[type="checkbox"] + label { cursor: pointer; }
 input[type="checkbox"]:disabled { cursor: unset; background-color: #4c4c4c; }
-input[type="checkbox"]:checked:disabled::after { border-color: #999; }
+input[type="checkbox"]:checked:disabled::after { border-color: #aaa; }
 input[type="checkbox"]:disabled + label { cursor: unset; }
 
 /*
@@ -609,7 +610,7 @@ input[type="checkbox"]:disabled + label { cursor: unset; }
 
 @media (prefers-color-scheme: dark) {
 	::file-selector-button, .btn {
-		border: #444 solid 1px;
+		border: #444 solid 0.125rem;
 	}
 
 	.btn:visited {
@@ -641,15 +642,15 @@ input[type="checkbox"]:disabled + label { cursor: unset; }
 
 .recent-changes__entry {
 	padding: 0.5rem 1rem;
-	border: 2px solid #999;
+	border: 0.125rem solid #999;
 	margin: 0 -1rem;
 }
 .recent-changes__entry + .recent-changes__entry {
-	margin-top: -2px;
+	margin-top: -0.125rem;
 }
 
 .recent-changes__entry * + * {
-	margin-top: 4px;
+	margin-top: 0.25rem;
 }
 
 .recent-changes__entry__time {
@@ -731,7 +732,7 @@ input[type="checkbox"]:disabled + label { cursor: unset; }
 .top-bar__search-bar {
 	border: 0;
 	width: 100%;
-	padding: 4px;
+	padding: 0.25rem;
 }
 
 .top-bar__section_search {
@@ -913,12 +914,12 @@ dd + dt {
 	max-width: 35rem;
 }
 .form--interwiki {
-	padding: 0 16px 16px 16px;
-	margin: 16px 0 16px 0;
-	border: 2px solid #999;
+	padding: 0 1rem 1rem 1rem;
+	margin: 1rem 0 1rem 0;
+	border: 0.125rem solid #999;
 }
 .form--interwiki + .form--interwiki {
-	margin-top: -18px;
+	margin-top: -1.125rem;
 }
 .form--interwiki__engine:has(option[value="generic"]:not(:checked)) ~ .form--interwiki__format {
 	display: none;

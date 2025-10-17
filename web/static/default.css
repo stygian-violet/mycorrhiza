@@ -589,7 +589,7 @@ input[type="checkbox"]:checked::after {
 }
 
 input[type="checkbox"] + label { cursor: pointer; }
-input[type="checkbox"]:disabled { cursor: unset; background-color: #4c4c4c; }
+input[type="checkbox"]:disabled { cursor: not-allowed; background-color: #4c4c4c; }
 input[type="checkbox"]:checked:disabled::after { border-color: #aaa; }
 input[type="checkbox"]:disabled + label { cursor: unset; }
 
@@ -601,12 +601,13 @@ input[type="checkbox"]:disabled + label { cursor: unset; }
 	list-style: none;
 	padding-left: 0.5rem;
 }
-.item_todo > input[type=checkbox]:disabled::after { border-color: #f1fa8c; }
 .item_todo > input[type=checkbox] {
 	position: absolute;
 	left: -1rem;
 	top: .1rem;
 }
+.item_todo > input[type="checkbox"]:disabled { cursor: unset; }
+.item_todo > input[type="checkbox"]:disabled::after { border-color: #f1fa8c; }
 
 @media (prefers-color-scheme: dark) {
 	::file-selector-button, .btn {

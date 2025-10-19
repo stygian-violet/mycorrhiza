@@ -171,7 +171,13 @@ aside { clear: both; }
 
 table { background: transparent; border: 0; border-collapse: collapse; display: block; overflow-x: auto; word-break: keep-all; }
 td, th { min-width: 10rem; max-width: 20rem; padding: 0 0.5rem; }
-caption { caption-side: top; font-size: small; }
+caption {
+	caption-side: top;
+	margin: 0.5rem 0;
+	font-size: 1.2rem;
+	font-weight: bold;
+	text-align: left;
+}
 
 .subhyphae__list, .subhyphae__list ul { display: flex; flex-flow: row wrap; gap: 0.25rem; padding: 0; margin: 0; }
 .subhyphae__list ul { font-size: 90%; margin-top: 0.25rem; }
@@ -255,7 +261,7 @@ table code { background-color: #383838; }
 .transclusion_stand-out { background-color: rgba(68, 68, 68, 0.5); }
 
 :focus { outline: 0.125rem solid #aaa; }
-.modal__fieldset { border: 0.125rem solid #aaa; }
+.modal__fieldset { border: 0.125rem solid #aaa; position: relative; }
 
 .transclusion code,
 .transclusion .codeblock { background-color: #454545; }
@@ -325,9 +331,6 @@ h2 + .add-to-category {
 /*
  * Shortcuts
  */
-template {
-	display: none;
-}
 
 kbd {
 	display: inline-block;
@@ -339,102 +342,33 @@ kbd {
 	opacity: .4;
 }
 
-.dialog {
-	position: absolute;
-
-	top: 0;
-	left: 50%;
-	width: 100%;
-	max-width: 1000px;
-	margin: 96px auto;
-	padding: 1.5rem;
-	transform: translate(-50%, 0);
-
-	background-color: #fff;
-	border-radius: 0.25rem;
-	box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
+.shortcuts-help .modal__content {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: 1fr;
+	overflow-y: auto;
 }
 
-.dialog-backdrop {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.3);
-}
-
-.dialog__header {
-	position: relative;
-	grid-column: 1 / -1;
-}
-
-.dialog__title {
-	margin: 0;
-	font-size: 1.5rem;
-}
-
-.dialog__close-button {
-	position: absolute;
-	display: block;
-	top: 0;
-	right: 0;
-	margin: 0;
-	padding: 0.5rem;
-	border: none;
-	background: url("icon/x.svg") no-repeat 0.5rem 0.5rem / 1rem 1rem;
-	width: 2rem;
-	height: 2rem;
-	cursor: pointer;
-}
-
-.dialog__close-button:active {
-	opacity: .7;
-}
-
-.shortcuts-help .dialog__content {
-	columns: 300px 2;
-	column-gap: 32px;
-	overflow: hidden;
+@media screen and (min-width: 600px) {
+	.shortcuts-help .modal__content {
+		grid-template-columns: 1fr 1fr;
+	}
 }
 
 .shortcuts-group {
-	/* Don't break a shortcut group between columns */
-	break-inside: avoid;
-	page-break-inside: avoid;
-	overflow: hidden;
-}
-
-.shortcuts-group-heading {
-	margin: 1rem 0 0.5rem;
-	font-size: 1.2rem;
-}
-
-.shortcuts-list {
+	display: table;
+	overflow: unset;
+	width: 100%;
 	margin: 0;
-	padding: 0;
+	word-break: break-word;
 }
 
-.shortcuts-list + .shortcuts-list {
-	margin-top: 1.5rem;
-}
-
-.shortcut-row {
-	display: flex;
-	margin: 0.5rem 0;
-	padding: 0;
-	list-style: none;
-}
-
-.shortcut-row__description {
-	flex: 1;
-}
+.shortcuts-group caption { margin-top: 0; }
+.shortcut-row td { padding: 0.5rem; }
+.shortcut-row__description { min-width: 50%; }
+.shortcut-row__keys { width: 10rem; min-width: unset; }
 
 @media (prefers-color-scheme: dark) {
-	.dialog {
-		background-color: #343434;
-		color: #ddd;
-	}
 	input, kbd {
 		color: #ddd;
 	}
@@ -513,6 +447,7 @@ kbd {
 .modal__title { font-size: 2rem; }
 .modal__title_small { font-size: 1.5rem; }
 .modal__fieldset {
+	position: relative;
 	padding: 1rem;
 	height: 100%;
 	display: flex;
@@ -521,6 +456,73 @@ kbd {
 }
 .modal__fieldset > * { margin: 0; }
 .modal__fieldset > .form-buttons { margin-top: auto; }
+
+.modal-backdrop {
+	display: grid;
+	grid-template-rows: 1fr auto 1fr;
+	grid-template-columns: 1fr auto 1fr;
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+
+	background-color: rgba(0, 0, 0, 0.3);
+}
+
+.modal-backdrop .modal {
+	grid-row: 2 / span 1;
+	grid-column: 2 / span 1;
+
+	max-width: 1000px;
+	max-height: 100vh;
+
+	margin: 0 1.5rem;
+	padding: 1.5rem;
+
+	background-color: #fff;
+	border-radius: 0.25rem;
+	box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+@media screen and (max-width: 499px) {
+	.modal-backdrop .modal {
+		margin: 0;
+		padding: 1rem;
+	}
+}
+
+.modal-backdrop .modal:focus { outline: none; }
+
+.modal-backdrop .modal__title {
+	font-size: 1.5rem;
+}
+
+.modal__close-button {
+	position: absolute;
+	top: -2rem;
+	right: 1rem;
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: #333 url("icon/x.svg") no-repeat 0.5rem 0.5rem / 1rem 1rem;
+	width: 2rem;
+	height: 2rem;
+	cursor: pointer;
+}
+
+.modal__content {
+	overflow-y: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+	.modal-backdrop .modal {
+		background-color: #343434;
+		color: #ddd;
+	}
+}
 
 /*
  * Buttons

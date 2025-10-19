@@ -217,33 +217,36 @@ class ShortcutGroup {
 function openHelp() {
     if ($('.shortcuts-help')) return
 
-    document.body.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
     let prevActiveElement = document.activeElement
 
-    let backdrop = rrh.html`<div class="dialog-backdrop"></div>`
+    let backdrop = rrh.html`<div class="modal-backdrop"></div>`
     backdrop.onclick = close
-    document.body.appendChild(backdrop)
 
     let dialog = rrh.html`
-        <div class="dialog shortcuts-help" tabindex="0">
-            <div class="dialog__header">
-                <h1 class="dialog__title">${rrh.l10n('List of shortcuts')}</h1>
-                <button class="dialog__close-button" aria-label="${rrh.l10n('Close this dialog')}"></button>
-            </div>
-            <div class="dialog__content"></div>
+        <div class="modal shortcuts-help" tabindex="0">
+            <fieldset class="modal__fieldset">
+                <legend class="modal__title">${rrh.l10n('List of shortcuts')}</legend>
+                <button class="modal__close-button" aria-label="${rrh.l10n('Close this dialog')}"></button>
+                <div class="modal__content"></div>
+            </fieldset>
         </div>
     `
-    dialog.querySelector('.dialog__close-button').onclick = close
+    dialog.querySelector('.modal__close-button').onclick = close
     dialog.onkeydown = event => {
         if (event.key === 'Escape') close()
     }
-    document.body.appendChild(dialog)
+		dialog.onclick = event => {
+        event.stopPropagation();
+    }
+
+    backdrop.appendChild(dialog)
+    document.body.appendChild(backdrop)
     dialog.focus()
 
     function close() {
-        document.body.overflow = ''
+        document.body.style.overflow = ''
         document.body.removeChild(backdrop)
-        document.body.removeChild(dialog)
         if (prevActiveElement) prevActiveElement.focus()
     }
 
@@ -255,21 +258,18 @@ function openHelp() {
 
     for (let group of rrh.shortcuts.groups) {
         if (group.shortcuts.length === 0) continue
-        dialog.querySelector('.dialog__content').appendChild(rrh.html`
-            <div class="shortcuts-group">
-                <h2 class="shortcuts-group-heading">${group.name}</h2>
-                <ul class="shortcuts-list">
-                    ${group.shortcuts.map(({ description, shortcuts }) => `
-                        <li class="shortcut-row">
-                            <div class="shortcut-row__description">${description}</div>
-                            <div class="shortcut-row__keys">
-                                ${formatShortcuts(shortcuts)}
-                            </div>
-                        </li>
-                    `)}
-                </ul>
-            </div>
-        `)
+        dialog.querySelector('.modal__content').appendChild(rrh.html`
+<table class="shortcuts-group">
+  <caption>${group.name}</caption>
+  <tbody>
+    ${group.shortcuts.map(({ description, shortcuts }) => `
+      <tr class="shortcut-row">
+        <td class="shortcut-row__description">${description}</td>
+        <td class="shortcut-row__keys">${formatShortcuts(shortcuts)}</td>
+      </tr>
+    `)}
+  </tbody>
+</table>`)
     }
 }
 

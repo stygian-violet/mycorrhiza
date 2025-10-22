@@ -290,9 +290,8 @@ caption {
 
 .subhyphae__list, .subhyphae__list ul { display: flex; flex-flow: row wrap; gap: 0.25rem; padding: 0; margin: 0; }
 .subhyphae__list ul { font-size: 90%; margin-top: 0.25rem; }
-.subhyphae__list ul li { border-width: 0.0625rem; }
 .subhyphae__entry, .subhyphae__link { padding: 0.25rem; border-radius: .25rem; }
-.subhyphae__entry { list-style-type: none; border: 0.125rem solid var(--border); }
+.subhyphae__entry { list-style-type: none; border: 0.0625rem solid var(--border); }
 .subhyphae__link { display: block; margin: -0.25rem; text-decoration: none; }
 .subhyphae__link:hover { background: var(--block-bg); }
 .subhyphae__truncated { list-style-type: none; border: 0; padding: 0; margin: 0 0.25rem; align-self: center; }

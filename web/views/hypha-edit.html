@@ -59,11 +59,11 @@
         <h1 class="edit__title">
             {{if .IsNew}}
                 {{block "creating [[hypha]]" .}}
-                    Create <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
+                    Create <a class="wikilink" href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
                 {{end}}
             {{else}}
                 {{block "editing [[hypha]]" .}}
-                    Edit <a href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
+                    Edit <a class="wikilink" href="{{ .Meta.Root }}hypha/{{.HyphaName}}">{{beautifulName .HyphaName}}</a>
                 {{end}}
             {{end}}
         </h1>

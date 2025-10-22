@@ -11,7 +11,7 @@
 	{{end}}
 
 	<section class="amnt-grid">
-		<form action="{{ .Meta.Root }}settings/change-password" method="post" class="modal amnt-menu-block">
+		<form action="{{ .Meta.Root }}settings/change-password" method="post" class="modal">
 			<fieldset class="modal__fieldset">
 				<legend class="modal__title modal__title_small">
 					{{block "change password" .}}Change password{{end}}
@@ -39,7 +39,7 @@
 			</fieldset>
 		</form>
 
-		<div class="modal amnt-menu-block">
+		<div class="modal">
 			<fieldset class="modal__fieldset">
 				<legend class="modal__title modal__title_small">
 					{{block "delete user" .}}Delete user{{end}}

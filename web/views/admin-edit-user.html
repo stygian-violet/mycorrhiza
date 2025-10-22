@@ -11,9 +11,9 @@
     {{end}}
 
     <section class="amnt-grid">
-        <form action="" method="post" class="modal amnt-menu-block">
+        <form action="" method="post" class="modal">
             <fieldset class="modal__fieldset">
-                <legend class="modal__title modal__title_small">
+                <legend class="modal__title_small">
                     {{block "change group" .}}Change group{{end}}
                 </legend>
                 <div class="form-field">
@@ -31,9 +31,9 @@
             </fieldset>
         </form>
 
-        <form action="{{ .Meta.Root }}admin/users/{{.U.Name}}/change-password" method="post" class="modal amnt-menu-block">
+        <form action="{{ .Meta.Root }}admin/users/{{.U.Name}}/change-password" method="post" class="modal">
             <fieldset class="modal__fieldset">
-                <legend class="modal__title modal__title_small">
+                <legend class="modal__title_small">
                     {{block "change password" .}}Change password{{end}}
                 </legend>
 				{{if .U.IsLocal}}
@@ -54,9 +54,9 @@
             </fieldset>
         </form>
 
-        <div class="modal amnt-menu-block">
+        <div class="modal">
             <fieldset class="modal__fieldset">
-                <legend class="modal__title modal__title_small">
+                <legend class="modal__title_small">
                     {{block "delete user" .}}Delete user{{end}}
                 </legend>
 				<p>{{block "delete user tip" .}}Remove the user from the database. Changes made by the user will be preserved. It will be possible to take this username later.{{end}}</p>
